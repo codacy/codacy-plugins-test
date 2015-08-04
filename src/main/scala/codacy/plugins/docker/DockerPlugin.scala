@@ -40,12 +40,6 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
     }.toOption
   }.toSet
 
-  private[this] def dockerPathCorrected(root: Path, filePath: SourcePath): Option[SourcePath] = {
-    Try(
-      Paths.get("/src").relativize(Paths.get(filePath.value))
-    ).toOption.map { case path => SourcePath(path.toString) }
-  }
-
   private[this] case class ToolImpl(config: ToolSpec) {
 
     import config.{name => toolName}
@@ -62,10 +56,8 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
         }.getOrElse(Stream.empty[ToolResult])
 
         results.flatMap { case toolResult =>
-          dockerPathCorrected(rootPath, toolResult.filename).flatMap { case sourceFile =>
-            config.patterns.collectFirst { case patternDef if patternDef.patternId == toolResult.patternId =>
-              Result(patternDef.patternId, sourceFile, toolResult.line, toolResult.message, patternDef.level)
-            }
+          config.patterns.collectFirst { case patternDef if patternDef.patternId == toolResult.patternId =>
+            Result(patternDef.patternId, toolResult.filename, toolResult.line, toolResult.message, patternDef.level)
           }
         }
       }.toOption.getOrElse(Stream.empty)
