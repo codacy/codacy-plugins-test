@@ -3,11 +3,12 @@ package codacy.plugins.docker
 import java.nio.file.{Files, Path, Paths}
 
 import codacy.plugins.traits.IResultsPlugin
+import codacy.utils.Printer
 import docker.{DockerImageName, ToolSpec, _}
-import play.api.libs.json.{Format, JsString, Json}
+import play.api.libs.json._
 
 import _root_.scala.sys.process._
-import _root_.scala.util.Try
+import scala.util.{Success, Failure, Try}
 
 class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin {
 
@@ -91,7 +92,18 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
   }
 
   private def readJsonDoc[T](name: String)(implicit docFmt: Format[T]): Option[T] = {
-    readRawDoc(name).flatMap(Json.parse(_).asOpt[T])
+    readRawDoc(name).flatMap {
+      doc =>
+        Try(Json.parse(doc)).flatMap { case json =>
+          json.validate[T] match {
+            case JsSuccess(result, _) =>
+              Success(result)
+            case JsError(err) =>
+              Printer.red(err.mkString)
+              Failure(new Throwable)
+          }
+        }.toOption
+    }
   }
 
   private def readRawDoc(name: String): Option[String] = {
