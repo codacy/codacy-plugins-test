@@ -1,7 +1,7 @@
 package codacy.plugins.docker
 
 import codacy.plugins.traits.JsonEnumeration
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.{JsValue, Format, Json}
 
 case class PluginRequest(directory: String, files: Seq[String], configuration: PluginConfiguration)
 
@@ -11,7 +11,7 @@ object PluginRequest {
   implicit val requestFmt: Format[PluginRequest] = Json.format[PluginRequest]
 }
 
-case class Pattern(patternIdentifier: String, parameters: Map[String, String])
+case class Pattern(patternIdentifier: String, parameters: Map[String, JsValue])
 
 case class PluginConfiguration(patterns: Seq[Pattern])
 

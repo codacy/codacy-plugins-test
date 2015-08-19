@@ -11,7 +11,7 @@ import _root_.scala.util.Try
 
 class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin {
 
-  private val dockerRunCmd = "docker run --net=none --privileged=false --cap-drop=ALL --user=docker --rm=true"
+  private val dockerRunCmd = "docker run --net=none --privileged=false --cap-drop=ALL --user=docker"
 
   lazy val spec: Option[ToolSpec] = readJsonDoc[ToolSpec]("patterns.json")
 
@@ -30,7 +30,7 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
   def configurationFor(patterns: Seq[Pattern]): Option[ToolConfig] = MaybeTool.map(_.configFor(patterns))
 
   private[this] def dockerCmdForSourcePath(sourcePath: Path) =
-    s"$dockerRunCmd --rm=true -t -v $sourcePath:/src:ro $dockerImageName".split(" ").toList
+    s"$dockerRunCmd -t -v $sourcePath:/src:ro $dockerImageName".split(" ").toList
 
   private[this] lazy val MaybeTool: Option[ToolImpl] = spec.map(ToolImpl.apply)
 
@@ -71,7 +71,7 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
           parameters = Option(pattern.parameters).filterNot(_.isEmpty).map(_.map { case (key, value) =>
             Param(
               name = ParamName(key),
-              value = Try(Json.parse(value)).getOrElse(JsString(value))
+              value = value
             )
           }.toSeq
           ))

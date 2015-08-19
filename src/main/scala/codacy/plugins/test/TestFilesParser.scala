@@ -4,14 +4,14 @@ import java.io.File
 
 import codacy.plugins.docker.{Language, ResultLevel}
 import codacy.utils.FileHelper
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 
 import scala.collection.immutable.Map
 
 case class PatternTestFile(file: File, language: Language.Value,
                            enabledPatterns: Seq[PatternSimple], matches: Seq[TestFileResult])
 
-case class PatternSimple(name: String, parameters: Map[String, String])
+case class PatternSimple(name: String, parameters: Map[String, JsValue])
 
 class TestFilesParser(filesDir: File) {
 
@@ -68,7 +68,7 @@ class TestFilesParser(filesDir: File) {
               case pattern if pattern.contains(":") =>
                 val name = pattern.split(":").head.trim
                 val jsonParams = Json.parse(pattern.substring(pattern.indexOf(":") + 1).mkString)
-                val params = Json.fromJson[Map[String, String]](jsonParams).get
+                val params = Json.fromJson[Map[String, JsValue]](jsonParams).get
 
                 Some(PatternSimple(name, params))
               //pattern does not have parameters

@@ -12,7 +12,7 @@ object DockerHelpers {
 
   def toPatterns(toolSpec: ToolSpec): Seq[Pattern] = toolSpec.patterns.map { case patternSpec =>
     val parameters = patternSpec.parameters.map(_.map { param =>
-      (param.name.value, Json.stringify(param.default))
+      (param.name.value, param.default)
     }.toMap).getOrElse(Map.empty)
 
     Pattern(patternSpec.patternId.value, parameters)
