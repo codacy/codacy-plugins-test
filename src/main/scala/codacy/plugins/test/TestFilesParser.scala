@@ -28,7 +28,8 @@ class TestFilesParser(filesDir: File) {
     Language.Python -> Seq("#"),
     Language.PHP -> Seq("#", "//"),
     Language.Scala -> Seq("/*", "//"),
-    Language.C -> Seq("/*", "//")
+    Language.C -> Seq("/*", "//"),
+    Language.Ruby -> Seq("#")
   )
 
   def getTestFiles: Seq[PatternTestFile] = {
