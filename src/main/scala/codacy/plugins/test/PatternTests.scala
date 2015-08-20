@@ -35,10 +35,6 @@ object PatternTests extends ITest with CustomMatchers {
 
       val configuration = DockerHelpers.toPatterns(testFile.enabledPatterns)
 
-      testFile.enabledPatterns.map { pattern =>
-        Pattern(pattern.name, pattern.parameters)
-      }
-
       val testFiles = Seq(new java.io.File(testDirectory, testFile.file.getName)).map(_.getAbsolutePath)
 
       val pluginResult = plugin.run(PluginRequest(testDirectory.getAbsolutePath, testFiles, PluginConfiguration(configuration)))

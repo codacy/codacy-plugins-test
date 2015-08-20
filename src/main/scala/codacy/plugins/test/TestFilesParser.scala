@@ -6,8 +6,6 @@ import codacy.plugins.docker.{Language, ResultLevel}
 import codacy.utils.FileHelper
 import play.api.libs.json.{JsValue, Json}
 
-import scala.collection.immutable.Map
-
 case class PatternTestFile(file: File, language: Language.Value,
                            enabledPatterns: Seq[PatternSimple], matches: Seq[TestFileResult])
 
@@ -68,7 +66,8 @@ class TestFilesParser(filesDir: File) {
               case pattern if pattern.contains(":") =>
                 val name = pattern.split(":").head.trim
                 val jsonParams = Json.parse(pattern.substring(pattern.indexOf(":") + 1).mkString)
-                val params = Json.fromJson[Map[String, JsValue]](jsonParams).getOrElse(Map.empty)
+                val typedJsonParams = cleanParameterTypes(jsonParams)
+                val params = typedJsonParams.asOpt[Map[String, JsValue]].getOrElse(Map.empty)
 
                 Some(PatternSimple(name, params))
               //pattern does not have parameters
@@ -115,5 +114,11 @@ class TestFilesParser(filesDir: File) {
       return getNextCodeLine(currentLine + 1, comments)
     }
     currentLine
+  }
+
+  private def cleanParameterTypes(json: JsValue): JsValue = {
+    val jsonString = json.toString()
+    val fixedString = jsonString.replaceAll( """"(true|false)"""", "$1").replaceAll( """"([0-9]+)"""", "$1")
+    Json.parse(fixedString)
   }
 }
