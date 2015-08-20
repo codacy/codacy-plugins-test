@@ -23,11 +23,19 @@ object DockerTest {
         val plugin = new DockerPlugin(DockerImageName(dockerName))
         val sourcePath = DockerHelpers.testsInDocker(plugin.dockerImageName)
 
-        possibleTests.foreach(test => run(plugin, sourcePath, test, typeOfTest))
+        val result = possibleTests
+          .map(test => run(plugin, sourcePath, test, typeOfTest))
+          .forall(identity)
 
         FileUtils.deleteDirectory(sourcePath.toFile)
 
-        true
+        if (!result) {
+          Printer.red("[Failure] Some tests failed!")
+          System.exit(1)
+        }
+
+        Printer.green("[Success] All tests passed!")
+        result
       }.orElse {
         Printer.red("[Missing] docker ref -> dockerName:dockerVersion")
         None
@@ -38,14 +46,19 @@ object DockerTest {
     }
   }
 
-  private def run(plugin: DockerPlugin, sourcePath: Path, test: ITest, testRequest: String) = {
+  private def run(plugin: DockerPlugin, sourcePath: Path, test: ITest, testRequest: String): Boolean = {
     if ((allTestKey :+ test.opt).contains(testRequest)) {
       test.run(plugin, sourcePath) match {
         case true =>
           Printer.green(s"[Success] ${test.getClass.getSimpleName}")
+          true
         case _ =>
           Printer.red(s"[Failure] ${test.getClass.getSimpleName}")
+          false
       }
+    } else {
+      // this test was not selected
+      true
     }
   }
 }

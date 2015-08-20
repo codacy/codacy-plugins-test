@@ -17,9 +17,9 @@ object PatternTests extends ITest with CustomMatchers {
   def run(plugin: DockerPlugin, sourcePath: Path): Boolean = {
     Printer.green(s"Running PatternsTests:")
     val testFiles = new TestFilesParser(sourcePath.toFile).getTestFiles
-    testFiles.forall { testFile =>
+    testFiles.map { testFile =>
       analyseFile(sourcePath.toFile, testFile, plugin)
-    }
+    }.forall(identity)
   }
 
   private def analyseFile(rootDirectory: File, testFile: PatternTestFile, plugin: DockerPlugin): Boolean = {
