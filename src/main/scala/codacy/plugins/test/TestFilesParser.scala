@@ -68,7 +68,7 @@ class TestFilesParser(filesDir: File) {
               case pattern if pattern.contains(":") =>
                 val name = pattern.split(":").head.trim
                 val jsonParams = Json.parse(pattern.substring(pattern.indexOf(":") + 1).mkString)
-                val params = Json.fromJson[Map[String, JsValue]](jsonParams).get
+                val params = Json.fromJson[Map[String, JsValue]](jsonParams).getOrElse(Map.empty)
 
                 Some(PatternSimple(name, params))
               //pattern does not have parameters
