@@ -27,7 +27,9 @@ class TestFilesParser(filesDir: File) {
     Language.PHP -> Seq("#", "//"),
     Language.Scala -> Seq("/*", "//"),
     Language.C -> Seq("/*", "//"),
-    Language.Ruby -> Seq("#")
+    Language.Ruby -> Seq("#"),
+    Language.Jade -> Seq("//", "//-"),
+    Language.Stylus -> Seq("//")
   )
 
   def getTestFiles: Seq[PatternTestFile] = {
