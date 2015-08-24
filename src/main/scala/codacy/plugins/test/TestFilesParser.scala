@@ -9,6 +9,12 @@ import play.api.libs.json.{JsValue, Json}
 case class PatternTestFile(file: File, language: Language.Value,
                            enabledPatterns: Seq[PatternSimple], matches: Seq[TestFileResult])
 
+case class IssueWithLine(severity: String, line: Int, patternId: String)
+
+object IssueWithLine {
+  implicit val formatter = Json.format[IssueWithLine]
+}
+
 case class PatternSimple(name: String, parameters: Map[String, JsValue])
 
 class TestFilesParser(filesDir: File) {
@@ -17,6 +23,7 @@ class TestFilesParser(filesDir: File) {
   val error = """#Err:\s*([A-Za-z0-9\_\-\.]+)""".r
   val info = """#Info:\s*([A-Za-z0-9\_\-\.]+)""".r
   val patterns = """#Patterns:\s*([\s\,A-Za-z0-9\_\-\{\}\'\"\:\.]+)""".r
+  val issueWithLineRegex = """#Issue:\s*(.*)""".r
 
   val languages = Map[Language.Value, Seq[String]](
     Language.Javascript -> Seq("//", "/*"),
@@ -52,6 +59,11 @@ class TestFilesParser(filesDir: File) {
               val nextLine = getNextCodeLine(line, commentLines)
 
               comment.trim match {
+                case issueWithLineRegex(value) =>
+                  for {
+                    IssueWithLine(severityStr, line, patternId) <- Json.parse(value).asOpt[IssueWithLine]
+                    severity <- ResultLevel.values.find(_.toString.startsWith(severityStr))
+                  } yield TestFileResult(patternId, line, severity)
                 case warning(value) => Some(TestFileResult(value, nextLine, ResultLevel.Warn))
                 case error(value) => Some(TestFileResult(value, nextLine, ResultLevel.Err))
                 case info(value) => Some(TestFileResult(value, nextLine, ResultLevel.Info))
@@ -61,6 +73,7 @@ class TestFilesParser(filesDir: File) {
 
           //we probably need to convert this into a smarter regex
           val enabledPatterns = comments.map(_._2).flatMap {
+
             case patterns(value) => value.split(",").map {
               //pattern has parameters
               case pattern if pattern.contains(":") =>
