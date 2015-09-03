@@ -3,9 +3,9 @@ package codacy.plugins.test
 import java.io.File
 import java.nio.file.Path
 
-import codacy.plugins.docker.{DockerPlugin, Pattern, PluginConfiguration, PluginRequest}
+import codacy.plugins.docker.{DockerPlugin, PluginConfiguration, PluginRequest}
 import codacy.plugins.traits.IResultsPlugin
-import codacy.utils.{Printer, FileHelper}
+import codacy.utils.{FileHelper, Printer}
 import org.apache.commons.io.FileUtils
 
 case class TestPattern(toolName: String, plugin: IResultsPlugin, patternId: String)
@@ -35,15 +35,15 @@ object PatternTests extends ITest with CustomMatchers {
 
       val configuration = DockerHelpers.toPatterns(testFile.enabledPatterns)
 
-      val testFiles = Seq(new java.io.File(testDirectory, testFile.file.getName)).map(_.getAbsolutePath)
+      val testFiles = Seq(new java.io.File(testDirectory, testFile.file.getName))
+      val testFilesAbsolutePaths = testFiles.map(_.getAbsolutePath)
 
-      val pluginResult = plugin.run(PluginRequest(testDirectory.getAbsolutePath, testFiles, PluginConfiguration(configuration)))
-      val resultsUUIDS = pluginResult.results.map(_.patternIdentifier).distinct
+      val filteredResults = {
+        val pluginResult = plugin.run(PluginRequest(testDirectory.getAbsolutePath, testFilesAbsolutePaths, PluginConfiguration(configuration)))
+        filterResults(testDirectory.toPath, testFiles, configuration, pluginResult.results)
+      }
 
-      if (resultsUUIDS.isEmpty) Printer.red(s"  + failed in file $filename, no results found!")
-      else Printer.green(s"  + found ${pluginResult.results.length} results")
-
-      pluginResult.results.map(r => TestFileResult(r.patternIdentifier, r.line, r.level))
+      filteredResults.map(r => TestFileResult(r.patternIdentifier, r.line, r.level))
     }
 
     val comparison = beEqualTo(testFile.matches).apply(matches)

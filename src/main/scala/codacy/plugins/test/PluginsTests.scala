@@ -1,6 +1,6 @@
 package codacy.plugins.test
 
-import java.nio.file.Path
+import java.nio.file.{Paths, Path}
 
 import codacy.plugins.docker.{DockerPlugin, PluginConfiguration, PluginRequest}
 import codacy.utils.{Printer, FileHelper}
@@ -14,12 +14,17 @@ object PluginsTests extends ITest {
     plugin.spec.forall { spec =>
       Printer.green(s"  + ${spec.name} should find results for all patterns")
 
-      val files = FileHelper.listFiles(sourcePath.toFile).map(_.getAbsolutePath)
+      val files = FileHelper.listFiles(sourcePath.toFile)
+      val fileAbsolutePaths = files.map(_.getAbsolutePath)
 
       val patterns = DockerHelpers.toPatterns(spec)
 
-      val pluginResult = plugin.run(PluginRequest(sourcePath.toAbsolutePath.toString, files, PluginConfiguration(patterns)))
-      val resultsUUIDS = pluginResult.results.map(_.patternIdentifier).distinct
+      val filteredResults = {
+        val pluginResult = plugin.run(PluginRequest(sourcePath.toAbsolutePath.toString, fileAbsolutePaths, PluginConfiguration(patterns)))
+        filterResults(sourcePath, files, patterns, pluginResult.results)
+      }
+
+      val resultsUUIDS = filteredResults.map(_.patternIdentifier).distinct
 
       val missingPatterns = patterns.map(_.patternIdentifier).diff(resultsUUIDS)
 
