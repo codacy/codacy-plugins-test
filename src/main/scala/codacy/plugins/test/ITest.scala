@@ -10,7 +10,7 @@ import codacy.plugins.docker.Pattern
 trait ITest {
   val opt: String
 
-  def run(plugin: DockerPlugin, sourcePath: Path): Boolean
+  def run(plugin: DockerPlugin, sourcePath: Path, dockerImageName: String): Boolean
 
   protected def filterResults(sourcePath: Path, files: Seq[File], patterns: Seq[Pattern], results: Seq[Result]): Seq[Result] = {
     val receivedResultsTotal = results.length
@@ -46,11 +46,11 @@ trait ITest {
       Printer.white(
         s"""
            |Extra results returned:
-           | * ${otherPatternsResults.map(_.patternIdentifier).mkString(", ")}
-           |
-           |Check the results returned:
-           | * The tool should only return results requested in the configuration
-           | * The results patternIds should match the names listed in the tools /docs/patterns.json
+           |* ${otherPatternsResults.map(_.patternIdentifier).mkString(", ")}
+            |
+            |Check the results returned:
+            |* The tool should only return results requested in the configuration
+            |* The results patternIds should match the names listed in the tools /docs/patterns.json
         """.stripMargin)
     }
 

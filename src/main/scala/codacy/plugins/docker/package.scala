@@ -1,7 +1,7 @@
 import play.api.libs.json.Reads.{IntReads, StringReads}
 import play.api.libs.json._
 
-package docker {
+package plugins {
 
 import codacy.plugins.docker.{CategoryType, ResultLevel}
 
@@ -38,6 +38,10 @@ class ResultLine(val value: Int) extends AnyVal {
   override def toString = value.toString
 }
 
+final class ErrorMessage(val value: String) extends AnyVal {
+  override def toString = value.toString
+}
+
 /*objects for the value classes so we don't have to do new... all the time - looks like a case class now*/
 object ParamName {
   def apply(value: String): ParamName = new ParamName(value)
@@ -63,6 +67,10 @@ object ResultLine {
   def apply(value: Int): ResultLine = new ResultLine(value)
 }
 
+object ErrorMessage {
+  def apply(value: String): ErrorMessage = new ErrorMessage(value)
+}
+
 case class Param(name: ParamName, value: JsValue)
 
 case class PatternWithParam(patternId: PatternId, parameters: Option[Seq[Param]])
@@ -71,7 +79,11 @@ case class ToolConfig(name: ToolName, patterns: Seq[PatternWithParam])
 
 case class FullConfig(tools: Set[ToolConfig], files: Option[Set[SourcePath]])
 
-case class ToolResult(filename: SourcePath, message: ResultMessage, patternId: PatternId, line: ResultLine)
+sealed trait ToolResult
+
+final case class Issue(filename: SourcePath, message: ResultMessage, patternId: PatternId, line: ResultLine) extends ToolResult
+
+final case class FileError(filename: SourcePath, message: Option[ErrorMessage]) extends ToolResult
 
 case class ParameterSpec(name: ParamName, default: JsValue)
 
@@ -96,24 +108,24 @@ case class ParameterDescription(name: ParamName, description: String)
 
 }
 
-package object docker {
+package object plugins {
 
   import scala.language.implicitConversions
 
-  /*implicits for the value classes still didn't implement macros for this...*/
-  implicit def toValue0(obj: ParamName) = obj.value
+  //implicits for the value classes still didn't implement macros for this...
+  implicit def toValue0(obj: ParamName): String = obj.value
 
-  implicit def toValue1(obj: PatternId) = obj.value
+  implicit def toValue1(obj: PatternId): String = obj.value
 
-  implicit def toValue2(obj: ToolName) = obj.value
+  implicit def toValue2(obj: ToolName): String = obj.value
 
-  implicit def toValue3(obj: SourcePath) = obj.value
+  implicit def toValue3(obj: SourcePath): String = obj.value
 
-  implicit def toValue4(obj: ResultMessage) = obj.value
+  implicit def toValue4(obj: ResultMessage): String = obj.value
 
-  implicit def toValue5(obj: ResultLine) = obj.value
+  implicit def toValue5(obj: ResultLine): Int = obj.value
 
-  implicit def toValue7(obj: DockerImageName) = obj.value
+  implicit def toValue7(obj: DockerImageName): String = obj.value
 
   private[this] implicit val fmt0 = Format(StringReads.map(ParamName.apply), Writes((obj: ParamName) => Json.toJson(obj.value)))
   private[this] implicit val fmt1 = Format(StringReads.map(PatternId.apply), Writes((obj: PatternId) => Json.toJson(obj.value)))
@@ -121,8 +133,25 @@ package object docker {
   private[this] implicit val fmt3 = Format(StringReads.map(SourcePath.apply), Writes((obj: SourcePath) => Json.toJson(obj.value)))
   private[this] implicit val fmt4 = Format(StringReads.map(ResultMessage.apply), Writes((obj: ResultMessage) => Json.toJson(obj.value)))
   private[this] implicit val fmt5 = Format(IntReads.map(ResultLine.apply), Writes((obj: ResultLine) => Json.toJson(obj.value)))
+  private[this] implicit val fmt6 = Format(StringReads.map(ErrorMessage.apply), Writes((obj: ErrorMessage) => Json.toJson(obj.value)))
 
-  implicit val readsToolResult: Reads[ToolResult] = Json.reads[ToolResult]
+  implicit lazy val readsToolResult: Reads[ToolResult] = {
+
+    lazy val IssueReadsName = Issue.getClass.getSimpleName
+    lazy val issueReads = Json.reads[Issue]
+
+    lazy val ErrorReadsName = FileError.getClass.getSimpleName
+    lazy val errorReads = Json.reads[FileError]
+
+    Reads[ToolResult] { (result: JsValue) =>
+      (result \ "type").validate[String].flatMap {
+        case IssueReadsName => issueReads.reads(result)
+        case ErrorReadsName => errorReads.reads(result)
+        case tpe => JsError(s"not a valid result type $tpe")
+      }.orElse(issueReads.reads(result))
+    }
+
+  }
 
   implicit val writesToolConfig: Writes[FullConfig] = {
     implicit val w2 = Json.writes[Param]

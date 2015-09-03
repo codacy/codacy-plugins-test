@@ -2,16 +2,15 @@ package codacy.plugins.docker
 
 import java.nio.file.{Files, Path, Paths}
 
+import codacy.plugins.test.DockerHelpers
 import codacy.plugins.traits.IResultsPlugin
-import docker.{DockerImageName, ToolSpec, _}
-import play.api.libs.json.{Format, JsString, Json}
+import play.api.libs.json.{Format, Json}
+import plugins._
 
 import _root_.scala.sys.process._
 import _root_.scala.util.Try
 
 class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin {
-
-  private val dockerRunCmd = "docker run --net=none --privileged=false --cap-drop=ALL --user=docker"
 
   lazy val spec: Option[ToolSpec] = readJsonDoc[ToolSpec]("patterns.json")
 
@@ -30,7 +29,7 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
   def configurationFor(patterns: Seq[Pattern]): Option[ToolConfig] = MaybeTool.map(_.configFor(patterns))
 
   private[this] def dockerCmdForSourcePath(sourcePath: Path) =
-    s"$dockerRunCmd -t -v $sourcePath:/src:ro $dockerImageName".split(" ").toList
+    s"${DockerHelpers.dockerRunCmd} -t -v $sourcePath:/src:ro $dockerImageName".split(" ").toList
 
   private[this] lazy val MaybeTool: Option[ToolImpl] = spec.map(ToolImpl.apply)
 
@@ -55,11 +54,11 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
           })
         }.getOrElse(Stream.empty[ToolResult])
 
-        results.flatMap { case toolResult =>
+        results.collect { case toolResult: Issue =>
           config.patterns.collectFirst { case patternDef if patternDef.patternId == toolResult.patternId =>
             Result(patternDef.patternId, toolResult.filename, toolResult.line, toolResult.message, patternDef.level)
           }
-        }
+        }.flatten
       }.toOption.getOrElse(Stream.empty)
     }
 
@@ -91,14 +90,7 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
   }
 
   private def readJsonDoc[T](name: String)(implicit docFmt: Format[T]): Option[T] = {
-    readRawDoc(name).flatMap(Json.parse(_).asOpt[T])
-  }
-
-  private def readRawDoc(name: String): Option[String] = {
-    val cmd = s"$dockerRunCmd -t --entrypoint=cat $dockerImageName /docs/$name".split(" ").toSeq
-    Try(cmd.lineStream.toList).map { case rawConfigString =>
-      rawConfigString.mkString(System.lineSeparator())
-    }.toOption
+    DockerHelpers.readRawDoc(dockerImageName, name).flatMap(Json.parse(_).asOpt[T])
   }
 
 }

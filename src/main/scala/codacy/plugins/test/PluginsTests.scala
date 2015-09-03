@@ -1,15 +1,15 @@
 package codacy.plugins.test
 
-import java.nio.file.{Paths, Path}
+import java.nio.file.Path
 
 import codacy.plugins.docker.{DockerPlugin, PluginConfiguration, PluginRequest}
-import codacy.utils.{Printer, FileHelper}
+import codacy.utils.{FileHelper, Printer}
 
 object PluginsTests extends ITest {
 
   val opt = "plugin"
 
-  def run(plugin: DockerPlugin, sourcePath: Path): Boolean = {
+  def run(plugin: DockerPlugin, sourcePath: Path, dockerImageName: String): Boolean = {
     Printer.green("Running PluginsTests:")
     plugin.spec.forall { spec =>
       Printer.green(s"  + ${spec.name} should find results for all patterns")
@@ -32,8 +32,8 @@ object PluginsTests extends ITest {
         Printer.red(
           s"""
              |Some patterns are not tested on plugin ${spec.name}
-             |-> Missing patterns:
-             |${missingPatterns.mkString(", ")}
+              |-> Missing patterns:
+              |${missingPatterns.mkString(", ")}
            """.stripMargin)
         false
       } else {

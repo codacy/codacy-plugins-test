@@ -2,16 +2,16 @@ package codacy.plugins
 
 import java.nio.file.Path
 
-import _root_.docker.DockerImageName
 import codacy.plugins.docker.DockerPlugin
-import codacy.plugins.test.{DockerHelpers, ITest, PatternTests, PluginsTests}
+import codacy.plugins.test._
 import codacy.utils.Printer
 import org.apache.commons.io.FileUtils
+import plugins.DockerImageName
 
 object DockerTest {
 
   private val allTestKey = Seq("all")
-  private val possibleTests = Seq(PluginsTests, PatternTests)
+  private val possibleTests = Seq(PluginsTests, PatternTests, JsonTests)
   private val possibleTestNames = allTestKey ++ possibleTests.map(_.opt)
 
   def main(args: Array[String]) {
@@ -24,7 +24,7 @@ object DockerTest {
         val sourcePath = DockerHelpers.testsInDocker(plugin.dockerImageName)
 
         val result = possibleTests
-          .map(test => run(plugin, sourcePath, test, typeOfTest))
+          .map(test => run(plugin, sourcePath, test, typeOfTest, dockerName))
           .forall(identity)
 
         FileUtils.deleteDirectory(sourcePath.toFile)
@@ -46,9 +46,9 @@ object DockerTest {
     }
   }
 
-  private def run(plugin: DockerPlugin, sourcePath: Path, test: ITest, testRequest: String): Boolean = {
+  private def run(plugin: DockerPlugin, sourcePath: Path, test: ITest, testRequest: String, dockerImageName: String): Boolean = {
     if ((allTestKey :+ test.opt).contains(testRequest)) {
-      test.run(plugin, sourcePath) match {
+      test.run(plugin, sourcePath, dockerImageName) match {
         case true =>
           Printer.green(s"[Success] ${test.getClass.getSimpleName}")
           true
