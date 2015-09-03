@@ -28,11 +28,14 @@ trait ITest {
     if (otherFilesResults.nonEmpty) {
       Printer.red(s"Some results are not in the files requested and were discarded!")
       Printer.white(
-        """
-          |Check the paths returned:
-          |  * The tool should only return results for the files requested
-          |  * The files should be relative to /src (ex: /src/dir/file.js -> dir/file.js)
-        """.stripMargin)
+        s"""
+           |Extra files:
+           |  * ${otherFilesResults.map(_.filename).distinct.mkString(", ")}
+           |
+           |Check the paths returned:
+           |  * The tool should only return results for the files requested
+           |  * The files should be relative to /src (ex: /src/dir/file.js -> dir/file.js)
+         """.stripMargin)
     }
 
     val requestedPatternIds = patterns.map(_.patternIdentifier)
@@ -45,12 +48,12 @@ trait ITest {
       Printer.white(
         s"""
            |Extra results returned:
-           |* ${otherPatternsResults.map(_.patternIdentifier).mkString(", ")}
-            |
-            |Check the results returned:
-            |* The tool should only return results requested in the configuration
-            |* The results patternIds should match the names listed in the tools /docs/patterns.json
-        """.stripMargin)
+           |* ${otherPatternsResults.map(_.patternIdentifier).distinct.mkString(", ")}
+           |
+           |Check the results returned:
+           |  * The tool should only return results requested in the configuration
+           |  * The results patternIds should match the names listed in the tools /docs/patterns.json
+         """.stripMargin)
     }
 
     filteredFileResults.intersect(filteredPatternResults)
