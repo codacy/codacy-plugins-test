@@ -14,11 +14,13 @@ object PatternTests extends ITest with CustomMatchers {
 
   val opt = "pattern"
 
-  def run(plugin: DockerPlugin, sourcePath: Path, dockerImageName: String): Boolean = {
+  def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageName: String): Boolean = {
     Printer.green(s"Running PatternsTests:")
-    val testFiles = new TestFilesParser(sourcePath.toFile).getTestFiles
-    testFiles.map { testFile =>
-      analyseFile(sourcePath.toFile, testFile, plugin)
+    testSources.map { sourcePath =>
+      val testFiles = new TestFilesParser(sourcePath.toFile).getTestFiles
+      testFiles.map { testFile =>
+        analyseFile(sourcePath.toFile, testFile, plugin)
+      }.forall(identity)
     }.forall(identity)
   }
 
@@ -30,21 +32,17 @@ object PatternTests extends ITest with CustomMatchers {
     Printer.green(s"- $filename should have ${testFile.matches.length} matches with patterns: " +
       testFile.enabledPatterns.map(_.name).mkString(", "))
 
-    val matches = FileHelper.withRandomDirectory { testDirectory =>
-      FileUtils.copyFileToDirectory(testFile.file, testDirectory, true)
+    val configuration = DockerHelpers.toPatterns(testFile.enabledPatterns)
 
-      val configuration = DockerHelpers.toPatterns(testFile.enabledPatterns)
+    val testFiles = Seq(new java.io.File(rootDirectory, testFile.file.getName))
+    val testFilesAbsolutePaths = testFiles.map(_.getAbsolutePath)
 
-      val testFiles = Seq(new java.io.File(testDirectory, testFile.file.getName))
-      val testFilesAbsolutePaths = testFiles.map(_.getAbsolutePath)
-
-      val filteredResults = {
-        val pluginResult = plugin.run(PluginRequest(testDirectory.getAbsolutePath, testFilesAbsolutePaths, PluginConfiguration(configuration)))
-        filterResults(testDirectory.toPath, testFiles, configuration, pluginResult.results)
-      }
-
-      filteredResults.map(r => TestFileResult(r.patternIdentifier, r.line, r.level))
+    val filteredResults = {
+      val pluginResult = plugin.run(PluginRequest(rootDirectory.getAbsolutePath, testFilesAbsolutePaths, PluginConfiguration(configuration)))
+      filterResults(rootDirectory.toPath, testFiles, configuration, pluginResult.results)
     }
+
+    val matches = filteredResults.map(r => TestFileResult(r.patternIdentifier, r.line, r.level))
 
     val comparison = beEqualTo(testFile.matches).apply(matches)
 

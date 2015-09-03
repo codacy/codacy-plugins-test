@@ -8,10 +8,12 @@ import codacy.utils.Printer
 import org.apache.commons.io.FileUtils
 import plugins.DockerImageName
 
+case class Sources(mainSourcePath: Path, directoryPaths: Seq[Path])
+
 object DockerTest {
 
   private val allTestKey = Seq("all")
-  private val possibleTests = Seq(PluginsTests, PatternTests, JsonTests)
+  private val possibleTests = Seq(JsonTests, PluginsTests, PatternTests)
   private val possibleTestNames = allTestKey ++ possibleTests.map(_.opt)
 
   def main(args: Array[String]) {
@@ -21,13 +23,15 @@ object DockerTest {
     typeOfTests.collect { case typeOfTest if possibleTestNames.contains(typeOfTest) =>
       dockerImageName.map { dockerName =>
         val plugin = new DockerPlugin(DockerImageName(dockerName))
-        val sourcePath = DockerHelpers.testsInDocker(plugin.dockerImageName)
+        val mainSourcePath = DockerHelpers.testsInDocker(plugin.dockerImageName)
+        val directorySourcePaths = DockerHelpers.testFoldersInDocker(plugin.dockerImageName).toFile.listFiles().toSeq.map(_.toPath)
+        val testSources = Seq(mainSourcePath) ++ directorySourcePaths
 
         val result = possibleTests
-          .map(test => run(plugin, sourcePath, test, typeOfTest, dockerName))
+          .map(test => run(plugin, testSources, test, typeOfTest, dockerName))
           .forall(identity)
 
-        FileUtils.deleteDirectory(sourcePath.toFile)
+        testSources.foreach(dir => FileUtils.deleteDirectory(dir.toFile))
 
         if (!result) {
           Printer.red("[Failure] Some tests failed!")
@@ -46,9 +50,9 @@ object DockerTest {
     }
   }
 
-  private def run(plugin: DockerPlugin, sourcePath: Path, test: ITest, testRequest: String, dockerImageName: String): Boolean = {
+  private def run(plugin: DockerPlugin, testSources: Seq[Path], test: ITest, testRequest: String, dockerImageName: String): Boolean = {
     if ((allTestKey :+ test.opt).contains(testRequest)) {
-      test.run(plugin, sourcePath, dockerImageName) match {
+      test.run(plugin, testSources, dockerImageName) match {
         case true =>
           Printer.green(s"[Success] ${test.getClass.getSimpleName}")
           true

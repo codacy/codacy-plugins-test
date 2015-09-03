@@ -3,14 +3,13 @@ package codacy.plugins.test
 import java.io.File
 import java.nio.file.Path
 
-import codacy.plugins.docker.{DockerPlugin, Result}
+import codacy.plugins.docker.{DockerPlugin, Pattern, Result}
 import codacy.utils.Printer
-import codacy.plugins.docker.Pattern
 
 trait ITest {
   val opt: String
 
-  def run(plugin: DockerPlugin, sourcePath: Path, dockerImageName: String): Boolean
+  def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageName: String): Boolean
 
   protected def filterResults(sourcePath: Path, files: Seq[File], patterns: Seq[Pattern], results: Seq[Result]): Seq[Result] = {
     val receivedResultsTotal = results.length

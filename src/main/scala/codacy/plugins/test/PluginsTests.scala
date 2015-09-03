@@ -9,22 +9,24 @@ object PluginsTests extends ITest {
 
   val opt = "plugin"
 
-  def run(plugin: DockerPlugin, sourcePath: Path, dockerImageName: String): Boolean = {
+  def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageName: String): Boolean = {
     Printer.green("Running PluginsTests:")
     plugin.spec.forall { spec =>
       Printer.green(s"  + ${spec.name} should find results for all patterns")
 
-      val files = FileHelper.listFiles(sourcePath.toFile)
-      val fileAbsolutePaths = files.map(_.getAbsolutePath)
-
       val patterns = DockerHelpers.toPatterns(spec)
 
-      val filteredResults = {
-        val pluginResult = plugin.run(PluginRequest(sourcePath.toAbsolutePath.toString, fileAbsolutePaths, PluginConfiguration(patterns)))
-        filterResults(sourcePath, files, patterns, pluginResult.results)
-      }
+      val resultsUUIDS = testSources.flatMap { sourcePath =>
+        val files = FileHelper.listFiles(sourcePath.toFile)
+        val fileAbsolutePaths = files.map(_.getAbsolutePath)
 
-      val resultsUUIDS = filteredResults.map(_.patternIdentifier).distinct
+        val filteredResults = {
+          val pluginResult = plugin.run(PluginRequest(sourcePath.toAbsolutePath.toString, fileAbsolutePaths, PluginConfiguration(patterns)))
+          filterResults(sourcePath, files, patterns, pluginResult.results)
+        }
+
+        filteredResults.map(_.patternIdentifier).distinct
+      }
 
       val missingPatterns = patterns.map(_.patternIdentifier).diff(resultsUUIDS)
 
@@ -32,8 +34,8 @@ object PluginsTests extends ITest {
         Printer.red(
           s"""
              |Some patterns are not tested on plugin ${spec.name}
-              |-> Missing patterns:
-              |${missingPatterns.mkString(", ")}
+             |-> Missing patterns:
+             |${missingPatterns.mkString(", ")}
            """.stripMargin)
         false
       } else {

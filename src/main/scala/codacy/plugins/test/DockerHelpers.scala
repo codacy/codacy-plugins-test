@@ -43,6 +43,20 @@ object DockerHelpers {
     sourceDir.resolve("tests")
   }
 
+  def testFoldersInDocker(dockerImageName: DockerImageName): Path = {
+    val sourceDir = Files.createTempDirectory("docker-test-folders")
+
+    val dockerStartedCmd = s"$dockerRunCmd -d --entrypoint=/bin/bash $dockerImageName"
+    val output = dockerStartedCmd.split(" ").toSeq.lineStream_!
+
+    val containerId = output.head
+    //copy files from running container
+    s"docker cp $containerId:/docs/directory-tests/* $sourceDir".split(" ").toSeq.!
+    //remove container
+    s"docker rm -f $containerId".split(" ").toSeq.!
+    sourceDir
+  }
+
   def readRawDoc(dockerImageName: String, name: String): Option[String] = {
     val cmd = s"$dockerRunCmd -t --entrypoint=cat $dockerImageName /docs/$name".split(" ").toSeq
     Try(cmd.lineStream.toList).map { case rawConfigString =>
