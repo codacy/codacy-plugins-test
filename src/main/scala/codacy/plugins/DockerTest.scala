@@ -23,9 +23,7 @@ object DockerTest {
     typeOfTests.collect { case typeOfTest if possibleTestNames.contains(typeOfTest) =>
       dockerImageName.map { dockerName =>
         val plugin = new DockerPlugin(DockerImageName(dockerName))
-        val mainSourcePath = DockerHelpers.testsInDocker(plugin.dockerImageName)
-        val directorySourcePaths = DockerHelpers.testFoldersInDocker(plugin.dockerImageName).toFile.listFiles().toSeq.map(_.toPath)
-        val testSources = Seq(mainSourcePath) ++ directorySourcePaths
+        val testSources = DockerHelpers.testFoldersInDocker(plugin.dockerImageName)
 
         val result = possibleTests
           .map(test => run(plugin, testSources, test, typeOfTest, dockerName))

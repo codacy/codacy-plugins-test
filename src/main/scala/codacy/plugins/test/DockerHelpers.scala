@@ -29,21 +29,7 @@ object DockerHelpers {
       Pattern(pattern.name, parameters)
   }
 
-  def testsInDocker(dockerImageName: DockerImageName): Path = {
-    val sourceDir = Files.createTempDirectory("docker-tests")
-
-    val dockerStartedCmd = s"$dockerRunCmd -d --entrypoint=/bin/bash $dockerImageName"
-    val output = dockerStartedCmd.split(" ").toSeq.lineStream_!
-
-    val containerId = output.head
-    //copy files from running container
-    s"docker cp $containerId:/docs/tests/ $sourceDir".split(" ").toSeq.!
-    //remove container
-    s"docker rm -f $containerId".split(" ").toSeq.!
-    sourceDir.resolve("tests")
-  }
-
-  def testFoldersInDocker(dockerImageName: DockerImageName): Path = {
+  def testFoldersInDocker(dockerImageName: DockerImageName): Seq[Path] = {
     val sourceDir = Files.createTempDirectory("docker-test-folders")
 
     val dockerStartedCmd = s"$dockerRunCmd -d --entrypoint=/bin/bash $dockerImageName"
@@ -51,10 +37,20 @@ object DockerHelpers {
 
     val containerId = output.head
     //copy files from running container
-    s"docker cp $containerId:/docs/directory-tests/* $sourceDir".split(" ").toSeq.!
+    s"docker cp $containerId:/docs/directory-tests $sourceDir".split(" ").toSeq.!
+
+    // backwards compatibility, making sure directory tests exist so we can copy the old test dir
+    s"mkdir -p $sourceDir/directory-tests".split(" ").toSeq.!
+    s"docker cp $containerId:/docs/tests $sourceDir/directory-tests".split(" ").toSeq.!
+
     //remove container
     s"docker rm -f $containerId".split(" ").toSeq.!
-    sourceDir
+    val sourcesDir = sourceDir.resolve("directory-tests")
+
+    sourcesDir.toFile.listFiles().collect {
+      case dir if dir.exists() =>
+        dir.toPath
+    }
   }
 
   def readRawDoc(dockerImageName: String, name: String): Option[String] = {
