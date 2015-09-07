@@ -34,7 +34,7 @@ object PatternTests extends ITest with CustomMatchers {
 
     val configuration = DockerHelpers.toPatterns(testFile.enabledPatterns)
 
-    val testFiles = Seq(new java.io.File(rootDirectory, testFile.file.getName))
+    val testFiles = Seq(testFile.file)
     val testFilesAbsolutePaths = testFiles.map(_.getAbsolutePath)
 
     val filteredResults = {
