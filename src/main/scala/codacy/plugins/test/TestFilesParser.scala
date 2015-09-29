@@ -6,6 +6,8 @@ import codacy.plugins.docker.{Language, ResultLevel}
 import codacy.utils.FileHelper
 import play.api.libs.json.{JsValue, Json}
 
+import scala.util.Try
+
 case class PatternTestFile(file: File, language: Language.Value,
                            enabledPatterns: Seq[PatternSimple], matches: Seq[TestFileResult])
 
@@ -19,11 +21,12 @@ case class PatternSimple(name: String, parameters: Map[String, JsValue])
 
 class TestFilesParser(filesDir: File) {
 
-  val warning = """#Warn:\s*([A-Za-z0-9\_\-\.]+)""".r
-  val error = """#Err:\s*([A-Za-z0-9\_\-\.]+)""".r
-  val info = """#Info:\s*([A-Za-z0-9\_\-\.]+)""".r
-  val patterns = """#Patterns:\s*([\s\,A-Za-z0-9\_\-\{\}\'\"\:\.]+)""".r
-  val issueWithLineRegex = """#Issue:\s*(.*)""".r
+  val Warning = """#Warn:\s*([A-Za-z0-9\_\-\.]+)""".r
+  val Error = """#Err:\s*([A-Za-z0-9\_\-\.]+)""".r
+  val Info = """#Info:\s*([A-Za-z0-9\_\-\.]+)""".r
+  val PatternsList = """#Patterns:\s*([\s\,A-Za-z0-9\_\-\.]+)""".r
+  val PatternWithParameters = """#Patterns:\s*([A-Za-z0-9\,\_\-\.]+)[\s\:]+(.*)""".r
+  val IssueWithLineRegex = """#Issue:\s*(.*)""".r
 
   val languages = Map[Language.Value, Seq[String]](
     Language.Javascript -> Seq("//", "/*"),
@@ -38,14 +41,6 @@ class TestFilesParser(filesDir: File) {
     Language.Jade -> Seq("//", "//-"),
     Language.Stylus -> Seq("//")
   )
-
-  //A pattern with parameters is unique per line of //Pattterns:
-  def splitPatterns(value: String) = {
-    if(value.contains("{"))
-      Array[String](value)
-    else
-      value.split(",")
-  }
 
   def getTestFiles: Seq[PatternTestFile] = {
 
@@ -69,36 +64,36 @@ class TestFilesParser(filesDir: File) {
               val nextLine = getNextCodeLine(line, commentLines)
 
               comment.trim match {
-                case issueWithLineRegex(value) =>
+                case IssueWithLineRegex(value) =>
                   for {
                     IssueWithLine(severityStr, line, patternId) <- Json.parse(value).asOpt[IssueWithLine]
                     severity <- ResultLevel.values.find(_.toString.startsWith(severityStr))
                   } yield TestFileResult(patternId, line, severity)
-                case warning(value) => Some(TestFileResult(value, nextLine, ResultLevel.Warn))
-                case error(value) => Some(TestFileResult(value, nextLine, ResultLevel.Err))
-                case info(value) => Some(TestFileResult(value, nextLine, ResultLevel.Info))
+                case Warning(value) => Some(TestFileResult(value, nextLine, ResultLevel.Warn))
+                case Error(value) => Some(TestFileResult(value, nextLine, ResultLevel.Err))
+                case Info(value) => Some(TestFileResult(value, nextLine, ResultLevel.Info))
                 case _ => None
               }
           }
 
           //we probably need to convert this into a smarter regex
-          val enabledPatterns = comments.map(_._2).flatMap {
-
-            case patterns(value) => splitPatterns(value).map {
-              //pattern has parameters
-              case pattern if pattern.contains(":") =>
-                val name = pattern.split(":").head.trim
-                val jsonParams = Json.parse(pattern.substring(pattern.indexOf(":") + 1).mkString)
-                val typedJsonParams = cleanParameterTypes(jsonParams)
-                val params = typedJsonParams.asOpt[Map[String, JsValue]].getOrElse(Map.empty)
-
-                Some(PatternSimple(name, params))
-              //pattern does not have parameters
-              case pattern =>
-                Some(PatternSimple(pattern.trim, Map()))
+          val enabledPatterns = comments
+            .map { case (_, comment) => comment }
+            .flatMap {
+            //pattern has no parameters
+            case PatternsList(value) => value.split(",").map { pattern =>
+              PatternSimple(pattern.trim, Map())
             }
-            case _ => None
-          }.flatten
+
+            case PatternWithParameters(patternIdString, parameters) =>
+              val patternId = patternIdString.trim
+              val params = Try(cleanParameterTypes(Json.parse(parameters))).toOption
+                .flatMap(_.asOpt[Map[String, JsValue]])
+                .getOrElse(Map.empty)
+              Seq(PatternSimple(patternId, params))
+
+            case _ => Seq.empty
+          }
 
           PatternTestFile(file, language, enabledPatterns, matches)
       }.toSeq
