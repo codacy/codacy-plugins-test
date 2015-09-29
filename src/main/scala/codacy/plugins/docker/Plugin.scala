@@ -1,7 +1,7 @@
 package codacy.plugins.docker
 
 import codacy.plugins.traits.JsonEnumeration
-import play.api.libs.json.{JsValue, Format, Json}
+import play.api.libs.json.{Format, JsValue, Json}
 
 case class PluginRequest(directory: String, files: Seq[String], configuration: PluginConfiguration)
 
@@ -26,24 +26,34 @@ case class Result(patternIdentifier: String, filename: String, line: Int, messag
 case class PluginResult(results: Seq[Result], failedFiles: Seq[String])
 
 case object Language extends Enumeration with JsonEnumeration {
-  val Scala, Javascript, CoffeeScript, CSS, PHP, C, CPP, ObjectiveC, Python, Ruby, Perl, Java, CSharp, VisualBasic, Jade, Stylus = Value
+  val Javascript, Scala, CSS, PHP, C, CPP, ObjectiveC, Python, Ruby, Perl, Java, CSharp, VisualBasic, Go, Elixir, Clojure,
+  CoffeeScript, Rust, Swift, Haskell, React, Shell, TypeScript, Jade, Stylus = Value
 
   def getExtensions(value: Value): Seq[String] = {
     value match {
-      case Scala => Seq(".scala")
-      case Javascript => Seq(".js")
-      case CoffeeScript => Seq(".coffee")
-      case CSS => Seq(".css")
-      case PHP => Seq(".php")
-      case C => Seq(".c", ".h")
-      case CPP => Seq(".cpp", ".hpp")
-      case ObjectiveC => Seq(".m")
-      case Python => Seq(".py")
-      case Ruby => Seq(".rb")
-      case Perl => Seq(".pl")
-      case Java => Seq(".java")
-      case CSharp => Seq(".cs")
-      case VisualBasic => Seq(".vb")
+      case Javascript => List(".js")
+      case Scala => List(".scala")
+      case CSS => List(".css")
+      case PHP => List(".php")
+      case C => List(".c", ".h")
+      case CPP => List(".cpp", ".hpp")
+      case ObjectiveC => List(".m")
+      case Python => List(".py")
+      case Ruby => List(".rb")
+      case Perl => List(".pl")
+      case Java => List(".java")
+      case CSharp => List(".cs")
+      case VisualBasic => List(".vb")
+      case Go => List(".go")
+      case Elixir => List(".ex", ".exs")
+      case Clojure => List(".clj", ".cljs", ".cljc", ".edn")
+      case CoffeeScript => List(".coffee")
+      case Rust => List(".rs", ".rlib")
+      case Swift => List(".swift")
+      case Haskell => List(".hs", ".lhs")
+      case React => List(".jsx")
+      case Shell => List(".sh")
+      case TypeScript => List(".ts")
       case Jade => Seq(".jade")
       case Stylus => Seq(".styl", ".stylus")
       case _ => Seq.empty
