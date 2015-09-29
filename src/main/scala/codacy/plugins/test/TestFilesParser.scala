@@ -39,6 +39,14 @@ class TestFilesParser(filesDir: File) {
     Language.Stylus -> Seq("//")
   )
 
+  //A pattern with parameters is unique per line of //Pattterns:
+  def splitPatterns(value: String) = {
+    if(value.contains("{"))
+      Array[String](value)
+    else
+      value.split(",")
+  }
+
   def getTestFiles: Seq[PatternTestFile] = {
 
     val validExtensions = Language.values.flatMap(Language.getExtensions).toArray
@@ -76,7 +84,7 @@ class TestFilesParser(filesDir: File) {
           //we probably need to convert this into a smarter regex
           val enabledPatterns = comments.map(_._2).flatMap {
 
-            case patterns(value) => value.split(",").map {
+            case patterns(value) => splitPatterns(value).map {
               //pattern has parameters
               case pattern if pattern.contains(":") =>
                 val name = pattern.split(":").head.trim
