@@ -1,3 +1,5 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/77e0473f417446a78758f02785a705b8)](https://www.codacy.com/app/Codacy/codacy-plugins-test)
+
 # Codacy Plugins Test
 
 Provide a testing interface for the external docker tools
