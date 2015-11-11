@@ -9,7 +9,7 @@ import codacy.utils.Printer
 trait ITest {
   val opt: String
 
-  def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageName: String): Boolean
+  def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageName: String, patternName: Option[String]): Boolean
 
   protected def filterResults(sourcePath: Path, files: Seq[File], patterns: Seq[Pattern], results: Seq[Result]): Seq[Result] = {
     val receivedResultsTotal = results.length

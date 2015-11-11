@@ -11,7 +11,7 @@ object JsonTests extends ITest {
 
   val opt = "json"
 
-  def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageName: String): Boolean = {
+  def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageName: String, patternName: Option[String]): Boolean = {
     Printer.green("Running JsonTests:")
 
     val toolOpt = checkDoc[ToolSpec](dockerImageName, "patterns.json")(_ => true)

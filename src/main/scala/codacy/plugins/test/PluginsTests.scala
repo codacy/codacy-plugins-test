@@ -9,7 +9,7 @@ object PluginsTests extends ITest {
 
   val opt = "plugin"
 
-  def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageName: String): Boolean = {
+  def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageName: String, patternName: Option[String]): Boolean = {
     Printer.green("Running PluginsTests:")
     plugin.spec.forall { spec =>
       Printer.green(s"  + ${spec.name} should find results for all patterns")
