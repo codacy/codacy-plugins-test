@@ -69,6 +69,13 @@ sbt "run-main codacy.plugins.DockerTest pattern codacy/jshint:1.0.3"
 sbt test
 ```
 
+Alternatively, you can run a specific test file:
+
+```sh
+sbt "run-main codacy.plugins.DockerTest pattern codacy/jshint:1.0.3 no-curly-brackets"
+sbt test
+```
+
 > All
 
 ```sh
