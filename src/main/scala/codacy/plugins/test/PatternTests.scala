@@ -14,13 +14,13 @@ object PatternTests extends ITest with CustomMatchers {
 
   val opt = "pattern"
 
-  def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageName: String, patternName: Option[String]): Boolean = {
+  def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageName: String, optArgs: Seq[String]): Boolean = {
     Printer.green(s"Running PatternsTests:")
     testSources.map { sourcePath =>
       val testFiles = new TestFilesParser(sourcePath.toFile).getTestFiles
 
-      val filteredTestFiles = patternName.fold(testFiles) {
-        case patternNameToRun => testFiles.filter(testFiles => testFiles.file.getName.contains(patternNameToRun))
+      val filteredTestFiles = optArgs.headOption.fold(testFiles) {
+        case fileNameToTest => testFiles.filter(testFiles => testFiles.file.getName.contains(fileNameToTest))
       }
 
       filteredTestFiles.map { testFile =>
