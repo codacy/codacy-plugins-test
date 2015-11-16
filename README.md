@@ -1,14 +1,9 @@
-[![Codacy Badge](https://api.codacy.com/project/badge/77e0473f417446a78758f02785a705b8)](https://www.codacy.com/app/Codacy/codacy-plugins-test)
+[![Codacy Badge](https://api.codacy.com/project/badge/grade/77e0473f417446a78758f02785a705b8)](https://www.codacy.com/app/Codacy/codacy-plugins-test)
+[![Build Status](https://circleci.com/gh/codacy/codacy-plugins-test.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/codacy/codacy-plugins-test)
 
 # Codacy Plugins Test
 
-Provide a testing interface for the external docker tools
-
-## Docs
-
-[Docker Docs](http://docs.codacy.com/v1.0/docs/tool-developer-guide)
-
-[Scala Docker Template Docs](http://docs.codacy.com/v1.0/docs/tool-developer-guide-scala)
+Provide a testing interface for the external docker tools.
 
 ## Test definition
 
@@ -81,6 +76,12 @@ sbt test
 ```sh
 sbt "run-main codacy.plugins.DockerTest all codacy/jshint:1.0.3"
 ```
+
+## Docs
+
+[Tool Developer Guide](http://docs.codacy.com/v1.5/docs/tool-developer-guide)
+
+[Tool Developer Guide - Using Scala](http://docs.codacy.com/v1.5/docs/tool-developer-guide-using-scala)
 
 ## Troubleshooting
 
