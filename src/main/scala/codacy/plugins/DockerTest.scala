@@ -19,6 +19,7 @@ object DockerTest {
   def main(args: Array[String]) {
     val typeOfTests = args.headOption
     val dockerImageName = args.drop(1).headOption
+    val optArgs = args.drop(2)
 
     typeOfTests.collect { case typeOfTest if possibleTestNames.contains(typeOfTest) =>
       dockerImageName.map { dockerName =>
@@ -26,7 +27,7 @@ object DockerTest {
         val testSources = DockerHelpers.testFoldersInDocker(plugin.dockerImageName)
 
         val result = possibleTests
-          .map(test => run(plugin, testSources, test, typeOfTest, dockerName))
+          .map(test => run(plugin, testSources, test, typeOfTest, dockerName, optArgs))
           .forall(identity)
 
         testSources.foreach(dir => FileUtils.deleteDirectory(dir.toFile))
@@ -48,9 +49,9 @@ object DockerTest {
     }
   }
 
-  private def run(plugin: DockerPlugin, testSources: Seq[Path], test: ITest, testRequest: String, dockerImageName: String): Boolean = {
+  private def run(plugin: DockerPlugin, testSources: Seq[Path], test: ITest, testRequest: String, dockerImageName: String, optArgs: Seq[String]): Boolean = {
     if ((allTestKey :+ test.opt).contains(testRequest)) {
-      test.run(plugin, testSources, dockerImageName) match {
+      test.run(plugin, testSources, dockerImageName, optArgs) match {
         case true =>
           Printer.green(s"[Success] ${test.getClass.getSimpleName}")
           true
