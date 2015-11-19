@@ -3,10 +3,10 @@ package codacy.plugins.test
 import java.io.File
 
 import codacy.plugins.docker.{Language, ResultLevel}
-import codacy.utils.FileHelper
+import codacy.utils.{Printer, FileHelper}
 import play.api.libs.json.{JsValue, Json}
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 case class PatternTestFile(file: File, language: Language.Value,
                            enabledPatterns: Seq[PatternSimple], matches: Seq[TestFileResult])
@@ -79,10 +79,18 @@ class TestFilesParser(filesDir: File) {
 
               comment.trim match {
                 case IssueWithLineRegex(value) =>
-                  for {
-                    IssueWithLine(severityStr, line, patternId) <- Json.parse(value).asOpt[IssueWithLine]
-                    severity <- ResultLevel.values.find(_.toString.startsWith(severityStr))
-                  } yield TestFileResult(patternId, line, severity)
+                  Try {
+                    for {
+                      IssueWithLine(severityStr, line, patternId) <- Json.parse(value).asOpt[IssueWithLine]
+                      severity <- ResultLevel.values.find(_.toString.startsWith(severityStr))
+                    } yield TestFileResult(patternId, line, severity)
+                  } match {
+                    case Success(result) => result
+                    case Failure(e) =>
+                      Printer.red(s"${file.getName}: Failing to parse Issue $value")
+                      System.exit(2)
+                      None
+                  }
                 case Warning(value) => Some(TestFileResult(value, nextLine, ResultLevel.Warn))
                 case Error(value) => Some(TestFileResult(value, nextLine, ResultLevel.Err))
                 case Info(value) => Some(TestFileResult(value, nextLine, ResultLevel.Info))
@@ -94,20 +102,20 @@ class TestFilesParser(filesDir: File) {
           val enabledPatterns = comments
             .map { case (_, comment) => comment }
             .flatMap {
-            //pattern has no parameters
-            case PatternsList(value) => value.split(",").map { pattern =>
-              PatternSimple(pattern.trim, Map())
+              //pattern has no parameters
+              case PatternsList(value) => value.split(",").map { pattern =>
+                PatternSimple(pattern.trim, Map())
+              }
+
+              case PatternWithParameters(patternIdString, parameters) =>
+                val patternId = patternIdString.trim
+                val params = Try(cleanParameterTypes(Json.parse(parameters))).toOption
+                  .flatMap(_.asOpt[Map[String, JsValue]])
+                  .getOrElse(Map.empty)
+                Seq(PatternSimple(patternId, params))
+
+              case _ => Seq.empty
             }
-
-            case PatternWithParameters(patternIdString, parameters) =>
-              val patternId = patternIdString.trim
-              val params = Try(cleanParameterTypes(Json.parse(parameters))).toOption
-                .flatMap(_.asOpt[Map[String, JsValue]])
-                .getOrElse(Map.empty)
-              Seq(PatternSimple(patternId, params))
-
-            case _ => Seq.empty
-          }
 
           PatternTestFile(file, language, enabledPatterns, matches)
       }.toSeq
