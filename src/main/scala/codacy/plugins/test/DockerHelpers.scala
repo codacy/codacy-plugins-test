@@ -10,7 +10,7 @@ import scala.util.Try
 
 object DockerHelpers {
 
-  val dockerRunCmd = "docker run --net=none --privileged=false --cap-drop=ALL --user=docker"
+  val dockerRunCmd = "docker run --net=none --privileged=false --user=docker"
 
   def toPatterns(toolSpec: ToolSpec): Seq[Pattern] = toolSpec.patterns.map { case patternSpec =>
     val parameters = patternSpec.parameters.map(_.map { param =>
@@ -43,8 +43,6 @@ object DockerHelpers {
     s"mkdir -p $sourceDir/directory-tests".split(" ").toSeq.!
     s"docker cp $containerId:/docs/tests $sourceDir/directory-tests".split(" ").toSeq.!
 
-    //remove container
-    s"docker rm -f $containerId".split(" ").toSeq.!
     val sourcesDir = sourceDir.resolve("directory-tests")
 
     sourcesDir.toFile.listFiles().collect {
