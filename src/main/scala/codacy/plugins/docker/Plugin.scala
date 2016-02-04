@@ -11,7 +11,7 @@ object PluginRequest {
   implicit val requestFmt: Format[PluginRequest] = Json.format[PluginRequest]
 }
 
-case class Pattern(patternIdentifier: String, parameters: Map[String, JsValue])
+case class Pattern(patternIdentifier: String, parameters: Option[Map[String, JsValue]])
 
 case class PluginConfiguration(patterns: Seq[Pattern])
 

@@ -17,7 +17,7 @@ object IssueWithLine {
   implicit val formatter = Json.format[IssueWithLine]
 }
 
-case class PatternSimple(name: String, parameters: Map[String, JsValue])
+case class PatternSimple(name: String, parameters: Option[Map[String, JsValue]])
 
 class TestFilesParser(filesDir: File) {
 
@@ -104,14 +104,13 @@ class TestFilesParser(filesDir: File) {
             .flatMap {
               //pattern has no parameters
               case PatternsList(value) => value.split(",").map { pattern =>
-                PatternSimple(pattern.trim, Map())
+                PatternSimple(pattern.trim, None)
               }
 
               case PatternWithParameters(patternIdString, parameters) =>
                 val patternId = patternIdString.trim
                 val params = Try(cleanParameterTypes(Json.parse(parameters))).toOption
                   .flatMap(_.asOpt[Map[String, JsValue]])
-                  .getOrElse(Map.empty)
                 Seq(PatternSimple(patternId, params))
 
               case _ => Seq.empty

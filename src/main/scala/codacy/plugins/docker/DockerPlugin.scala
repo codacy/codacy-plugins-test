@@ -67,7 +67,7 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
       patterns = patterns.map { case pattern =>
         PatternWithParam(
           patternId = PatternId(pattern.patternIdentifier),
-          parameters = Option(pattern.parameters).filterNot(_.isEmpty).map(_.map { case (key, value) =>
+          parameters = pattern.parameters.map(_.map { case (key, value) =>
             Param(
               name = ParamName(key),
               value = value
