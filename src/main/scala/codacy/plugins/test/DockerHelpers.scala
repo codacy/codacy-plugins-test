@@ -15,18 +15,14 @@ object DockerHelpers {
   def toPatterns(toolSpec: ToolSpec): Seq[Pattern] = toolSpec.patterns.map { case patternSpec =>
     val parameters = patternSpec.parameters.map(_.map { param =>
       (param.name.value, param.default)
-    }.toMap).getOrElse(Map.empty)
+    }.toMap)
 
     Pattern(patternSpec.patternId.value, parameters)
   }.toSeq
 
   def toPatterns(patterns: Seq[PatternSimple]): Seq[Pattern] = patterns.map {
     case pattern =>
-      val parameters = pattern.parameters.map { case (name, value) =>
-        (name, value)
-      }
-
-      Pattern(pattern.name, parameters)
+      Pattern(pattern.name, pattern.parameters)
   }
 
   def testFoldersInDocker(dockerImageName: DockerImageName): Seq[Path] = {
