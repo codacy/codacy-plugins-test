@@ -39,6 +39,8 @@ object DockerHelpers {
     s"mkdir -p $sourceDir/directory-tests".split(" ").toSeq.!
     s"docker cp $containerId:/docs/tests $sourceDir/directory-tests".split(" ").toSeq.!
 
+    //remove container
+    s"docker rm -f $containerId".split(" ").toSeq.!
     val sourcesDir = sourceDir.resolve("directory-tests")
 
     sourcesDir.toFile.listFiles().collect {
