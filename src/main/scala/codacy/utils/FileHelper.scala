@@ -38,7 +38,7 @@ object FileHelper {
   def withRandomDirectory[A](block: File => A): A = {
     val randomDir = Files.createTempDirectory("codacy-").toFile
     val result = block(randomDir)
-    FileUtils.deleteDirectory(randomDir)
+    FileUtils.deleteQuietly(randomDir)
     result
   }
 

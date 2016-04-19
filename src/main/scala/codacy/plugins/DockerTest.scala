@@ -30,7 +30,7 @@ object DockerTest {
           .map(test => run(plugin, testSources, test, typeOfTest, dockerName, optArgs))
           .forall(identity)
 
-        testSources.foreach(dir => FileUtils.deleteDirectory(dir.toFile))
+        testSources.foreach(dir => FileUtils.deleteQuietly(dir.toFile))
 
         if (!result) {
           Printer.red("[Failure] Some tests failed!")
