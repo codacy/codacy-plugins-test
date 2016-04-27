@@ -56,4 +56,24 @@ object DockerHelpers {
     }.toOption
   }
 
+  def withDocsDirectory[T](dockerImageName: String)(block: Path => T): T = {
+    val sourceDir = Files.createTempDirectory("docker-docs-folders")
+    val dockerStartedCmd = s"$dockerRunCmd -d --entrypoint=/bin/bash $dockerImageName"
+
+    for {
+      output <- Try(dockerStartedCmd.split(" ").toList.lineStream_!.toList).toOption
+      containerId <- output.headOption
+      // Copy files from running container
+      _ <- Try(s"docker cp $containerId:/docs $sourceDir".split(" ").toList.lineStream_!.toList).toOption
+      // Remove container
+      _ <- Try(s"docker rm -f $containerId".split(" ").toList.lineStream_!.toList).toOption
+    } yield ()
+
+    val result = block(sourceDir.resolve("docs"))
+
+    Try(s"rm -rf ${sourceDir.toString}".split(" ").toList.lineStream_!.toList)
+
+    result
+  }
+
 }
