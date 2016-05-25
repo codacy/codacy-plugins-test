@@ -96,7 +96,7 @@ case class ToolSpec(name: ToolName, patterns: Set[PatternSpec])
  */
 
 // TODO: timeToFix needs to be added to jshint patterns
-case class PatternDescription(patternId: PatternId, title: String, description: String,
+case class PatternDescription(patternId: PatternId, title: String, description: Option[String],
                               parameters: Option[Set[ParameterDescription]],
                               private val timeToFix: Option[Int],
                               private val explanationOpt: Option[String]) {
