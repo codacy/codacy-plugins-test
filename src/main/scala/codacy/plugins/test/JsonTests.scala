@@ -68,9 +68,6 @@ object JsonTests extends ITest {
 
           diffResult.newObjects.isEmpty && diffResult.deletedObjects.isEmpty
 
-        case (Some(_), _) =>
-          true
-
         case _ => false
       }
     }
