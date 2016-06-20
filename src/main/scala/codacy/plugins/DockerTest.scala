@@ -12,9 +12,17 @@ case class Sources(mainSourcePath: Path, directoryPaths: Seq[Path])
 
 object DockerTest {
 
-  private val allTestKey = Seq("all")
   private val possibleTests = Seq(JsonTests, PluginsTests, PatternTests)
-  private val possibleTestNames = allTestKey ++ possibleTests.map(_.opt)
+  private val possibleTestsWithUda = SourceTests +: possibleTests
+
+  private val possibleTestNames = config.keySet
+
+  private lazy val config = Map(
+    "all" -> possibleTests,
+    "allWithUdas" -> possibleTestsWithUda
+  ) ++ possibleTestsWithUda.map{ case test =>
+    test.opt -> Seq(test)
+  }
 
   def main(args: Array[String]) {
     val typeOfTests = args.headOption
@@ -26,7 +34,7 @@ object DockerTest {
         val plugin = new DockerPlugin(DockerImageName(dockerName))
         val testSources = DockerHelpers.testFoldersInDocker(plugin.dockerImageName)
 
-        val result = possibleTests
+        val result = possibleTestsWithUda
           .map(test => run(plugin, testSources, test, typeOfTest, dockerName, optArgs))
           .forall(identity)
 
@@ -50,18 +58,19 @@ object DockerTest {
   }
 
   private def run(plugin: DockerPlugin, testSources: Seq[Path], test: ITest, testRequest: String, dockerImageName: String, optArgs: Seq[String]): Boolean = {
-    if ((allTestKey :+ test.opt).contains(testRequest)) {
-      test.run(plugin, testSources, dockerImageName, optArgs) match {
-        case true =>
-          Printer.green(s"[Success] ${test.getClass.getSimpleName}")
-          true
-        case _ =>
-          Printer.red(s"[Failure] ${test.getClass.getSimpleName}")
-          false
-      }
-    } else {
-      // this test was not selected
-      true
+    config.get(testRequest) match{
+      case Some(ts) if ts.contains(test) =>
+        test.run(plugin, testSources, dockerImageName, optArgs) match {
+          case true =>
+            Printer.green(s"[Success] ${test.getClass.getSimpleName}")
+            true
+          case _ =>
+            Printer.red(s"[Failure] ${test.getClass.getSimpleName}")
+            false
+        }
+      case _ =>
+        // this test was not selected
+        true
     }
   }
 }
