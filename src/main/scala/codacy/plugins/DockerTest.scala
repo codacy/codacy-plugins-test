@@ -12,17 +12,15 @@ case class Sources(mainSourcePath: Path, directoryPaths: Seq[Path])
 
 object DockerTest {
 
-  private val possibleTests = Seq(JsonTests, PluginsTests, PatternTests)
-  private val possibleTestsWithUda = SourceTests +: possibleTests
-
-  private val possibleTestNames = config.keySet
-
   private lazy val config = Map(
     "all" -> possibleTests,
     "allWithUdas" -> possibleTestsWithUda
-  ) ++ possibleTestsWithUda.map{ case test =>
+  ) ++ possibleTestsWithUda.map { case test =>
     test.opt -> Seq(test)
   }
+  private lazy val possibleTests = Seq(JsonTests, PluginsTests, PatternTests)
+  private lazy val possibleTestsWithUda = SourceTests +: possibleTests
+  private lazy val possibleTestNames = config.keySet
 
   def main(args: Array[String]) {
     val typeOfTests = args.headOption
@@ -58,7 +56,7 @@ object DockerTest {
   }
 
   private def run(plugin: DockerPlugin, testSources: Seq[Path], test: ITest, testRequest: String, dockerImageName: String, optArgs: Seq[String]): Boolean = {
-    config.get(testRequest) match{
+    config.get(testRequest) match {
       case Some(ts) if ts.contains(test) =>
         test.run(plugin, testSources, dockerImageName, optArgs) match {
           case true =>
