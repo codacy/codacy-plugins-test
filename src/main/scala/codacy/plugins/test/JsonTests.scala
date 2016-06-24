@@ -46,27 +46,29 @@ object JsonTests extends ITest {
               generateUniquePatternSignature(description.patternId.value, parameters)
           }).fastDiff
 
+
           if (diffResult.newObjects.nonEmpty) {
             Printer.red(
-             s"""
-                |Some patterns were only found in /docs/patterns.json
-                |Confirm that all the patterns and parameters present in /docs/patterns.json are also present in /docs/description/description.json
-                |
+              s"""
+                 |Some patterns were only found in /docs/patterns.json
+                 |Confirm that all the patterns and parameters present in /docs/patterns.json are also present in /docs/description/description.json
+                 |
                 |  * ${diffResult.newObjects.map(_.patternId).mkString(",")}
               """.stripMargin)
           }
 
           if (diffResult.deletedObjects.nonEmpty) {
             Printer.red(
-             s"""
-                |Some patterns were only found in /docs/description/description.json
-                |Confirm that all the patterns and parameters present in /docs/description/description.json are also present in /docs/patterns.json
-                |
+              s"""
+                 |Some patterns were only found in /docs/description/description.json
+                 |Confirm that all the patterns and parameters present in /docs/description/description.json are also present in /docs/patterns.json
+                 |
                 |  * ${diffResult.deletedObjects.map(_.patternId).mkString(",")}
               """.stripMargin)
           }
 
-          diffResult.newObjects.isEmpty && diffResult.deletedObjects.isEmpty
+          sys.props.get("codacy.tests.ignore.descriptions").isDefined ||
+            (diffResult.newObjects.isEmpty && diffResult.deletedObjects.isEmpty)
 
         case _ => false
       }

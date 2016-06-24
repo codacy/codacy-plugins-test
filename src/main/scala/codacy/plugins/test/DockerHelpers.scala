@@ -10,7 +10,7 @@ import scala.util.Try
 
 object DockerHelpers {
 
-  val dockerRunCmd = "docker run --net=none --privileged=false --user=docker"
+  val dockerRunCmd = List("docker", "run", "--net=none", "--privileged=false", "--user=docker")
 
   def toPatterns(toolSpec: ToolSpec): Seq[Pattern] = toolSpec.patterns.map { case patternSpec =>
     val parameters = patternSpec.parameters.map(_.map { param =>
@@ -28,19 +28,19 @@ object DockerHelpers {
   def testFoldersInDocker(dockerImageName: DockerImageName): Seq[Path] = {
     val sourceDir = Files.createTempDirectory("docker-test-folders")
 
-    val dockerStartedCmd = s"$dockerRunCmd -d --entrypoint=/bin/bash $dockerImageName"
-    val output = dockerStartedCmd.split(" ").toSeq.lineStream_!
+    val dockerStartedCmd = dockerRunCmd ++ List("-d", "--entrypoint=bash", dockerImageName.value)
+    val output = dockerStartedCmd.lineStream_!
 
     val containerId = output.head
     //copy files from running container
-    s"docker cp $containerId:/docs/directory-tests $sourceDir".split(" ").toSeq.!
+    List("docker", "cp", s"$containerId:/docs/directory-tests", sourceDir.toString).lineStream_!.toList
 
     // backwards compatibility, making sure directory tests exist so we can copy the old test dir
-    s"mkdir -p $sourceDir/directory-tests".split(" ").toSeq.!
-    s"docker cp $containerId:/docs/tests $sourceDir/directory-tests".split(" ").toSeq.!
+    List("mkdir", "-p", s"$sourceDir/directory-tests").lineStream_!.toList
+    List("docker", "cp", s"$containerId:/docs/tests", s"$sourceDir/directory-tests").lineStream_!.toList
 
-    //remove container
-    s"docker rm -f $containerId".split(" ").toSeq.!
+    // Remove container
+    List("docker", "rm", "-f", containerId).lineStream_!.toList
     val sourcesDir = sourceDir.resolve("directory-tests")
 
     sourcesDir.toFile.listFiles().collect {
@@ -50,7 +50,7 @@ object DockerHelpers {
   }
 
   def readRawDoc(dockerImageName: String, name: String): Option[String] = {
-    val cmd = s"$dockerRunCmd -t --entrypoint=cat $dockerImageName /docs/$name".split(" ").toSeq
+    val cmd = dockerRunCmd ++ List("--entrypoint=cat", dockerImageName, s"/docs/$name")
     Try(cmd.lineStream.toList).map { case rawConfigString =>
       rawConfigString.mkString(System.lineSeparator())
     }.toOption
@@ -58,20 +58,20 @@ object DockerHelpers {
 
   def withDocsDirectory[T](dockerImageName: String)(block: Path => T): T = {
     val sourceDir = Files.createTempDirectory("docker-docs-folders")
-    val dockerStartedCmd = s"$dockerRunCmd -d --entrypoint=/bin/bash $dockerImageName"
+    val dockerStartedCmd = dockerRunCmd ++ List("-d", "--entrypoint=bash", dockerImageName)
 
     for {
-      output <- Try(dockerStartedCmd.split(" ").toList.lineStream_!.toList).toOption
+      output <- Try(dockerStartedCmd.lineStream_!.toList).toOption
       containerId <- output.headOption
       // Copy files from running container
-      _ <- Try(s"docker cp $containerId:/docs $sourceDir".split(" ").toList.lineStream_!.toList).toOption
+      _ <- Try(List("docker", "cp", s"$containerId:/docs", sourceDir.toString).lineStream_!.toList).toOption
       // Remove container
-      _ <- Try(s"docker rm -f $containerId".split(" ").toList.lineStream_!.toList).toOption
+      _ <- Try(List("docker", "rm", "-f", containerId).lineStream_!.toList).toOption
     } yield ()
 
     val result = block(sourceDir.resolve("docs"))
 
-    Try(s"rm -rf ${sourceDir.toString}".split(" ").toList.lineStream_!.toList)
+    Try(List("rm", "-rf", sourceDir.toString).lineStream_!.toList)
 
     result
   }
