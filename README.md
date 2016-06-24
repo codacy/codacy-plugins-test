@@ -47,6 +47,18 @@ function test() {
 
 ## Usage
 
+> JsonTests
+
+Checks if the patterns definitions are in the correct format
+
+```sh
+sbt "run-main codacy.plugins.DockerTest json codacy/jshint:1.0.3"
+```
+
+**Options:**
+
+* `codacy.tests.ignore.descriptions` - if this variable is defined we do not check if all the patterns have descriptions
+
 > PluginsTests
 
 Checks if all the patterns have an occurrence in the test files
@@ -64,6 +76,10 @@ sbt "run-main codacy.plugins.DockerTest pattern codacy/jshint:1.0.3"
 sbt test
 ```
 
+**Options:**
+
+* `codacy.tests.threads` - number of parallel threads to run the tests
+
 Alternatively, you can run a specific test file:
 
 ```sh
@@ -76,6 +92,14 @@ sbt test
 ```sh
 sbt "run-main codacy.plugins.DockerTest all codacy/jshint:1.0.3"
 ```
+
+> Debug
+
+If you need to debug the output of the dockers after the tests you can request the runner to not remove them with:
+
+**Options:**
+
+* `codacy.tests.noremove` - do not remove dockers after running test
 
 ## Docs
 

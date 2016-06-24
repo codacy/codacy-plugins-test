@@ -5,8 +5,11 @@ import java.nio.file.Path
 
 import codacy.plugins.docker.{DockerPlugin, PluginConfiguration, PluginRequest}
 import codacy.plugins.traits.IResultsPlugin
-import codacy.utils.{FileHelper, Printer}
-import org.apache.commons.io.FileUtils
+import codacy.utils.Printer
+
+import scala.collection.parallel.ForkJoinTaskSupport
+import scala.concurrent.forkjoin.ForkJoinPool
+import scala.util.Try
 
 case class TestPattern(toolName: String, plugin: IResultsPlugin, patternId: String)
 
@@ -23,7 +26,14 @@ object PatternTests extends ITest with CustomMatchers {
         case fileNameToTest => testFiles.filter(testFiles => testFiles.file.getName.contains(fileNameToTest))
       }
 
-      filteredTestFiles.map { testFile =>
+      val testFilesPar = sys.props.get("codacy.tests.threads").flatMap(nrt => Try(nrt.toInt).toOption)
+        .map { nrThreads =>
+          val filesPar = filteredTestFiles.par
+          filesPar.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(nrThreads))
+          filesPar
+        }.getOrElse(filteredTestFiles)
+
+      testFilesPar.map { testFile =>
         analyseFile(sourcePath.toFile, testFile, plugin)
       }.forall(identity)
     }.forall(identity)

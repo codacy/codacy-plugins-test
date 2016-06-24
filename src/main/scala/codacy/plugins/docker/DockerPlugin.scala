@@ -15,12 +15,11 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
   lazy val spec: Option[ToolSpec] = readJsonDoc[ToolSpec]("patterns.json")
 
   override def run(pluginRequest: PluginRequest): PluginResult = {
-    import pluginRequest._
-    runOnFiles(directory, files, configuration, files.length)
+    runOnFiles(pluginRequest.directory, pluginRequest.files, pluginRequest.configuration, pluginRequest.files.length)
   }
 
   protected def runOnFiles(rootDirectory: String, files: Seq[String], configuration: PluginConfiguration, maxFileNum: Int): PluginResult = {
-    Seq(s"chmod", "a+rwx", rootDirectory).lineStream_!.toList
+    List("chmod", "a+rwx", rootDirectory).lineStream_!.toList
     MaybeTool.map(_.apply(rootDirectory, files, configuration, maxFileNum)).map { case allResults =>
       PluginResult(allResults.toList, Seq.empty)
     }.getOrElse(PluginResult(Seq.empty, files))
@@ -28,8 +27,14 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
 
   def configurationFor(patterns: Seq[Pattern]): Option[ToolConfig] = MaybeTool.map(_.configFor(patterns))
 
-  private[this] def dockerCmdForSourcePath(sourcePath: Path) =
-    s"${DockerHelpers.dockerRunCmd} -t -v $sourcePath:/src:ro $dockerImageName".split(" ").toList
+  private[this] def dockerCmdForSourcePath(sourcePath: Path, configPath: Path) = {
+    val rmOpts = sys.props.get("codacy.tests.noremove").map(_ => List.empty).getOrElse(List("--rm=true"))
+
+    DockerHelpers.dockerRunCmd ++ List("-v", s"${sourcePath.toFile.getCanonicalPath}:/src:rw",
+      "-v", s"${configPath.toFile.getCanonicalPath}:/src/.codacy.json:ro") ++
+      rmOpts ++
+      List(dockerImageName.value)
+  }
 
   private[this] lazy val MaybeTool: Option[ToolImpl] = spec.map(ToolImpl.apply)
 
@@ -40,15 +45,12 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
   }.toSet
 
   private[this] case class ToolImpl(config: ToolSpec) {
-
-    import config.{name => toolName}
-
     def apply(rootDirectory: String, files: Seq[String], configuration: PluginConfiguration, maxFileNum: Int): Stream[Result] = {
       Try(Paths.get(rootDirectory)).map { case rootPath =>
         val fileList = whitelist(rootPath, files)
 
-        val results = sourceDirWithConfigCreated(rootPath, configuration.patterns, fileList).flatMap { case sourceDir =>
-          val cmd = dockerCmdForSourcePath(sourceDir)
+        val results = sourceDirWithConfigCreated(configuration.patterns, fileList).flatMap { configPath =>
+          val cmd = dockerCmdForSourcePath(rootPath, configPath)
           Try(cmd.lineStream_!).map(_.flatMap { case line =>
             Try(Json.parse(line)).toOption.flatMap(_.asOpt[ToolResult])
           })
@@ -63,7 +65,7 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
     }
 
     def configFor(patterns: Seq[Pattern]): ToolConfig = ToolConfig(
-      name = toolName,
+      name = config.name,
       patterns = patterns.map { case pattern =>
         PatternWithParam(
           patternId = PatternId(pattern.patternIdentifier),
@@ -77,15 +79,19 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
       }
     )
 
-    private[this] def sourceDirWithConfigCreated(sourceDir: Path, patterns: Seq[Pattern], paths: Set[Path]): Try[Path] = {
+    private[this] def sourceDirWithConfigCreated(patterns: Seq[Pattern], paths: Set[Path]): Try[Path] = {
       val thisToolsConfig = configFor(patterns)
       val fileList = paths.map { path => SourcePath(path.toString) }
 
       val fullConfig = FullConfig(Set(thisToolsConfig), Option(fileList).filter(_.nonEmpty))
 
+      val tmpFile = Files.createTempFile("codacy-config", ".json")
       val config = Json.stringify(Json.toJson(fullConfig))
-      val path = sourceDir.resolve(Paths.get(".codacy.json"))
-      Try(Files.write(path, config.getBytes)).map(_ => sourceDir)
+      val filePathRes = Try(Files.write(tmpFile, config.getBytes))
+
+      List("chmod", "a+rwx", tmpFile.toFile.getCanonicalPath).lineStream_!.toList
+
+      filePathRes
     }
   }
 
