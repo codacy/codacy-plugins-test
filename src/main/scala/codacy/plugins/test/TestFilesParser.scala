@@ -53,7 +53,8 @@ class TestFilesParser(filesDir: File) {
     Language.Shell -> Seq("#"),
     Language.TypeScript -> Seq("//", "/*"),
     Language.Jade -> Seq("//", "//-"),
-    Language.Stylus -> Seq("//")
+    Language.Stylus -> Seq("//"),
+    Language.XML -> Seq("<!--")
   )
 
   def getTestFiles: Seq[PatternTestFile] = {
