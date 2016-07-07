@@ -21,12 +21,12 @@ case class PatternSimple(name: String, parameters: Option[Map[String, JsValue]])
 
 class TestFilesParser(filesDir: File) {
 
-  val Warning = """#Warn:\s*([A-Za-z0-9\_\-\.]+)""".r
-  val Error = """#Err:\s*([A-Za-z0-9\_\-\.]+)""".r
-  val Info = """#Info:\s*([A-Za-z0-9\_\-\.]+)""".r
-  val PatternsList = """#Patterns:\s*([\s\,A-Za-z0-9\_\-\.]+)""".r
-  val PatternWithParameters = """#Patterns:\s*([A-Za-z0-9\,\_\-\.]+)[\s\:]+(.*)""".r
-  val IssueWithLineRegex = """#Issue:\s*(.*)""".r
+  val Warning = """\s*#Warn:\s*([A-Za-z0-9\_\-\.]+).*""".r
+  val Error = """\s*#Err:\s*([A-Za-z0-9\_\-\.]+).*""".r
+  val Info = """\s*#Info:\s*([A-Za-z0-9\_\-\.]+).*""".r
+  val PatternsList = """\s*#Patterns:\s*([\s\,A-Za-z0-9\_\-\.]+)""".r
+  val PatternWithParameters = """\s*#Patterns:\s*([A-Za-z0-9\,\_\-\.]+)[\s\:]+(.*)""".r
+  val IssueWithLineRegex = """\s*#Issue:\s*(.*)""".r
 
   val languages = Map[Language.Value, Seq[String]](
     Language.Javascript -> Seq("//", "/*"),
@@ -53,7 +53,8 @@ class TestFilesParser(filesDir: File) {
     Language.Shell -> Seq("#"),
     Language.TypeScript -> Seq("//", "/*"),
     Language.Jade -> Seq("//", "//-"),
-    Language.Stylus -> Seq("//")
+    Language.Stylus -> Seq("//"),
+    Language.XML -> Seq("<!--")
   )
 
   def getTestFiles: Seq[PatternTestFile] = {
