@@ -2,8 +2,9 @@ package codacy.plugins.test
 
 import java.io.File
 
-import codacy.plugins.docker.{Language, ResultLevel}
-import codacy.utils.{Printer, FileHelper}
+import codacy.docker.api.Result
+import codacy.plugins.docker.Language
+import codacy.utils.{FileHelper, Printer}
 import play.api.libs.json.{JsValue, Json}
 
 import scala.util.{Failure, Success, Try}
@@ -83,7 +84,7 @@ class TestFilesParser(filesDir: File) {
                   Try {
                     for {
                       IssueWithLine(severityStr, line, patternId) <- Json.parse(value).asOpt[IssueWithLine]
-                      severity <- ResultLevel.values.find(_.toString.startsWith(severityStr))
+                      severity <- Result.Level.values.find(_.toString.startsWith(severityStr))
                     } yield TestFileResult(patternId, line, severity)
                   } match {
                     case Success(result) => result
@@ -92,9 +93,9 @@ class TestFilesParser(filesDir: File) {
                       System.exit(2)
                       None
                   }
-                case Warning(value) => Some(TestFileResult(value, nextLine, ResultLevel.Warn))
-                case Error(value) => Some(TestFileResult(value, nextLine, ResultLevel.Err))
-                case Info(value) => Some(TestFileResult(value, nextLine, ResultLevel.Info))
+                case Warning(value) => Some(TestFileResult(value, nextLine, Result.Level.Warn))
+                case Error(value) => Some(TestFileResult(value, nextLine, Result.Level.Err))
+                case Info(value) => Some(TestFileResult(value, nextLine, Result.Level.Info))
                 case _ => None
               }
           }

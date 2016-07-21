@@ -1,5 +1,6 @@
 package codacy.plugins.docker
 
+import codacy.docker.api.{Result => ToolResult}
 import codacy.plugins.traits.JsonEnumeration
 import play.api.libs.json.{Format, JsValue, Json}
 
@@ -15,13 +16,7 @@ case class Pattern(patternIdentifier: String, parameters: Option[Map[String, JsV
 
 case class PluginConfiguration(patterns: Seq[Pattern])
 
-object ResultLevel extends Enumeration with JsonEnumeration {
-  val Err = Value("Error")
-  val Warn = Value("Warning")
-  val Info = Value("Info")
-}
-
-case class Result(patternIdentifier: String, filename: String, line: Int, message: String, level: ResultLevel.Value)
+case class Result(patternIdentifier: String, filename: String, line: Int, message: String, level: ToolResult.Level)
 
 case class PluginResult(results: Seq[Result], failedFiles: Seq[String])
 

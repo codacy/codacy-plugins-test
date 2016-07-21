@@ -1,11 +1,11 @@
 package codacy.plugins.test
 
-import codacy.plugins.docker.ResultLevel
+import codacy.docker.api.Result
 import org.scalatest.matchers.{MatchResult, Matcher}
 
 import scala.util.Properties
 
-case class TestFileResult(patternInternalId: String, line: Int, level: ResultLevel.Value)
+case class TestFileResult(patternInternalId: String, line: Int, level: Result.Level)
 
 trait CustomMatchers {
 
