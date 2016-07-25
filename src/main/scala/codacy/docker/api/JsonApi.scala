@@ -45,8 +45,8 @@ trait JsonApi {
   implicit lazy val resultMessageFormat = Format( Reads.StringReads.map( Result.Message ),
     Writes((v:Result.Message) => Json.toJson(v.value)) )//Json.format[Result.Message]
 
-  implicit lazy val resultLineFormat = Format( Reads.IntReads.map( Result.Line ),
-    Writes((v: Result.Line) => Json.toJson(v.value)) )//Json.format[Result.Line]
+  implicit lazy val resultLineFormat = Format( Reads.IntReads.map( Source.Line ),
+    Writes((v: Source.Line) => Json.toJson(v.value)) )//Json.format[Result.Line]
 
   implicit lazy val parameterNameFormat = Format( Reads.StringReads.map( Parameter.Name ),
     Writes((v:Parameter.Name) => Json.toJson(v.value)) )//Json.format[Parameter.Name]
@@ -98,10 +98,10 @@ trait JsonApi {
         case IssueReadsName => issueReads.reads(result)
         case ErrorReadsName => errorReads.reads(result)
         case tpe => JsError(s"not a valid result type $tpe")
-      }.orElse(issueReads.reads(result))
-    }.map{
+      }
+    }.orElse(issueReads).orElse(errorReads).map{
       case Issue(filename,message,patternId,line) =>
-        Result.Issue(Source.File(filename),Result.Message(message),Pattern.Id(patternId),Result.Line(line))
+        Result.Issue(Source.File(filename),Result.Message(message),Pattern.Id(patternId),Source.Line(line))
       case FileError(filename,messageOpt) =>
         Result.FileError(Source.File(filename),messageOpt.map(ErrorMessage))
     }
