@@ -70,7 +70,7 @@ object JsonTests extends ITest {
           sys.props.get("codacy.tests.ignore.descriptions").isDefined ||
             (diffResult.newObjects.isEmpty && diffResult.deletedObjects.isEmpty)
 
-        case _ => false
+        case _ => sys.props.get("codacy.tests.ignore.descriptions").isDefined
       }
     }
   }
