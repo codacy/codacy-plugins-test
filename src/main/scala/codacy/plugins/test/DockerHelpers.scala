@@ -2,7 +2,9 @@ package codacy.plugins.test
 
 import java.nio.file.{Files, Path}
 
+import codacy.docker.api._
 import codacy.plugins.docker.Pattern
+import play.api.libs.json.Json
 import plugins._
 
 import _root_.scala.sys.process._
@@ -12,9 +14,9 @@ object DockerHelpers {
 
   val dockerRunCmd = List("docker", "run", "--net=none", "--privileged=false", "--user=docker")
 
-  def toPatterns(toolSpec: ToolSpec): Seq[Pattern] = toolSpec.patterns.map { case patternSpec =>
+  def toPatterns(toolSpec: Tool.Specification): Seq[Pattern] = toolSpec.patterns.map { case patternSpec =>
     val parameters = patternSpec.parameters.map(_.map { param =>
-      (param.name.value, param.default)
+      (param.name.value, Json.toJson(param.default))
     }.toMap)
 
     Pattern(patternSpec.patternId.value, parameters)
@@ -49,8 +51,8 @@ object DockerHelpers {
     }
   }
 
-  def readRawDoc(dockerImageName: String, name: String): Option[String] = {
-    val cmd = dockerRunCmd ++ List("--entrypoint=cat", dockerImageName, s"/docs/$name")
+  def readRawDoc(dockerImageName: DockerImageName, name: String): Option[String] = {
+    val cmd = dockerRunCmd ++ List("--entrypoint=cat", dockerImageName.value, s"/docs/$name")
     Try(cmd.lineStream.toList).map { case rawConfigString =>
       rawConfigString.mkString(System.lineSeparator())
     }.toOption

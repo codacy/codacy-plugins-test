@@ -2,9 +2,10 @@ package codacy.plugins.docker
 
 import java.nio.file.{Files, Path, Paths}
 
+import codacy.docker.api.{Configuration, Parameter, Source, Tool, Pattern => DockerPattern, Result => ToolResult}
 import codacy.plugins.test.DockerHelpers
 import codacy.plugins.traits.IResultsPlugin
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json._
 import plugins._
 
 import _root_.scala.sys.process._
@@ -12,7 +13,7 @@ import _root_.scala.util.Try
 
 class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin {
 
-  lazy val spec: Option[ToolSpec] = readJsonDoc[ToolSpec]("patterns.json")
+  lazy val spec: Option[Tool.Specification] = readJsonDoc[Tool.Specification]("patterns.json")
 
   override def run(pluginRequest: PluginRequest): PluginResult = {
     runOnFiles(pluginRequest.directory, pluginRequest.files, pluginRequest.configuration, pluginRequest.files.length)
@@ -25,7 +26,7 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
     }.getOrElse(PluginResult(Seq.empty, files))
   }
 
-  def configurationFor(patterns: Seq[Pattern]): Option[ToolConfig] = MaybeTool.map(_.configFor(patterns))
+  def configurationFor(patterns: Seq[Pattern]): Option[Tool.Configuration] = MaybeTool.map(_.configFor(patterns))
 
   private[this] def dockerCmdForSourcePath(sourcePath: Path, configPath: Path) = {
     val rmOpts = sys.props.get("codacy.tests.noremove").map(_ => List.empty).getOrElse(List("--rm=true"))
@@ -44,7 +45,7 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
     }.toOption
   }.toSet
 
-  private[this] case class ToolImpl(config: ToolSpec) {
+  private[this] case class ToolImpl(config: Tool.Specification) {
     def apply(rootDirectory: String, files: Seq[String], configuration: PluginConfiguration, maxFileNum: Int): Stream[Result] = {
       Try(Paths.get(rootDirectory)).map { case rootPath =>
         val fileList = whitelist(rootPath, files)
@@ -56,34 +57,37 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
           })
         }.getOrElse(Stream.empty[ToolResult])
 
-        results.collect { case toolResult: Issue =>
+        results.collect { case toolResult: ToolResult.Issue =>
           config.patterns.collectFirst { case patternDef if patternDef.patternId == toolResult.patternId =>
-            Result(patternDef.patternId, toolResult.filename, toolResult.line, toolResult.message, patternDef.level)
+            Result(patternDef.patternId.value, toolResult.file.path, toolResult.line.value, toolResult.message.value, patternDef.level)
           }
         }.flatten
       }.toOption.getOrElse(Stream.empty)
     }
 
-    def configFor(patterns: Seq[Pattern]): ToolConfig = ToolConfig(
+    def configFor(patterns: Seq[Pattern]): Tool.Configuration = Tool.Configuration(
       name = config.name,
-      patterns = patterns.map { case pattern =>
-        PatternWithParam(
-          patternId = PatternId(pattern.patternIdentifier),
-          parameters = pattern.parameters.map(_.map { case (key, value) =>
-            Param(
-              name = ParamName(key),
-              value = value
-            )
-          }.toSeq
-          ))
-      }
+      patterns = Some(
+        patterns.map { case Pattern(id, paramsOpt) =>
+          DockerPattern.Definition(
+            DockerPattern.Id(id),
+            paramsOpt.map(_.map { case (key, value) =>
+              Parameter.Definition(
+                Parameter.Name(key),
+                Parameter.Value(value)
+              )
+
+            }.toSet)
+          )
+        }.toList
+      )
     )
 
     private[this] def sourceDirWithConfigCreated(patterns: Seq[Pattern], paths: Set[Path]): Try[Path] = {
       val thisToolsConfig = configFor(patterns)
-      val fileList = paths.map { path => SourcePath(path.toString) }
+      val fileList = paths.map { path => Source.File(path.toString) }
 
-      val fullConfig = FullConfig(Set(thisToolsConfig), Option(fileList).filter(_.nonEmpty))
+      val fullConfig = Configuration(Set(thisToolsConfig), Option(fileList).filter(_.nonEmpty))
 
       val tmpFile = Files.createTempFile("codacy-config", ".json")
       val config = Json.stringify(Json.toJson(fullConfig))

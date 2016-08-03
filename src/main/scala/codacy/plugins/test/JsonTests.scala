@@ -3,6 +3,7 @@ package codacy.plugins.test
 import java.io.File
 import java.nio.file.Path
 
+import codacy.docker.api._
 import codacy.plugins.docker.DockerPlugin
 import codacy.utils.{CollectionHelper, FileHelper, Printer}
 import play.api.libs.json.{JsError, JsSuccess, Json, Reads}
@@ -19,7 +20,7 @@ object JsonTests extends ITest {
 
     DockerHelpers.withDocsDirectory(dockerImageName) { baseDocDir =>
 
-      val toolOpt = checkDoc[ToolSpec](baseDocDir, "patterns.json")(_ => true)
+      val toolOpt = checkDoc[Tool.Specification](baseDocDir, "patterns.json")(_ => true)
       val descriptionsOpt = checkDoc[Seq[PatternDescription]](baseDocDir, "description/description.json") { descriptions =>
         descriptions.map { pattern =>
           readFile(baseDocDir, s"description/${pattern.patternId}.md") match {
@@ -36,7 +37,7 @@ object JsonTests extends ITest {
 
       (toolOpt, descriptionsOpt) match {
         case (Some(tool), Some(descriptions)) =>
-          val diffResult = new CollectionHelper[PatternSpec, PatternDescription, String](tool.patterns.toSeq, descriptions)({
+          val diffResult = new CollectionHelper[Pattern.Specification, PatternDescription, String](tool.patterns.toSeq, descriptions)({
             pattern =>
               val parameters = pattern.parameters.getOrElse(Seq.empty).map(_.name.value).toSeq.sorted
               generateUniquePatternSignature(pattern.patternId.value, parameters)
