@@ -48,6 +48,16 @@ object JsonTests extends ITest {
           }).fastDiff
 
 
+          val duplicateDescriptions = descriptions.groupBy(_.patternId).filter { case (_, v) => v.length > 1 }
+          if (duplicateDescriptions.nonEmpty) {
+            Printer.red(
+              s"""
+                 |Some patterns were duplicated in /docs/description/description.json
+                 |
+                 |  * ${duplicateDescriptions.map { case (patternId, _) => patternId }.mkString(",")}
+              """.stripMargin)
+          }
+
           if (diffResult.newObjects.nonEmpty) {
             Printer.red(
               s"""
