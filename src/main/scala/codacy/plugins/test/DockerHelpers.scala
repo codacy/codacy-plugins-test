@@ -2,6 +2,7 @@ package codacy.plugins.test
 
 import java.nio.file.{Files, Path}
 
+import codacy.TryExtension
 import codacy.docker.api._
 import codacy.plugins.docker.Pattern
 import play.api.libs.json.Json
@@ -55,7 +56,7 @@ object DockerHelpers {
     val cmd = dockerRunCmd ++ List("--entrypoint=cat", dockerImageName.value, s"/docs/$name")
     Try(cmd.lineStream.toList).map { case rawConfigString =>
       rawConfigString.mkString(System.lineSeparator())
-    }.toOption
+    }.toOptionWithLog()
   }
 
   def withDocsDirectory[T](dockerImageName: String)(block: Path => T): T = {

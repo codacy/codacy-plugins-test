@@ -3,6 +3,7 @@ package codacy.plugins.test
 import java.io.File
 
 import codacy.docker.api.Result
+import codacy.plugins.docker
 import codacy.plugins.docker.Language
 import codacy.utils.{FileHelper, Printer}
 import play.api.libs.json.{JsValue, Json}
@@ -55,16 +56,17 @@ class TestFilesParser(filesDir: File) {
     Language.TypeScript -> Seq("//", "/*"),
     Language.Jade -> Seq("//", "//-"),
     Language.Stylus -> Seq("//"),
-    Language.XML -> Seq("<!--")
+    Language.XML -> Seq("<!--"),
+    Language.Dockerfile -> Seq("#")
   )
 
   def getTestFiles: Seq[PatternTestFile] = {
 
     val validExtensions = Language.values.flatMap(Language.getExtensions).toArray
-    val files = FileHelper.listFiles(filesDir).filter(f => validExtensions.contains(s".${f.getName.split('.').last}"))
+    val files = FileHelper.listFiles(filesDir).filter(f => validExtensions.contains(s".${f.getName.toLowerCase.split('.').last}"))
 
     files.map { file =>
-      val extension = "." + file.getName.split('.').last
+      val extension = "." + file.getName.toLowerCase.split('.').last
 
       val languageMap = Language.values.toList.map(lang => (lang, Language.getExtensions(lang)))
 
