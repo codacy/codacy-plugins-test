@@ -22,7 +22,7 @@ case class PluginResult(results: Seq[Result], failedFiles: Seq[String])
 
 case object Language extends Enumeration with JsonEnumeration {
   val Javascript, Scala, CSS, PHP, C, CPP, ObjectiveC, Python, Ruby, Perl, Java, CSharp, VisualBasic, Go, Elixir, Clojure,
-  CoffeeScript, Rust, Swift, Haskell, React, Shell, TypeScript, Jade, Stylus, XML, Dockerfile = Value
+  CoffeeScript, Rust, Swift, Haskell, React, Shell, TypeScript, Jade, Stylus, XML, Dockerfile, SQL = Value
 
   def getExtensions(value: Value): Seq[String] = {
     value match {
@@ -53,6 +53,7 @@ case object Language extends Enumeration with JsonEnumeration {
       case Stylus => Seq(".styl", ".stylus")
       case XML => Seq(".xml")
       case Dockerfile => Seq(".dockerfile")
+      case SQL => Seq(".sql")
       case _ => Seq.empty
     }
   }
