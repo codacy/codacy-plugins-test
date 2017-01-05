@@ -57,7 +57,8 @@ class TestFilesParser(filesDir: File) {
     Language.Jade -> Seq("//", "//-"),
     Language.Stylus -> Seq("//"),
     Language.XML -> Seq("<!--"),
-    Language.Dockerfile -> Seq("#")
+    Language.Dockerfile -> Seq("#"),
+    Language.SQL -> Seq("--", "/*")
   )
 
   def getTestFiles: Seq[PatternTestFile] = {
