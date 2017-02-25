@@ -22,11 +22,12 @@ case class PluginResult(results: Seq[Result], failedFiles: Seq[String])
 
 case object Language extends Enumeration with JsonEnumeration {
   val Javascript, Scala, CSS, PHP, C, CPP, ObjectiveC, Python, Ruby, Perl, Java, CSharp, VisualBasic, Go, Elixir, Clojure,
-  CoffeeScript, Rust, Swift, Haskell, React, Shell, TypeScript, Jade, Stylus, XML, Dockerfile, SQL, JSON, Apex = Value
+  CoffeeScript, Rust, Swift, Haskell, React, Shell, TypeScript, Jade, Stylus, XML, Dockerfile, PLSQL, JSON,
+  Apex, Velocity, JSP = Value
 
   def getExtensions(value: Value): Seq[String] = {
     value match {
-      case Javascript => List(".js")
+      case Javascript => List(".js", ".jsx")
       case Scala => List(".scala")
       case CSS => List(".css")
       case PHP => List(".php")
@@ -46,16 +47,26 @@ case object Language extends Enumeration with JsonEnumeration {
       case Rust => List(".rs", ".rlib")
       case Swift => List(".swift")
       case Haskell => List(".hs", ".lhs")
-      case React => List(".jsx")
       case Shell => List(".sh")
       case TypeScript => List(".ts")
       case Jade => Seq(".jade")
       case Stylus => Seq(".styl", ".stylus")
-      case XML => Seq(".xml")
+      case XML => Seq(".xml", ".xsl", ".wsdl", ".pom")
       case Dockerfile => Seq(".dockerfile")
-      case SQL => Seq(".sql")
+      case PLSQL => Seq(
+        ".sql", // Normal SQL
+        ".trg", // Triggers
+        ".prc", ".fnc", // Standalone Procedures and Functions
+        ".pld", // Oracle*Forms
+        ".pls", ".plh", ".plb", // Packages
+        ".pck", ".pks", ".pkh", ".pkb", // Packages
+        ".typ", ".tyb", // Object Types
+        ".tps", ".tpb" // Object Types
+      )
       case JSON => Seq(".json")
       case Apex => Seq(".cls")
+      case Velocity => Seq(".vm")
+      case JSP => Seq(".jsp")
       case _ => Seq.empty
     }
   }
