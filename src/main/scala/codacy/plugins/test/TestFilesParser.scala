@@ -58,9 +58,11 @@ class TestFilesParser(filesDir: File) {
     Language.Stylus -> Seq("//"),
     Language.XML -> Seq("<!--"),
     Language.Dockerfile -> Seq("#"),
-    Language.SQL -> Seq("--", "/*"),
+    Language.PLSQL -> Seq("--", "/*"),
     Language.JSON -> Seq("//", "/*"),
-    Language.Apex -> Seq("//", "/*")
+    Language.Apex -> Seq("//", "/*"),
+    Language.Velocity -> Seq("/*"),
+    Language.JSP -> Seq("<%--")
   )
 
   def getTestFiles: Seq[PatternTestFile] = {
