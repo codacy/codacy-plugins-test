@@ -23,11 +23,11 @@ case class PatternSimple(name: String, parameters: Option[Map[String, JsValue]])
 
 class TestFilesParser(filesDir: File) {
 
-  val Warning = """\s*#Warn(?:ing)?:\s*([A-Za-z0-9\_\-\.=]+).*""".r
-  val Error = """\s*#Err(?:or)?:\s*([A-Za-z0-9\_\-\.=]+).*""".r
-  val Info = """\s*#Info:\s*([A-Za-z0-9\_\-\.=]+).*""".r
-  val PatternsList = """\s*#Patterns:\s*([\s\,A-Za-z0-9\_\-\.=]+)""".r
-  val PatternWithParameters = """\s*#Patterns:\s*([A-Za-z0-9\,\_\-\.=]+)[\s\:]+(.*)""".r
+  val Warning = """\s*#Warn(?:ing)?:\s*([A-Za-z0-9\_\-\.=/]+).*""".r
+  val Error = """\s*#Err(?:or)?:\s*([A-Za-z0-9\_\-\.=/]+).*""".r
+  val Info = """\s*#Info:\s*([A-Za-z0-9\_\-\.=/]+).*""".r
+  val PatternsList = """\s*#Patterns:\s*([\s\,A-Za-z0-9\_\-\.=/]+)""".r
+  val PatternWithParameters = """\s*#Patterns:\s*([A-Za-z0-9\,\_\-\.=/]+)[\s\:]+(.*)""".r
   val IssueWithLineRegex = """\s*#Issue:\s*(.*)""".r
 
   val languages = Map[Language.Value, Seq[String]](
