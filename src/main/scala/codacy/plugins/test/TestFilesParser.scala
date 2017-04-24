@@ -62,7 +62,8 @@ class TestFilesParser(filesDir: File) {
     Language.JSON -> Seq("//", "/*"),
     Language.Apex -> Seq("//", "/*"),
     Language.Velocity -> Seq("/*"),
-    Language.JSP -> Seq("<%--")
+    Language.JSP -> Seq("<%--"),
+    Language.Visualforce -> Seq("<!--")
   )
 
   def getTestFiles: Seq[PatternTestFile] = {
