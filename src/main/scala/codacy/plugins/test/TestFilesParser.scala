@@ -70,10 +70,10 @@ class TestFilesParser(filesDir: File) {
   def getTestFiles: Seq[PatternTestFile] = {
 
     val validExtensions = Language.values.flatMap(Language.getExtensions).toArray
-    val files = FileHelper.listFiles(filesDir).filter(f => validExtensions.contains(s".${f.getName.toLowerCase.split('.').last}"))
+    val files = FileHelper.listFiles(filesDir).filter(f => validExtensions.contains(s".${f.getName.split('.').last}"))
 
     files.map { file =>
-      val extension = "." + file.getName.toLowerCase.split('.').last
+      val extension = "." + file.getName.split('.').last
 
       val languageMap = Language.values.toList.map(lang => (lang, Language.getExtensions(lang)))
 
