@@ -40,6 +40,7 @@ class TestFilesParser(filesDir: File) {
     Language.ObjectiveC -> Seq("/*", "//"),
     Language.Python -> Seq("#"),
     Language.Ruby -> Seq("#"),
+    Language.Kotlin -> Seq("//", "/*"),
     Language.Perl -> Seq("#"),
     Language.Java -> Seq("//", "/*"),
     Language.CSharp -> Seq("//", "/*"),
