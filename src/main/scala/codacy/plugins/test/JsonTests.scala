@@ -47,7 +47,6 @@ object JsonTests extends ITest {
               generateUniquePatternSignature(description.patternId.value, parameters)
           }).fastDiff
 
-
           val duplicateDescriptions = descriptions.groupBy(_.patternId).filter { case (_, v) => v.length > 1 }
           if (duplicateDescriptions.nonEmpty) {
             Printer.red(
@@ -78,6 +77,27 @@ object JsonTests extends ITest {
               """.stripMargin)
           }
 
+          val titlesAboveLimit = descriptions.filter(_.title.length > 255)
+          if (titlesAboveLimit.nonEmpty) {
+            Printer.red(
+              s"""
+                 |Some titles are too big in /docs/description/description.json
+                 |The max size of a title is 255 characters
+                 |
+                 | * ${titlesAboveLimit.map(_.patternId).mkString(", ")}
+              """.stripMargin)
+          }
+
+          val descriptionsAboveLimit = descriptions.filter(_.description.getOrElse("").length > 500)
+          if (descriptionsAboveLimit.nonEmpty) {
+            Printer.red(
+              s"""
+                 |Some descriptions are too big in /docs/description/description.json
+                 |The max size of a description is 500 characters
+                 |
+                 | * ${descriptionsAboveLimit.map(_.patternId).mkString(", ")}
+              """.stripMargin)
+          }
           sys.props.get("codacy.tests.ignore.descriptions").isDefined ||
             (diffResult.newObjects.isEmpty && diffResult.deletedObjects.isEmpty)
 
