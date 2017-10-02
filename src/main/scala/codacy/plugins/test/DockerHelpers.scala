@@ -53,7 +53,7 @@ object DockerHelpers {
   }
 
   def readRawDoc(dockerImageName: DockerImageName, name: String): Option[String] = {
-    val cmd = dockerRunCmd ++ List("--entrypoint=cat", dockerImageName.value, s"/docs/$name")
+    val cmd = dockerRunCmd ++ List("--rm=true", "--entrypoint=cat", dockerImageName.value, s"/docs/$name")
     Try(cmd.lineStream.toList).map { case rawConfigString =>
       rawConfigString.mkString(System.lineSeparator())
     }.toOptionWithLog()
