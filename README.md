@@ -45,6 +45,12 @@ function test() {
 }
 ```
 
+## Usage as docker
+
+```sh
+docker run --privileged -v /var/run/docker.sock:/var/run/docker.sock codacy/codacy-plugins-test json codacy/jshint:1.0.3
+```
+
 ## Usage
 
 > JsonTests
