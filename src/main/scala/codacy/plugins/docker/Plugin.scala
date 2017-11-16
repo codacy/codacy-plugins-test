@@ -48,7 +48,7 @@ case object Language extends Enumeration with JsonEnumeration {
       case Swift => List(".swift")
       case Haskell => List(".hs", ".lhs")
       case Shell => List(".sh")
-      case Kotlin => List(".kt")
+      case Kotlin => List(".kt", ".kts")
       case TypeScript => List(".ts")
       case Jade => Seq(".jade")
       case Stylus => Seq(".styl", ".stylus")
