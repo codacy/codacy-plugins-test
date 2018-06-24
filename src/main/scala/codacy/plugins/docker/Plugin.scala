@@ -1,28 +1,34 @@
 package codacy.plugins.docker
 
-import codacy.docker.api.{Result => ToolResult}
 import codacy.plugins.traits.JsonEnumeration
+import com.codacy.plugins.api.results.Result
 import play.api.libs.json.{Format, JsValue, Json}
 
-case class PluginRequest(directory: String, files: Seq[String], configuration: PluginConfiguration)
+final case class PluginRequest(directory: String, files: Seq[String], configuration: PluginConfiguration)
 
 object PluginRequest {
-  implicit val patternFmt: Format[Pattern] = Json.format[Pattern]
-  implicit val configurationFmt: Format[PluginConfiguration] = Json.format[PluginConfiguration]
+  implicit val patternFmt: Format[PluginPattern] = Json.format[PluginPattern]
+  implicit val configurationFmt: Format[PluginConfiguration] =
+    Json.format[PluginConfiguration]
   implicit val requestFmt: Format[PluginRequest] = Json.format[PluginRequest]
 }
 
-case class Pattern(patternIdentifier: String, parameters: Option[Map[String, JsValue]])
+final case class PluginPattern(patternIdentifier: String, parameters: Option[Map[String, JsValue]])
 
-case class PluginConfiguration(patterns: Seq[Pattern])
+final case class PluginConfiguration(patterns: Seq[PluginPattern])
 
-case class Result(patternIdentifier: String, filename: String, line: Int, message: String, level: ToolResult.Level)
+final case class PluginResult(patternIdentifier: String,
+                              filename: String,
+                              line: Int,
+                              message: String,
+                              level: Result.Level)
 
-case class PluginResult(results: Seq[Result], failedFiles: Seq[String])
+final case class PluginResults(results: Seq[PluginResult], failedFiles: Seq[String])
 
 case object Language extends Enumeration with JsonEnumeration {
-  val Javascript, Scala, CSS, PHP, C, CPP, ObjectiveC, Python, Ruby, Perl, Java, CSharp, VisualBasic, Go, Elixir, Clojure,
-  CoffeeScript, Rust, Swift, Haskell, React, Shell, TypeScript, Jade, Stylus, XML, Dockerfile, PLSQL, JSON,
+
+  val Javascript, Scala, CSS, PHP, C, CPP, ObjectiveC, Python, Ruby, Perl, Java, CSharp, VisualBasic, Go, Elixir,
+  Clojure, CoffeeScript, Rust, Swift, Haskell, React, Shell, TypeScript, Jade, Stylus, XML, Dockerfile, PLSQL, JSON,
   Apex, Velocity, JSP, Visualforce, R, Kotlin = Value
 
   def getExtensions(value: Value): Seq[String] = {
@@ -54,16 +60,24 @@ case object Language extends Enumeration with JsonEnumeration {
       case Stylus => Seq(".styl", ".stylus")
       case XML => Seq(".xml", ".xsl", ".wsdl", ".pom")
       case Dockerfile => Seq(".dockerfile")
-      case PLSQL => Seq(
-        ".sql", // Normal SQL
-        ".trg", // Triggers
-        ".prc", ".fnc", // Standalone Procedures and Functions
-        ".pld", // Oracle*Forms
-        ".pls", ".plh", ".plb", // Packages
-        ".pck", ".pks", ".pkh", ".pkb", // Packages
-        ".typ", ".tyb", // Object Types
-        ".tps", ".tpb" // Object Types
-      )
+      case PLSQL =>
+        Seq(".sql", // Normal SQL
+            ".trg", // Triggers
+            ".prc",
+            ".fnc", // Standalone Procedures and Functions
+            ".pld", // Oracle*Forms
+            ".pls",
+            ".plh",
+            ".plb", // Packages
+            ".pck",
+            ".pks",
+            ".pkh",
+            ".pkb", // Packages
+            ".typ",
+            ".tyb", // Object Types
+            ".tps",
+            ".tpb" // Object Types
+        )
       case JSON => Seq(".json")
       case Apex => Seq(".cls")
       case Velocity => Seq(".vm")
@@ -76,9 +90,8 @@ case object Language extends Enumeration with JsonEnumeration {
 }
 
 object CategoryType extends Enumeration with JsonEnumeration {
-  val Security, CodeStyle, ErrorProne, Performance, Compatibility, Documentation, UnusedCode,
 
-  //Deprecated
+  val Security, CodeStyle, ErrorProne, Performance, Compatibility, Documentation, UnusedCode, //Deprecated
   Complexity, BestPractice, Comprehensibility, Duplication = Value
 
   def fromString(s: String): Option[Value] =

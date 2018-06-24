@@ -10,15 +10,18 @@ import scala.util.Properties
 object SourceTests extends ITest {
   override val opt: String = "source"
 
-  override def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageName: String, optArgs: Seq[String]): Boolean = {
-    Printer.green(s"Running SourceTests:")
+  override def run(plugin: DockerPlugin,
+                   testSources: Seq[Path],
+                   dockerImageName: String,
+                   optArgs: Seq[String]): Boolean = {
+    Printer.green("Running SourceTests:")
     DockerHelpers.withDocsDirectory(dockerImageName) { baseDocDir =>
       plugin.spec match {
         case Some(spec) =>
           val patterns = DockerHelpers.toPatterns(spec)
-          patterns.forall { case pattern =>
+          patterns.forall { pattern =>
             readFile(baseDocDir, s"patterns/${pattern.patternIdentifier}.scala") match {
-              case Some(patternSource) =>
+              case Some(_) =>
                 Printer.green(s"found source for pattern ${pattern.patternIdentifier}")
                 true
               case _ =>
@@ -27,7 +30,7 @@ object SourceTests extends ITest {
             }
           }
         case _ =>
-          Printer.red(s"no valid spec")
+          Printer.red("no valid spec")
           false
       }
     }

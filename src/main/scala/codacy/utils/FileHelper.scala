@@ -4,14 +4,12 @@ import java.io.File
 import java.nio.charset.CodingErrorAction
 import java.nio.file.Files
 
-import org.apache.commons.io.FileUtils
-
 import scala.io.{Codec, Source}
 import scala.util.Try
 import scala.util.control.NonFatal
 
 object FileHelper {
-  implicit val codec = Codec("UTF-8")
+  implicit val codec: Codec = Codec("UTF-8")
   codec.onMalformedInput(CodingErrorAction.REPLACE)
   codec.onUnmappableCharacter(CodingErrorAction.REPLACE)
 
@@ -21,7 +19,7 @@ object FileHelper {
     try {
       sourceOpt.map(_.getLines().toList)
     } catch {
-      case NonFatal(e) =>
+      case NonFatal(_) =>
         None
     } finally {
       sourceOpt.foreach(_.close())
@@ -29,20 +27,18 @@ object FileHelper {
   }
 
   def listFiles(file: File): Seq[File] = {
-    file.isDirectory match {
-      case true => file.listFiles().flatMap(listFiles)
-      case _ => Seq(file)
+    if (file.isDirectory) {
+      file.listFiles().flatMap(listFiles)
+    } else {
+      Seq(file)
     }
   }
 
   def withRandomDirectory[A](block: File => A): A = {
     val randomDir = Files.createTempDirectory("codacy-").toFile
     val result = block(randomDir)
-    FileUtils.deleteQuietly(randomDir)
+    better.files.File(randomDir.toPath).delete()
     result
   }
 
-  private def randomFile(extension: String = "conf"): File = {
-    Files.createTempFile("codacy-", s".$extension").toFile
-  }
 }

@@ -21,7 +21,9 @@ object PluginsTests extends ITest {
         val fileAbsolutePaths = files.map(_.getAbsolutePath)
 
         val filteredResults = {
-          val pluginResult = plugin.run(PluginRequest(sourcePath.toAbsolutePath.toString, fileAbsolutePaths, PluginConfiguration(patterns)))
+          val pluginResult = plugin.run(
+            PluginRequest(sourcePath.toAbsolutePath.toString, fileAbsolutePaths, PluginConfiguration(patterns))
+          )
           filterResults(sourcePath, files, patterns, pluginResult.results)
         }
 
@@ -31,8 +33,7 @@ object PluginsTests extends ITest {
       val missingPatterns = patterns.map(_.patternIdentifier).diff(resultsUUIDS)
 
       if (missingPatterns.nonEmpty) {
-        Printer.red(
-          s"""
+        Printer.red(s"""
              |Some patterns are not tested on plugin ${spec.name}
              |-> Missing patterns:
              |${missingPatterns.mkString(", ")}

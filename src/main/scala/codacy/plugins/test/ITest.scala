@@ -3,7 +3,7 @@ package codacy.plugins.test
 import java.io.File
 import java.nio.file.Path
 
-import codacy.plugins.docker.{DockerPlugin, Pattern, Result}
+import codacy.plugins.docker.{DockerPlugin, PluginPattern, PluginResult}
 import codacy.utils.Printer
 
 trait ITest {
@@ -11,7 +11,10 @@ trait ITest {
 
   def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageName: String, optArgs: Seq[String]): Boolean
 
-  protected def filterResults(sourcePath: Path, files: Seq[File], patterns: Seq[Pattern], results: Seq[Result]): Seq[Result] = {
+  protected def filterResults(sourcePath: Path,
+                              files: Seq[File],
+                              patterns: Seq[PluginPattern],
+                              results: Seq[PluginResult]): Seq[PluginResult] = {
     val receivedResultsTotal = results.length
 
     if (results.nonEmpty) {
@@ -26,9 +29,8 @@ trait ITest {
     }
 
     if (otherFilesResults.nonEmpty) {
-      Printer.red(s"Some results are not in the files requested and were discarded!")
-      Printer.white(
-        s"""
+      Printer.red("Some results are not in the files requested and were discarded!")
+      Printer.white(s"""
            |Extra files:
            |  * ${otherFilesResults.map(_.filename).distinct.mkString(", ")}
            |
@@ -44,9 +46,8 @@ trait ITest {
     }
 
     if (otherPatternsResults.nonEmpty) {
-      Printer.red(s"Some results returned were not requested by the test and were discarded!")
-      Printer.white(
-        s"""
+      Printer.red("Some results returned were not requested by the test and were discarded!")
+      Printer.white(s"""
            |Extra results returned:
            |* ${otherPatternsResults.map(_.patternIdentifier).distinct.mkString(", ")}
            |

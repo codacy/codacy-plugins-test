@@ -1,12 +1,22 @@
+import sbt.Keys._
+import sbt._
+
+name := "codacy-plugins-test"
+version := "1.0.0-SNAPSHOT"
+organization := "com.codacy"
+
+val scalaBinaryVersionNumber = "2.12"
+val scalaVersionNumber = s"$scalaBinaryVersionNumber.4"
+
+scalaVersion in ThisBuild := scalaVersionNumber
 resolvers += Resolver.sonatypeRepo("releases")
 
-name := """codacy-plugins-test"""
+libraryDependencies ++= Seq(Dependencies.playJson, Dependencies.codacyPluginsApi, Dependencies.betterFiles) ++
+  // Tests
+  Seq(Dependencies.scalatest)
 
-scalaVersion := "2.11.7"
+scalaBinaryVersion in ThisBuild := scalaBinaryVersionNumber
 
-libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % "2.2.5",
-  "com.typesafe.play" %% "play-json" % "2.4.8",
-  "com.codacy" %% "codacy-plugins-api" % "0.1.2",
-  "commons-io" % "commons-io" % "2.4"
-)
+scalacOptions ++= Common.compilerFlags
+
+scapegoatVersion in ThisBuild := "1.3.5"

@@ -6,8 +6,8 @@ import java.nio.file.Path
 import codacy.docker.api._
 import codacy.plugins.docker.DockerPlugin
 import codacy.utils.{CollectionHelper, FileHelper, Printer}
+import com.codacy.plugins.api.results.{Pattern, Tool}
 import play.api.libs.json.{JsError, JsSuccess, Json, Reads}
-import plugins._
 
 import scala.util.Properties
 
@@ -19,38 +19,40 @@ object JsonTests extends ITest {
     Printer.green("Running JsonTests:")
 
     DockerHelpers.withDocsDirectory(dockerImageName) { baseDocDir =>
-
       val toolOpt = checkDoc[Tool.Specification](baseDocDir, "patterns.json")(_ => true)
-      val descriptionsOpt = checkDoc[Seq[PatternDescription]](baseDocDir, "description/description.json") { descriptions =>
-        descriptions.map { pattern =>
-          readFile(baseDocDir, s"description/${pattern.patternId}.md") match {
-            case Some(_) =>
-              Printer.green(s"Read /docs/description/${pattern.patternId}.md successfully")
-              true
+      val descriptionsOpt = checkDoc[Seq[Pattern.Description]](baseDocDir, "description/description.json") {
+        descriptions =>
+          descriptions
+            .map { pattern =>
+              readFile(baseDocDir, s"description/${pattern.patternId}.md") match {
+                case Some(_) =>
+                  Printer.green(s"Read /docs/description/${pattern.patternId}.md successfully")
+                  true
 
-            case _ =>
-              Printer.red(s"Could not read /docs/description/${pattern.patternId}.md")
-              false
-          }
-        }.forall(identity)
+                case _ =>
+                  Printer.red(s"Could not read /docs/description/${pattern.patternId}.md")
+                  false
+              }
+            }
+            .forall(identity)
       }
 
       (toolOpt, descriptionsOpt) match {
         case (Some(tool), Some(descriptions)) =>
-          val diffResult = new CollectionHelper[Pattern.Specification, PatternDescription, String](tool.patterns.toSeq, descriptions)({
-            pattern =>
-              val parameters = pattern.parameters.getOrElse(Seq.empty).map(_.name.value).toSeq.sorted
-              generateUniquePatternSignature(pattern.patternId.value, parameters)
-          }, {
-            description =>
-              val parameters = description.parameters.getOrElse(Seq.empty).map(_.name.value).toSeq.sorted
-              generateUniquePatternSignature(description.patternId.value, parameters)
-          }).fastDiff
+          val diffResult =
+            new CollectionHelper[Pattern.Specification, Pattern.Description, String](tool.patterns.toSeq, descriptions)(
+              { pattern =>
+                val parameters = pattern.parameters.getOrElse(Seq.empty).map(_.name.value).toSeq.sorted
+                generateUniquePatternSignature(pattern.patternId.value, parameters)
+              }, { description =>
+                val parameters = description.parameters.getOrElse(Seq.empty).map(_.name.value).toSeq.sorted
+                generateUniquePatternSignature(description.patternId.value, parameters)
+              }
+            ).fastDiff
 
           val duplicateDescriptions = descriptions.groupBy(_.patternId).filter { case (_, v) => v.length > 1 }
           if (duplicateDescriptions.nonEmpty) {
-            Printer.red(
-              s"""
+            Printer.red(s"""
                  |Some patterns were duplicated in /docs/description/description.json
                  |
                  |  * ${duplicateDescriptions.map { case (patternId, _) => patternId }.mkString(",")}
@@ -58,8 +60,7 @@ object JsonTests extends ITest {
           }
 
           if (diffResult.newObjects.nonEmpty) {
-            Printer.red(
-              s"""
+            Printer.red(s"""
                  |Some patterns were only found in /docs/patterns.json
                  |Confirm that all the patterns and parameters present in /docs/patterns.json are also present in /docs/description/description.json
                  |
@@ -68,8 +69,7 @@ object JsonTests extends ITest {
           }
 
           if (diffResult.deletedObjects.nonEmpty) {
-            Printer.red(
-              s"""
+            Printer.red(s"""
                  |Some patterns were only found in /docs/description/description.json
                  |Confirm that all the patterns and parameters present in /docs/description/description.json are also present in /docs/patterns.json
                  |
@@ -77,10 +77,9 @@ object JsonTests extends ITest {
               """.stripMargin)
           }
 
-          val titlesAboveLimit = descriptions.filter(_.title.length > 255)
+          val titlesAboveLimit = descriptions.filter(_.title.value.length > 255)
           if (titlesAboveLimit.nonEmpty) {
-            Printer.red(
-              s"""
+            Printer.red(s"""
                  |Some titles are too big in /docs/description/description.json
                  |The max size of a title is 255 characters
                  |
@@ -88,10 +87,9 @@ object JsonTests extends ITest {
               """.stripMargin)
           }
 
-          val descriptionsAboveLimit = descriptions.filter(_.description.getOrElse("").length > 500)
+          val descriptionsAboveLimit = descriptions.filter(_.description.fold("")(_.value).length > 500)
           if (descriptionsAboveLimit.nonEmpty) {
-            Printer.red(
-              s"""
+            Printer.red(s"""
                  |Some descriptions are too big in /docs/description/description.json
                  |The max size of a description is 500 characters
                  |
@@ -99,14 +97,15 @@ object JsonTests extends ITest {
               """.stripMargin)
           }
           sys.props.get("codacy.tests.ignore.descriptions").isDefined ||
-            (diffResult.newObjects.isEmpty && diffResult.deletedObjects.isEmpty)
+          (diffResult.newObjects.isEmpty && diffResult.deletedObjects.isEmpty)
 
         case _ => sys.props.get("codacy.tests.ignore.descriptions").isDefined
       }
     }
   }
 
-  private def checkDoc[T](baseDir: Path, filename: String)(block: T => Boolean)(implicit format: Reads[T]): Option[T] = {
+  private def checkDoc[T](baseDir: Path,
+                          filename: String)(block: T => Boolean)(implicit format: Reads[T]): Option[T] = {
     readFile(baseDir.resolve(filename).toFile)
       .map { docString =>
         Printer.green(s"Read /docs/$filename successfully")
@@ -122,10 +121,11 @@ object JsonTests extends ITest {
             println(e)
             Option.empty[T]
         }
-      }.getOrElse {
-      Printer.red(s"Could not read /docs/$filename")
-      Option.empty[T]
-    }
+      }
+      .getOrElse {
+        Printer.red(s"Could not read /docs/$filename")
+        Option.empty[T]
+      }
   }
 
   private def generateUniquePatternSignature(patternName: String, parameters: Seq[String]) = {
