@@ -32,7 +32,8 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
     val rmOpts = sys.props.get("codacy.tests.noremove").map(_ => List.empty).getOrElse(List("--rm=true"))
 
     DockerHelpers.dockerRunCmd ++ List("-v", s"${sourcePath.toFile.getCanonicalPath}:/src:rw",
-      "-v", s"${configPath.toFile.getCanonicalPath}:/src/.codacy.json:ro") ++
+      "-v", s"${configPath.toFile.getCanonicalPath}:/src/.codacy.json:ro", "-v",
+    s"${configPath.toFile.getCanonicalPath}:/.codacyrc:ro") ++
       rmOpts ++
       List(dockerImageName.value)
   }
