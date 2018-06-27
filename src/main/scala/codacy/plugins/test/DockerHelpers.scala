@@ -31,7 +31,7 @@ object DockerHelpers {
   def testFoldersInDocker(dockerImageName: DockerImageName): Seq[Path] = {
     val sourceDir = Files.createTempDirectory("docker-test-folders")
 
-    val dockerStartedCmd = dockerRunCmd ++ List("-d", "--entrypoint=bash", dockerImageName.value)
+    val dockerStartedCmd = dockerRunCmd ++ List("-d", "--entrypoint=sh", dockerImageName.value)
     val output = dockerStartedCmd.lineStream_!
 
     val containerId = output.head
@@ -61,7 +61,7 @@ object DockerHelpers {
 
   def withDocsDirectory[T](dockerImageName: String)(block: Path => T): T = {
     val sourceDir = Files.createTempDirectory("docker-docs-folders")
-    val dockerStartedCmd = dockerRunCmd ++ List("-d", "--entrypoint=bash", dockerImageName)
+    val dockerStartedCmd = dockerRunCmd ++ List("-d", "--entrypoint=sh", dockerImageName)
 
     for {
       output <- Try(dockerStartedCmd.lineStream_!.toList).toOption
