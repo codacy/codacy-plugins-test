@@ -21,7 +21,7 @@ case class Result(patternIdentifier: String, filename: String, line: Int, messag
 case class PluginResult(results: Seq[Result], failedFiles: Seq[String])
 
 case object Language extends Enumeration with JsonEnumeration {
-  val Javascript, Scala, CSS, PHP, C, CPP, ObjectiveC, Python, Ruby, Perl, Java, CSharp, VisualBasic, Go, Elixir, Clojure,
+  val Javascript, Scala, CSS, LESS, SASS, PHP, C, CPP, ObjectiveC, Python, Ruby, Perl, Java, CSharp, VisualBasic, Go, Elixir, Clojure,
   CoffeeScript, Rust, Swift, Haskell, React, Shell, TypeScript, Jade, Stylus, XML, Dockerfile, PLSQL, JSON,
   Apex, Velocity, JSP, Visualforce, R, Kotlin = Value
 
@@ -30,6 +30,8 @@ case object Language extends Enumeration with JsonEnumeration {
       case Javascript => List(".js", ".jsx")
       case Scala => List(".scala")
       case CSS => List(".css")
+      case LESS => List(".less")
+      case SASS => List(".scss")
       case PHP => List(".php")
       case C => List(".c", ".h")
       case CPP => List(".cpp", ".hpp")
