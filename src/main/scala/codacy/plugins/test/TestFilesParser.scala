@@ -34,6 +34,8 @@ class TestFilesParser(filesDir: File) {
     Language.Javascript -> Seq("//", "/*"),
     Language.Scala -> Seq("/*", "//"),
     Language.CSS -> Seq("/*"),
+    Language.LESS -> Seq("/*"),
+    Language.SASS -> Seq("/*"),
     Language.PHP -> Seq("#", "//"),
     Language.C -> Seq("/*", "//"),
     Language.CPP -> Seq("/*", "//"),
