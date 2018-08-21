@@ -23,7 +23,7 @@ case class PluginResult(results: Seq[Result], failedFiles: Seq[String])
 case object Language extends Enumeration with JsonEnumeration {
   val Javascript, Scala, CSS, LESS, SASS, PHP, C, CPP, ObjectiveC, Python, Ruby, Perl, Java, CSharp, VisualBasic, Go, Elixir, Clojure,
   CoffeeScript, Rust, Swift, Haskell, React, Shell, TypeScript, Jade, Stylus, XML, Dockerfile, PLSQL, JSON,
-  Apex, Velocity, JSP, Visualforce, R, Kotlin = Value
+  Apex, Velocity, JSP, Visualforce, R, Powershell, Solidity, Kotlin = Value
 
   def getExtensions(value: Value): Seq[String] = {
     value match {
@@ -72,6 +72,8 @@ case object Language extends Enumeration with JsonEnumeration {
       case Visualforce => Seq(".page", ".component")
       case JSP => Seq(".jsp")
       case R => Seq(".R")
+      case Powershell => List(".ps1", ".psc1", ".psd1", ".psm1", ".ps1xml", ".pssc", ".cdxml", ".clixml")
+      case Solidity => List(".sol")
       case _ => Seq.empty
     }
   }
