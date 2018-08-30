@@ -27,7 +27,7 @@ case object Language extends Enumeration with JsonEnumeration {
 
   def getExtensions(value: Value): Seq[String] = {
     value match {
-      case Javascript => List(".js", ".jsx")
+      case Javascript => List(".js", ".jsx", ".jsm", ".vue")
       case Scala => List(".scala")
       case CSS => List(".css")
       case LESS => List(".less")
