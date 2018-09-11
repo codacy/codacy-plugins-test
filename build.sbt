@@ -2,11 +2,11 @@ resolvers += Resolver.sonatypeRepo("releases")
 
 name := """codacy-plugins-test"""
 
-scalaVersion := "2.11.7"
+val scalaBinaryVersionNumber = "2.12"
+scalaVersion := s"$scalaBinaryVersionNumber.6"
 
 libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % "2.2.5",
-  "com.typesafe.play" %% "play-json" % "2.4.8",
-  "com.codacy" %% "codacy-plugins-api" % "0.1.2",
+  "org.scalatest" %% "scalatest" % "3.0.5",
+  "com.codacy" %% "codacy-analysis-core" % "0.1.0-alpha3.3204",
   "commons-io" % "commons-io" % "2.4"
 )

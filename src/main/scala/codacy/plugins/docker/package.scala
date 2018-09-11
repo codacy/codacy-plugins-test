@@ -2,7 +2,7 @@ import play.api.libs.json._
 
 package plugins {
 
-  import codacy.docker.api.{Parameter, Pattern}
+  import com.codacy.plugins.api.results.{Parameter, Pattern}
 
   /*value classes to make things typesafe*/
   class DockerImageName(val value: String) extends AnyVal {

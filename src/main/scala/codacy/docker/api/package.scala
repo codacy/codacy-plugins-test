@@ -1,6 +1,7 @@
 package codacy.docker
 
-import play.api.libs.json.{JsNull, JsString, JsValue, Json}
+import com.codacy.plugins.api.results.Parameter
+import play.api.libs.json.{JsString, JsValue, Json}
 
 import scala.util.Try
 

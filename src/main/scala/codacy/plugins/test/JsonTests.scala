@@ -6,6 +6,7 @@ import java.nio.file.Path
 import codacy.docker.api._
 import codacy.plugins.docker.DockerPlugin
 import codacy.utils.{CollectionHelper, FileHelper, Printer}
+import com.codacy.plugins.api.results.{Pattern, Tool}
 import play.api.libs.json.{JsError, JsSuccess, Json, Reads}
 import plugins._
 

@@ -1,6 +1,6 @@
 package codacy.plugins.docker
 
-import codacy.docker.api.{Result => ToolResult}
+import com.codacy.plugins.api.results.{Result => ToolResult}
 import codacy.plugins.traits.JsonEnumeration
 import play.api.libs.json.{Format, JsValue, Json}
 

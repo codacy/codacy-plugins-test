@@ -2,9 +2,11 @@ package codacy.plugins.docker
 
 import java.nio.file.{Files, Path, Paths}
 
-import codacy.docker.api.{Configuration, Parameter, Source, Tool, Pattern => DockerPattern, Result => ToolResult}
 import codacy.plugins.test.DockerHelpers
 import codacy.plugins.traits.IResultsPlugin
+import com.codacy.plugins.api.Source
+import com.codacy.plugins.api.results.Tool.CodacyConfiguration
+import com.codacy.plugins.api.results.{Parameter, Tool, Pattern => DockerPattern, Result => ToolResult}
 import play.api.libs.json._
 import plugins._
 
@@ -88,7 +90,7 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
       val thisToolsConfig = configFor(patterns)
       val fileList = paths.map { path => Source.File(path.toString) }
 
-      val fullConfig = Configuration(Set(thisToolsConfig), Option(fileList).filter(_.nonEmpty))
+      val fullConfig = CodacyConfiguration(Set(thisToolsConfig), Option(fileList).filter(_.nonEmpty), None)
 
       val tmpFile = Files.createTempFile("codacy-config", ".json")
       val config = Json.stringify(Json.toJson(fullConfig))

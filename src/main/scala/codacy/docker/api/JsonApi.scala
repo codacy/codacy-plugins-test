@@ -1,6 +1,11 @@
 package codacy.docker.api
 
+import com.codacy.plugins.api.languages.{Language, Languages}
+import com.codacy.plugins.api.results.Tool.Configuration
+import com.codacy.plugins.api.results.{Parameter, Pattern, Result, Tool}
+import com.codacy.plugins.api.{ErrorMessage, Source}
 import play.api.libs.json._
+
 import scala.language.implicitConversions
 
 private[api] case class ParamValue(value:JsValue) extends AnyVal with Parameter.Value
@@ -60,11 +65,22 @@ trait JsonApi {
   implicit lazy val sourceFileFormat = Format(Reads.StringReads.map(Source.File),
     Writes((v: Source.File) => Json.toJson(v.path))) //Json.format[Source.File]
 
+  implicit val languageFormat: Format[Language] = Format[Language](
+    Reads { json: JsValue =>
+      json.validate[String].flatMap { langStr =>
+        Languages
+          .fromName(langStr)
+          .fold[JsResult[Language]](JsError(s"Could not find language for name $langStr"))(JsSuccess(_))
+      }
+    },
+    Writes((v: Language) => JsString(v.name)))
+
   implicit lazy val parameterSpecificationFormat = Json.format[Parameter.Specification]
   implicit lazy val parameterDefinitionFormat = Json.format[Parameter.Definition]
   implicit lazy val patternDefinitionFormat = Json.format[Pattern.Definition]
   implicit lazy val patternSpecificationFormat = Json.format[Pattern.Specification]
   implicit lazy val toolConfigurationFormat = Json.format[Tool.Configuration]
+  implicit lazy val versionFormat = Json.format[Tool.Version]
   implicit lazy val specificationFormat = Json.format[Tool.Specification]
   implicit lazy val configurationFormat = Json.format[Configuration]
 

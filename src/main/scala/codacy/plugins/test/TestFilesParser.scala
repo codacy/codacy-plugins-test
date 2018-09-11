@@ -2,10 +2,9 @@ package codacy.plugins.test
 
 import java.io.File
 
-import codacy.docker.api.Result
-import codacy.plugins.docker
 import codacy.plugins.docker.Language
 import codacy.utils.{FileHelper, Printer}
+import com.codacy.plugins.api.results.Result
 import play.api.libs.json.{JsValue, Json}
 
 import scala.util.{Failure, Success, Try}
@@ -77,7 +76,7 @@ class TestFilesParser(filesDir: File) {
     val validExtensions = Language.values.flatMap(Language.getExtensions).toArray
     val files = FileHelper.listFiles(filesDir).filter(f => validExtensions.contains(s".${f.getName.split('.').last}"))
 
-    files.map { file =>
+    files.flatMap { file =>
       val extension = "." + file.getName.split('.').last
 
       val languageMap = Language.values.toList.map(lang => (lang, Language.getExtensions(lang)))
@@ -133,8 +132,8 @@ class TestFilesParser(filesDir: File) {
             }
 
           PatternTestFile(file, language, enabledPatterns, matches)
-      }.toSeq
-    }.toSeq.flatten
+      }
+    }
   }
 
   private def getAllComments(file: File, language: Language.Value): Seq[(Int, String)] = {

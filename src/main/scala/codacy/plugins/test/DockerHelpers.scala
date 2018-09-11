@@ -5,6 +5,7 @@ import java.nio.file.{Files, Path}
 import codacy.TryExtension
 import codacy.docker.api._
 import codacy.plugins.docker.Pattern
+import com.codacy.plugins.api.results.Tool
 import play.api.libs.json.Json
 import plugins._
 
