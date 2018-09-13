@@ -15,7 +15,7 @@ import _root_.scala.util.Try
 
 class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin {
 
-  lazy val spec: Option[Tool.Specification] = readJsonDoc[Tool.Specification]("patterns.json")
+  lazy val spec: Option[Tool.Specification] = None
 
   override def run(pluginRequest: PluginRequest): PluginResult = {
     runOnFiles(pluginRequest.directory, pluginRequest.files, pluginRequest.configuration, pluginRequest.files.length)
@@ -35,7 +35,7 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
 
     DockerHelpers.dockerRunCmd ++ List("-v", s"${sourcePath.toFile.getCanonicalPath}:/src:rw",
       "-v", s"${configPath.toFile.getCanonicalPath}:/src/.codacy.json:ro", "-v",
-    s"${configPath.toFile.getCanonicalPath}:/.codacyrc:ro") ++
+      s"${configPath.toFile.getCanonicalPath}:/.codacyrc:ro") ++
       rmOpts ++
       List(dockerImageName.value)
   }
@@ -102,8 +102,5 @@ class DockerPlugin(val dockerImageName: DockerImageName) extends IResultsPlugin 
     }
   }
 
-  private def readJsonDoc[T](name: String)(implicit docFmt: Format[T]): Option[T] = {
-    DockerHelpers.readRawDoc(dockerImageName, name).flatMap(Json.parse(_).asOpt[T])
-  }
 
 }

@@ -4,8 +4,8 @@ import java.io.File
 import java.nio.file.Path
 
 import codacy.docker.api._
-import codacy.plugins.docker.DockerPlugin
 import codacy.utils.{CollectionHelper, FileHelper, Printer}
+import com.codacy.plugins.api.results
 import com.codacy.plugins.api.results.{Pattern, Tool}
 import play.api.libs.json.{JsError, JsSuccess, Json, Reads}
 import plugins._
@@ -16,10 +16,10 @@ object JsonTests extends ITest {
 
   val opt = "json"
 
-  def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageName: String, optArgs: Seq[String]): Boolean = {
+  def run(spec: Option[results.Tool.Specification], testSources: Seq[Path], dockerImageName: String, dockerImageVersion: String, optArgs: Seq[String]): Boolean = {
     Printer.green("Running JsonTests:")
 
-    DockerHelpers.withDocsDirectory(dockerImageName) { baseDocDir =>
+    DockerHelpers.withDocsDirectory(s"$dockerImageName:$dockerImageVersion") { baseDocDir =>
 
       val toolOpt = checkDoc[Tool.Specification](baseDocDir, "patterns.json")(_ => true)
       val descriptionsOpt = checkDoc[Seq[PatternDescription]](baseDocDir, "description/description.json") { descriptions =>

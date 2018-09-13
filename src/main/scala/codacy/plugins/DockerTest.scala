@@ -2,11 +2,11 @@ package codacy.plugins
 
 import java.nio.file.Path
 
-import codacy.plugins.docker.DockerPlugin
 import codacy.plugins.test._
 import codacy.utils.Printer
+import com.codacy.plugins.api.results.Tool
 import org.apache.commons.io.FileUtils
-import plugins.DockerImageName
+import play.api.libs.json.{Format, Json}
 
 case class Sources(mainSourcePath: Path, directoryPaths: Seq[Path])
 
@@ -24,16 +24,16 @@ object DockerTest {
 
   def main(args: Array[String]) {
     val typeOfTests = args.headOption
-    val dockerImageName = args.drop(1).headOption
+    val dockerImageNameAndVersionOpt = args.drop(1).headOption
     val optArgs = args.drop(2)
 
     typeOfTests.collect { case typeOfTest if possibleTestNames.contains(typeOfTest) =>
-      dockerImageName.map { dockerName =>
-        val plugin = new DockerPlugin(DockerImageName(dockerName))
-        val testSources = DockerHelpers.testFoldersInDocker(plugin.dockerImageName)
+      dockerImageNameAndVersionOpt.map { dockerImageNameAndVersion =>
+
+        val testSources = DockerHelpers.testFoldersInDocker(dockerImageNameAndVersion)
 
         val result = possibleTestsWithUda
-          .map(test => run(plugin, testSources, test, typeOfTest, dockerName, optArgs))
+          .map(test => run(testSources, test, typeOfTest, dockerImageNameAndVersion, optArgs))
           .forall(identity)
 
         testSources.foreach(dir => FileUtils.deleteQuietly(dir.toFile))
@@ -55,10 +55,20 @@ object DockerTest {
     }
   }
 
-  private def run(plugin: DockerPlugin, testSources: Seq[Path], test: ITest, testRequest: String, dockerImageName: String, optArgs: Seq[String]): Boolean = {
+  private def run(testSources: Seq[Path], test: ITest, testRequest: String, dockerImageNameAndVersion: String, optArgs: Seq[String]): Boolean = {
+
     config.get(testRequest) match {
       case Some(ts) if ts.contains(test) =>
-        test.run(plugin, testSources, dockerImageName, optArgs) match {
+
+        val spec: Option[Tool.Specification] = readJsonDoc[Tool.Specification](dockerImageNameAndVersion, "patterns.json")
+
+        val (dockerImageName, dockerVersion) = dockerImageNameAndVersion.split(":") match {
+          case Array(name, version) => (name, version)
+          case Array(name) => (name, "latest")
+          case _ => throw new RuntimeException("Invalid Docker Name.")
+        }
+
+        test.run(spec, testSources, dockerImageName, dockerVersion, optArgs) match {
           case true =>
             Printer.green(s"[Success] ${test.getClass.getSimpleName}")
             true
@@ -71,4 +81,9 @@ object DockerTest {
         true
     }
   }
+
+  private def readJsonDoc[T](dockerImageName: String, name: String)(implicit docFmt: Format[T]): Option[T] = {
+    DockerHelpers.readRawDoc(dockerImageName, name).flatMap(Json.parse(_).asOpt[T])
+  }
+
 }

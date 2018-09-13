@@ -7,7 +7,6 @@ import codacy.docker.api._
 import codacy.plugins.docker.Pattern
 import com.codacy.plugins.api.results.Tool
 import play.api.libs.json.Json
-import plugins._
 
 import _root_.scala.sys.process._
 import scala.util.Try
@@ -24,15 +23,14 @@ object DockerHelpers {
     Pattern(patternSpec.patternId.value, parameters)
   }.toSeq
 
-  def toPatterns(patterns: Seq[PatternSimple]): Seq[Pattern] = patterns.map {
-    case pattern =>
-      Pattern(pattern.name, pattern.parameters)
+  def toPatterns(patterns: Seq[PatternSimple]): Seq[Pattern] = patterns.map { pattern =>
+    Pattern(pattern.name, pattern.parameters)
   }
 
-  def testFoldersInDocker(dockerImageName: DockerImageName): Seq[Path] = {
+  def testFoldersInDocker(dockerImageName: String): Seq[Path] = {
     val sourceDir = Files.createTempDirectory("docker-test-folders")
 
-    val dockerStartedCmd = dockerRunCmd ++ List("-d", "--entrypoint=sh", dockerImageName.value)
+    val dockerStartedCmd = dockerRunCmd ++ List("-d", "--entrypoint=sh", dockerImageName)
     val output = dockerStartedCmd.lineStream_!
 
     val containerId = output.head
@@ -53,8 +51,9 @@ object DockerHelpers {
     }
   }
 
-  def readRawDoc(dockerImageName: DockerImageName, name: String): Option[String] = {
-    val cmd = dockerRunCmd ++ List("--rm=true", "--entrypoint=cat", dockerImageName.value, s"/docs/$name")
+
+  def readRawDoc(dockerImageName: String, name: String): Option[String] = {
+    val cmd = dockerRunCmd ++ List("--rm=true", "--entrypoint=cat", dockerImageName, s"/docs/$name")
     Try(cmd.lineStream.toList).map { case rawConfigString =>
       rawConfigString.mkString(System.lineSeparator())
     }.toOptionWithLog()

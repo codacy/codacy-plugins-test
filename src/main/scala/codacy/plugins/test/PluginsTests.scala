@@ -3,28 +3,24 @@ package codacy.plugins.test
 import java.nio.file.{Path, Paths}
 
 import codacy.plugins.docker
-import codacy.plugins.docker.DockerPlugin
 import codacy.utils.{FileHelper, Printer}
 import com.codacy.analysis.core
 import com.codacy.analysis.core.model.{CodacyCfg, Issue, Pattern}
 import com.codacy.analysis.core.tools.Tool
 import com.codacy.plugins.api.languages.{Language, Languages}
+import com.codacy.plugins.api.results
 import com.codacy.plugins.results.traits.DockerTool
 
 object PluginsTests extends ITest {
 
   val opt = "plugin"
 
-  def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageNameAndVersion: String, optArgs: Seq[String]): Boolean = {
+  def run(specOpt: Option[results.Tool.Specification], testSources: Seq[Path],
+          dockerImageName: String, dockerImageVersion: String, optArgs: Seq[String]): Boolean = {
     Printer.green("Running PluginsTests:")
-    plugin.spec.forall { spec =>
+    specOpt.forall { spec =>
       Printer.green(s"  + ${spec.name} should find results for all patterns")
 
-      val (dockerImageName, dockerVersion) = dockerImageNameAndVersion.split(":") match {
-        case Array(name, version) => (name, version)
-        case Array(name) => (name, "latest")
-        case _ => throw new RuntimeException("Invalid Docker Name.")
-      }
 
       val patterns: Seq[docker.Pattern] = DockerHelpers.toPatterns(spec)
       val modelPatterns: Set[Pattern] = patterns.map(p => core.model.Pattern(p.patternIdentifier,
@@ -41,8 +37,8 @@ object PluginsTests extends ITest {
         val dockerTool = new DockerTool(dockerName = dockerImageName, true, languages,
           dockerImageName, dockerImageName, dockerImageName, "", "", "", needsCompilation = false,
           needsPatternsToRun = false, hasUIConfiguration = true) {
-          override lazy val toolVersion: Option[String] = Some(dockerVersion)
-          override val dockerTag: String = dockerVersion
+          override lazy val toolVersion: Option[String] = Some(dockerImageVersion)
+          override val dockerTag: String = dockerImageVersion
           override val dockerImageName: String = dockerName
         }
 

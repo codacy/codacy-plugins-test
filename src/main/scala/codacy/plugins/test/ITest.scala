@@ -3,16 +3,19 @@ package codacy.plugins.test
 import java.io.File
 import java.nio.file.Path
 
-import codacy.plugins.docker.{DockerPlugin, Pattern}
+import codacy.plugins.docker.Pattern
 import codacy.utils.Printer
 import com.codacy.analysis.core.model.{FileError, Issue, ToolResult}
 import com.codacy.plugins.api._
+import com.codacy.plugins.api.results.Tool
+
 import scala.util.{Failure, Success, Try}
 
 trait ITest {
   val opt: String
 
-  def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageName: String, optArgs: Seq[String]): Boolean
+  //TODO: create object to encapsulate dockerImageName and DockerImageVersion
+  def run(spec: Option[Tool.Specification], testSources: Seq[Path], dockerImageName: String, dockerImageVersion: String, optArgs: Seq[String]): Boolean
 
   protected def filterResults(spec: Option[results.Tool.Specification], sourcePath: Path, files: Seq[File],
                               patterns: Seq[Pattern], toolResults: Try[Set[ToolResult]]): Set[Issue] = {

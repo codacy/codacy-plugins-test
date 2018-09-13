@@ -2,13 +2,13 @@ package codacy.plugins.test
 
 import java.io.File
 import java.nio.file.{Path, Paths}
-import com.codacy.plugins.api._
-import codacy.plugins.docker.DockerPlugin
+
 import codacy.plugins.traits.IResultsPlugin
 import codacy.utils.Printer
 import com.codacy.analysis.core
 import com.codacy.analysis.core.model.{CodacyCfg, FullLocation, LineLocation, Pattern}
 import com.codacy.analysis.core.tools.Tool
+import com.codacy.plugins.api._
 import com.codacy.plugins.api.languages.Languages
 import com.codacy.plugins.results.traits.DockerTool
 
@@ -22,7 +22,7 @@ object PatternTests extends ITest with CustomMatchers {
 
   val opt = "pattern"
 
-  def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageNameAndVersion: String, optArgs: Seq[String]): Boolean = {
+  def run(specOpt: Option[results.Tool.Specification], testSources: Seq[Path], dockerImageName: String, dockerImageVersion: String, optArgs: Seq[String]): Boolean = {
     Printer.green(s"Running PatternsTests:")
     testSources.map { sourcePath =>
       val testFiles = new TestFilesParser(sourcePath.toFile).getTestFiles
@@ -31,18 +31,12 @@ object PatternTests extends ITest with CustomMatchers {
         fileNameToTest => testFiles.filter(testFiles => testFiles.file.getName.contains(fileNameToTest))
       }
 
-      val (dockerImageName, dockerVersion) = dockerImageNameAndVersion.split(":") match {
-        case Array(name, version) => (name, version)
-        case Array(name) => (name, "latest")
-        case _ => throw new RuntimeException("Invalid Docker Name.")
-      }
-
       val languages = filteredTestFiles.groupBy(_.language).keySet.flatMap(l => Languages.fromName(l.toString))
 
       val dockerTool = new DockerTool(dockerName = dockerImageName, true, languages,
         dockerImageName, dockerImageName, dockerImageName, "", "", "", needsCompilation = false, needsPatternsToRun = false, hasUIConfiguration = true) {
-        override lazy val toolVersion: Option[String] = Some(dockerVersion)
-        override val dockerTag: String = dockerVersion
+        override lazy val toolVersion: Option[String] = Some(dockerImageVersion)
+        override val dockerTag: String = dockerImageVersion
         override val dockerImageName: String = dockerName
       }
 
@@ -56,7 +50,7 @@ object PatternTests extends ITest with CustomMatchers {
         }.getOrElse(filteredTestFiles)
 
       testFilesPar.map { testFile =>
-        dockerTools.get(testFile.language.toString).exists(analyseFile(plugin.spec, sourcePath.toFile, testFile, _))
+        dockerTools.get(testFile.language.toString).exists(analyseFile(specOpt, sourcePath.toFile, testFile, _))
       }.forall(identity)
     }.forall(identity)
   }
