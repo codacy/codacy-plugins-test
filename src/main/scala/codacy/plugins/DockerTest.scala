@@ -68,7 +68,7 @@ object DockerTest {
           case _ => throw new RuntimeException("Invalid Docker Name.")
         }
 
-        test.run(spec, testSources, dockerImageName, dockerVersion, optArgs) match {
+        test.run(spec, testSources, DockerImage(dockerImageName, dockerVersion), optArgs) match {
           case true =>
             Printer.green(s"[Success] ${test.getClass.getSimpleName}")
             true

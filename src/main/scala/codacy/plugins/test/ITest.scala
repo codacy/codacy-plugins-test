@@ -11,11 +11,16 @@ import com.codacy.plugins.api.results.Tool
 
 import scala.util.{Failure, Success, Try}
 
+final case class DockerImage(dockerName: String, dockerVersion: String) {
+  override def toString: String = {
+    s"$dockerName:$dockerVersion"
+  }
+}
+
 trait ITest {
   val opt: String
 
-  //TODO: create object to encapsulate dockerImageName and DockerImageVersion
-  def run(spec: Option[Tool.Specification], testSources: Seq[Path], dockerImageName: String, dockerImageVersion: String, optArgs: Seq[String]): Boolean
+  def run(spec: Option[Tool.Specification], testSources: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean
 
   protected def filterResults(spec: Option[results.Tool.Specification], sourcePath: Path, files: Seq[File],
                               patterns: Seq[Pattern], toolResults: Try[Set[ToolResult]]): Set[Issue] = {

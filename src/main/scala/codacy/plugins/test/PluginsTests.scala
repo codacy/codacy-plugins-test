@@ -16,7 +16,7 @@ object PluginsTests extends ITest {
   val opt = "plugin"
 
   def run(specOpt: Option[results.Tool.Specification], testSources: Seq[Path],
-          dockerImageName: String, dockerImageVersion: String, optArgs: Seq[String]): Boolean = {
+          dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     Printer.green("Running PluginsTests:")
     specOpt.forall { spec =>
       Printer.green(s"  + ${spec.name} should find results for all patterns")
@@ -33,6 +33,9 @@ object PluginsTests extends ITest {
         val testFiles = new TestFilesParser(sourcePath.toFile).getTestFiles
 
         val languages: Set[Language] = testFiles.flatMap(testFile => Languages.fromName(testFile.language.toString))(collection.breakOut)
+
+        val dockerImageName = dockerImage.dockerName
+        val dockerImageVersion = dockerImage.dockerVersion
 
         val dockerTool = new DockerTool(dockerName = dockerImageName, true, languages,
           dockerImageName, dockerImageName, dockerImageName, "", "", "", needsCompilation = false,

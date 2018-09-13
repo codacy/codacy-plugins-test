@@ -15,10 +15,11 @@ object JsonTests extends ITest {
 
   val opt = "json"
 
-  def run(spec: Option[results.Tool.Specification], testSources: Seq[Path], dockerImageName: String, dockerImageVersion: String, optArgs: Seq[String]): Boolean = {
+  def run(spec: Option[results.Tool.Specification], testSources: Seq[Path],
+          dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     Printer.green("Running JsonTests:")
 
-    DockerHelpers.withDocsDirectory(s"$dockerImageName:$dockerImageVersion") { baseDocDir =>
+    DockerHelpers.withDocsDirectory(dockerImage.toString) { baseDocDir =>
 
       val toolOpt = checkDoc[Tool.Specification](baseDocDir, "patterns.json")(_ => true)
       val descriptionsOpt = checkDoc[Seq[PatternDescription]](baseDocDir, "description/description.json") { descriptions =>

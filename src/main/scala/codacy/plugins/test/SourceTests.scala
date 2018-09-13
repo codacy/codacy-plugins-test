@@ -11,10 +11,10 @@ object SourceTests extends ITest {
   override val opt: String = "source"
 
 
-  override def run(specOpt: Option[results.Tool.Specification], testSources: Seq[Path], dockerImageName: String,
-                   dockerImageVersion: String, optArgs: Seq[String]): Boolean = {
+  override def run(specOpt: Option[results.Tool.Specification], testSources: Seq[Path],
+                   dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     Printer.green(s"Running SourceTests:")
-    DockerHelpers.withDocsDirectory(s"$dockerImageName:$dockerImageVersion") { baseDocDir =>
+    DockerHelpers.withDocsDirectory(dockerImage.toString) { baseDocDir =>
       specOpt match {
         case Some(spec) =>
           val patterns = DockerHelpers.toPatterns(spec)

@@ -20,7 +20,8 @@ object PatternTests extends ITest with CustomMatchers {
 
   val opt = "pattern"
 
-  def run(specOpt: Option[results.Tool.Specification], testSources: Seq[Path], dockerImageName: String, dockerImageVersion: String, optArgs: Seq[String]): Boolean = {
+  def run(specOpt: Option[results.Tool.Specification], testSources: Seq[Path],
+          dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     Printer.green(s"Running PatternsTests:")
     testSources.map { sourcePath =>
       val testFiles = new TestFilesParser(sourcePath.toFile).getTestFiles
@@ -30,6 +31,9 @@ object PatternTests extends ITest with CustomMatchers {
       }
 
       val languages = filteredTestFiles.groupBy(_.language).keySet.flatMap(l => Languages.fromName(l.toString))
+
+      val dockerImageName = dockerImage.dockerName
+      val dockerImageVersion = dockerImage.dockerVersion
 
       val dockerTool = new DockerTool(dockerName = dockerImageName, true, languages,
         dockerImageName, dockerImageName, dockerImageName, "", "", "", needsCompilation = false, needsPatternsToRun = false, hasUIConfiguration = true) {
