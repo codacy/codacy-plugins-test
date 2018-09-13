@@ -15,7 +15,7 @@ object DockerTest {
   private lazy val config = Map(
     "all" -> possibleTests,
     "allWithUdas" -> possibleTestsWithUda
-  ) ++ possibleTestsWithUda.map { case test =>
+  ) ++ possibleTestsWithUda.map { test =>
     test.opt -> Seq(test)
   }
   private lazy val possibleTests = Seq(JsonTests, PluginsTests, PatternTests)
