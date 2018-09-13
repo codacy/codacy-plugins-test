@@ -22,6 +22,7 @@ object PluginsTests extends ITest {
 
       val (dockerImageName, dockerVersion) = dockerImageNameAndVersion.split(":") match {
         case Array(name, version) => (name, version)
+        case Array(name) => (name, "latest")
         case _ => throw new RuntimeException("Invalid Docker Name.")
       }
 
@@ -31,7 +32,6 @@ object PluginsTests extends ITest {
           case (name, value) => core.model.Parameter(name, value.toString)
         }(collection.breakOut))))(collection.breakOut)
       val codacyCfg = CodacyCfg(modelPatterns)
-
 
       val resultsUUIDS = testSources.flatMap { sourcePath =>
         val testFiles = new TestFilesParser(sourcePath.toFile).getTestFiles
