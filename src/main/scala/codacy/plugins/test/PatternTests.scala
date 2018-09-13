@@ -2,7 +2,7 @@ package codacy.plugins.test
 
 import java.io.File
 import java.nio.file.{Path, Paths}
-
+import com.codacy.plugins.api._
 import codacy.plugins.docker.DockerPlugin
 import codacy.plugins.traits.IResultsPlugin
 import codacy.utils.Printer
@@ -56,12 +56,12 @@ object PatternTests extends ITest with CustomMatchers {
         }.getOrElse(filteredTestFiles)
 
       testFilesPar.map { testFile =>
-        dockerTools.get(testFile.language.toString).exists(analyseFile(sourcePath.toFile, testFile, _))
+        dockerTools.get(testFile.language.toString).exists(analyseFile(plugin.spec, sourcePath.toFile, testFile, _))
       }.forall(identity)
     }.forall(identity)
   }
 
-  private def analyseFile(rootDirectory: File, testFile: PatternTestFile, tool: Tool): Boolean = {
+  private def analyseFile(spec: Option[results.Tool.Specification], rootDirectory: File, testFile: PatternTestFile, tool: Tool): Boolean = {
 
     val testFilePath = testFile.file.getAbsolutePath
     val filename = toRelativePath(rootDirectory.getAbsolutePath, testFilePath)
@@ -84,7 +84,7 @@ object PatternTests extends ITest with CustomMatchers {
 
     val result = tool.run(better.files.File(rootDirectory.getAbsolutePath), testFilesAbsolutePaths.to[Set], codacyCfg)
 
-    val filteredResults = filterResults(rootDirectory.toPath, testFiles, configuration, result)
+    val filteredResults = filterResults(spec, rootDirectory.toPath, testFiles, configuration, result)
 
     val matches = filteredResults.map(r => TestFileResult(r.patternId.value,
       r.location match {

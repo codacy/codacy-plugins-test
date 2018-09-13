@@ -56,7 +56,7 @@ object PluginsTests extends ITest {
         val filteredResults: Set[Issue] = tools.flatMap {
           tool =>
             val results = tool.run(better.files.File(sourcePath.toAbsolutePath), fileAbsolutePaths.map(f => Paths.get(f))(collection.breakOut), codacyCfg)
-            filterResults(sourcePath, files, patterns, results)
+            filterResults(None, sourcePath, files, patterns, results)
         }(collection.breakOut)
 
         filteredResults.map(_.patternId.value)

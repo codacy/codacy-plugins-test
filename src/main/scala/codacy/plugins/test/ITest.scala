@@ -6,7 +6,7 @@ import java.nio.file.Path
 import codacy.plugins.docker.{DockerPlugin, Pattern}
 import codacy.utils.Printer
 import com.codacy.analysis.core.model.{FileError, Issue, ToolResult}
-
+import com.codacy.plugins.api._
 import scala.util.{Failure, Success, Try}
 
 trait ITest {
@@ -14,7 +14,8 @@ trait ITest {
 
   def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageName: String, optArgs: Seq[String]): Boolean
 
-  protected def filterResults(sourcePath: Path, files: Seq[File], patterns: Seq[Pattern], toolResults: Try[Set[ToolResult]]): Set[Issue] = {
+  protected def filterResults(spec: Option[results.Tool.Specification], sourcePath: Path, files: Seq[File],
+                              patterns: Seq[Pattern], toolResults: Try[Set[ToolResult]]): Set[Issue] = {
     toolResults match {
       case Failure(e) =>
         Printer.red(e.getStackTrace.mkString("\n"))
@@ -28,9 +29,20 @@ trait ITest {
           Printer.red("No results received!")
         }
 
-        (filterFileErrors _).andThen(issues =>
-          filterResultsFromFiles(issues, files, sourcePath).intersect(filterResultsFromPatterns(issues, patterns))
-        )(results)
+        (filterFileErrors _)
+          .andThen(filterResultsFromSpecPatterns(_, spec))
+          .andThen(issues =>
+            filterResultsFromFiles(issues, files, sourcePath)
+              .intersect(filterResultsFromPatterns(issues, patterns))
+          )(results)
+    }
+  }
+
+  private def filterResultsFromSpecPatterns(issuesResults: Set[Issue], specOpt: Option[results.Tool.Specification]) = {
+    specOpt.fold(issuesResults) {
+      spec =>
+        val specPatternIds: Set[results.Pattern.Id] = spec.patterns.map(_.patternId)
+        issuesResults.filter(issue => specPatternIds.contains(issue.patternId))
     }
   }
 
