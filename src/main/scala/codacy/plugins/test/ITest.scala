@@ -21,6 +21,7 @@ trait ITest {
                               patterns: Seq[Pattern], toolResults: Try[Set[ToolResult]]): Set[Issue] = {
     toolResults match {
       case Failure(e) =>
+        Printer.red(e.getMessage)
         Printer.red(e.getStackTrace.mkString("\n"))
         Set.empty
       case Success(results) =>
