@@ -3,7 +3,6 @@ package codacy.plugins.test
 import java.io.File
 import java.nio.file.{Path, Paths}
 
-import codacy.plugins.traits.IResultsPlugin
 import codacy.utils.Printer
 import com.codacy.analysis.core
 import com.codacy.analysis.core.model.{CodacyCfg, FullLocation, LineLocation, Pattern}
@@ -16,7 +15,6 @@ import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool
 import scala.util.Try
 
-case class TestPattern(toolName: String, plugin: IResultsPlugin, patternId: String)
 
 object PatternTests extends ITest with CustomMatchers {
 

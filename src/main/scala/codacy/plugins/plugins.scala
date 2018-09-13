@@ -1,17 +1,10 @@
-import play.api.libs.json._
+package codacy
 
-package plugins {
+import play.api.libs.json.Json
+
+package object plugins {
 
   import com.codacy.plugins.api.results.{Parameter, Pattern}
-
-  /*value classes to make things typesafe*/
-  class DockerImageName(val value: String) extends AnyVal {
-    override def toString = value.toString
-  }
-
-  object DockerImageName {
-    def apply(value: String): DockerImageName = new DockerImageName(value)
-  }
 
   case class ParameterDescription(name: Parameter.Name, description: String)
 

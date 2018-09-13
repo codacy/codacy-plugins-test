@@ -3,7 +3,6 @@ package codacy.plugins.test
 import java.nio.file.{Files, Path}
 
 import codacy.TryExtension
-import codacy.docker.api._
 import codacy.plugins.docker.Pattern
 import com.codacy.plugins.api.results.Tool
 import play.api.libs.json.Json
@@ -15,12 +14,13 @@ object DockerHelpers {
 
   val dockerRunCmd = List("docker", "run", "--net=none", "--privileged=false", "--user=docker")
 
-  def toPatterns(toolSpec: Tool.Specification): Seq[Pattern] = toolSpec.patterns.map { case patternSpec =>
-    val parameters = patternSpec.parameters.map(_.map { param =>
-      (param.name.value, Json.toJson(param.default))
-    }.toMap)
+  def toPatterns(toolSpec: Tool.Specification): Seq[Pattern] = toolSpec.patterns.map {
+    patternSpec =>
+      val parameters = patternSpec.parameters.map(_.map { param =>
+        (param.name.value, Json.toJson(param.default))
+      }.toMap)
 
-    Pattern(patternSpec.patternId.value, parameters)
+      Pattern(patternSpec.patternId.value, parameters)
   }.toSeq
 
   def toPatterns(patterns: Seq[PatternSimple]): Seq[Pattern] = patterns.map { pattern =>
@@ -54,9 +54,7 @@ object DockerHelpers {
 
   def readRawDoc(dockerImageName: String, name: String): Option[String] = {
     val cmd = dockerRunCmd ++ List("--rm=true", "--entrypoint=cat", dockerImageName, s"/docs/$name")
-    Try(cmd.lineStream.toList).map { case rawConfigString =>
-      rawConfigString.mkString(System.lineSeparator())
-    }.toOptionWithLog()
+    Try(cmd.lineStream.toList).map(_.mkString(System.lineSeparator())).toOptionWithLog()
   }
 
   def withDocsDirectory[T](dockerImageName: String)(block: Path => T): T = {
