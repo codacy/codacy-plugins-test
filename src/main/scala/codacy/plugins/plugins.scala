@@ -1,10 +1,10 @@
 package codacy
 
 import play.api.libs.json.Json
+import com.codacy.plugins.api.results.{Parameter, Pattern}
 
 package object plugins {
 
-  import com.codacy.plugins.api.results.{Parameter, Pattern}
 
   case class ParameterDescription(name: Parameter.Name, description: String)
 
