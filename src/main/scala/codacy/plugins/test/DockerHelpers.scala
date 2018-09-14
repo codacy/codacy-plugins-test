@@ -84,27 +84,25 @@ object DockerHelpers {
   def findTools(testFiles: Seq[PatternTestFile], dockerImage: DockerImage): Seq[core.tools.Tool] = {
     val dockerImageName = dockerImage.name
     val dockerImageVersion = dockerImage.version
-    (core.tools.Tool.availableTools ++ PluginHelper.dockerEnterprisePlugins).collectFirst {
-      case tool if tool.dockerName == dockerImageName && tool.dockerTag == dockerImageVersion =>
-        tool.languages.map {
-          language => new core.tools.Tool(tool, language)
-        }(collection.breakOut)
-    }.getOrElse {
-      val languages: Set[Language] =
-        sys.props.get("codacy.tests.languages").map(_.split(",").flatMap(Languages.fromName).to[Set])
-          .getOrElse {
-            testFiles.flatMap(testFile => Languages.fromName(testFile.language.toString))(collection.breakOut)
-          }
-      val dockerTool = new DockerTool(dockerName = dockerImageName, true, languages,
-        dockerImageName, dockerImageName, dockerImageName, "", "", "", needsCompilation = false,
-        needsPatternsToRun = true, hasUIConfiguration = true) {
-        override lazy val toolVersion: Option[String] = Some(dockerImageVersion)
-        override val dockerTag: String = dockerImageVersion
-      }
-      languages.map {
-        language => new core.tools.Tool(dockerTool, language)
-      }(collection.breakOut)
+
+    val languages: Set[Language] = sys.props.get("codacy.tests.languages").map(_.split(",").flatMap(Languages.fromName).to[Set])
+      .orElse {
+        (core.tools.Tool.availableTools ++ PluginHelper.dockerEnterprisePlugins).collectFirst {
+          case tool if tool.dockerName == dockerImageName && tool.dockerTag == dockerImageVersion =>
+            tool.languages
+        }
+      }.getOrElse(testFiles.flatMap(testFile => Languages.fromName(testFile.language.toString))(collection.breakOut))
+
+    val dockerTool = new DockerTool(dockerName = dockerImageName, true, languages,
+      dockerImageName, dockerImageName, dockerImageName, "", "", "", needsCompilation = false,
+      needsPatternsToRun = true, hasUIConfiguration = true) {
+      override lazy val toolVersion: Option[String] = Some(dockerImageVersion)
+      override val dockerTag: String = dockerImageVersion
     }
+
+    languages.map {
+      language => new core.tools.Tool(dockerTool, language)
+    }(collection.breakOut)
   }
 
 }
