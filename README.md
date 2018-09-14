@@ -83,7 +83,6 @@ sbt test
 * `codacy.tests.languages` - languages supported by the tool. If this option isn't provided, the languages
 will be inferred from the test files. Example: `-Dcodacy.tests.languages=ruby,java,javascript`
 
-
 Alternatively, you can run a specific test file:
 
 ```sh
