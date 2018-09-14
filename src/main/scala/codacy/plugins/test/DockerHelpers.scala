@@ -90,7 +90,11 @@ object DockerHelpers {
           language => new core.tools.Tool(tool, language)
         }(collection.breakOut)
     }.getOrElse {
-      val languages: Set[Language] = testFiles.flatMap(testFile => Languages.fromName(testFile.language.toString))(collection.breakOut)
+      val languages: Set[Language] =
+        sys.props.get("codacy.tests.languages").map(_.split(",").flatMap(Languages.fromName).to[Set])
+          .getOrElse {
+            testFiles.flatMap(testFile => Languages.fromName(testFile.language.toString))(collection.breakOut)
+          }
       val dockerTool = new DockerTool(dockerName = dockerImageName, true, languages,
         dockerImageName, dockerImageName, dockerImageName, "", "", "", needsCompilation = false,
         needsPatternsToRun = true, hasUIConfiguration = true) {
