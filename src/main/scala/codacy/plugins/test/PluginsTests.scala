@@ -6,10 +6,7 @@ import codacy.plugins.docker
 import codacy.utils.{FileHelper, Printer}
 import com.codacy.analysis.core
 import com.codacy.analysis.core.model.{CodacyCfg, Issue, Pattern}
-import com.codacy.analysis.core.tools.Tool
-import com.codacy.plugins.api.languages.{Language, Languages}
 import com.codacy.plugins.api.results
-import com.codacy.plugins.results.traits.DockerTool
 
 object PluginsTests extends ITest {
 
@@ -32,29 +29,14 @@ object PluginsTests extends ITest {
       val resultsUUIDS = testSources.flatMap { sourcePath =>
         val testFiles = new TestFilesParser(sourcePath.toFile).getTestFiles
 
-        val languages: Set[Language] = testFiles.flatMap(testFile => Languages.fromName(testFile.language.toString))(collection.breakOut)
-
-        val dockerImageName = dockerImage.dockerName
-        val dockerImageVersion = dockerImage.dockerVersion
-
-        val dockerTool = new DockerTool(dockerName = dockerImageName, true, languages,
-          dockerImageName, dockerImageName, dockerImageName, "", "", "", needsCompilation = false,
-          needsPatternsToRun = false, hasUIConfiguration = true) {
-          override lazy val toolVersion: Option[String] = Some(dockerImageVersion)
-          override val dockerTag: String = dockerImageVersion
-          override val dockerImageName: String = dockerName
-        }
-
-        val tools: Set[Tool] = languages.map {
-          language => new Tool(dockerTool, language)
-        }(collection.breakOut)
+        val tools = DockerHelpers.findTools(testFiles, dockerImage)
 
         val files = FileHelper.listFiles(sourcePath.toFile)
-        val fileAbsolutePaths = files.map(_.getAbsolutePath)
+        val fileAbsolutePaths: Set[Path] = files.map(file => Paths.get(file.getAbsolutePath))(collection.breakOut)
 
         val filteredResults: Set[Issue] = tools.flatMap {
           tool =>
-            val results = tool.run(better.files.File(sourcePath.toAbsolutePath), fileAbsolutePaths.map(f => Paths.get(f))(collection.breakOut), codacyCfg)
+            val results = tool.run(better.files.File(sourcePath.toAbsolutePath), fileAbsolutePaths, codacyCfg)
             filterResults(None, sourcePath, files, patterns, results)
         }(collection.breakOut)
 

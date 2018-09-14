@@ -11,9 +11,9 @@ import com.codacy.plugins.api.results.Tool
 
 import scala.util.{Failure, Success, Try}
 
-final case class DockerImage(dockerName: String, dockerVersion: String) {
+final case class DockerImage(name: String, version: String) {
   override def toString: String = {
-    s"$dockerName:$dockerVersion"
+    s"$name:$version"
   }
 }
 

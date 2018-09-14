@@ -4,7 +4,11 @@ import java.nio.file.{Files, Path}
 
 import codacy.TryExtension
 import codacy.plugins.docker.Pattern
+import com.codacy.analysis._
+import com.codacy.plugins.api.languages.{Language, Languages}
 import com.codacy.plugins.api.results.Tool
+import com.codacy.plugins.results.traits.DockerTool
+import com.codacy.plugins.utils.PluginHelper
 import play.api.libs.json.Json
 
 import _root_.scala.sys.process._
@@ -75,6 +79,28 @@ object DockerHelpers {
     Try(List("rm", "-rf", sourceDir.toString).lineStream_!.toList)
 
     result
+  }
+
+  def findTools(testFiles: Seq[PatternTestFile], dockerImage: DockerImage): Seq[core.tools.Tool] = {
+    val dockerImageName = dockerImage.name
+    val dockerImageVersion = dockerImage.version
+    (core.tools.Tool.availableTools ++ PluginHelper.dockerEnterprisePlugins).collectFirst {
+      case tool if tool.dockerName == dockerImageName && tool.dockerTag == dockerImageVersion =>
+        tool.languages.map {
+          language => new core.tools.Tool(tool, language)
+        }(collection.breakOut)
+    }.getOrElse {
+      val languages: Set[Language] = testFiles.flatMap(testFile => Languages.fromName(testFile.language.toString))(collection.breakOut)
+      val dockerTool = new DockerTool(dockerName = dockerImageName, true, languages,
+        dockerImageName, dockerImageName, dockerImageName, "", "", "", needsCompilation = false,
+        needsPatternsToRun = true, hasUIConfiguration = true) {
+        override lazy val toolVersion: Option[String] = Some(dockerImageVersion)
+        override val dockerTag: String = dockerImageVersion
+      }
+      languages.map {
+        language => new core.tools.Tool(dockerTool, language)
+      }(collection.breakOut)
+    }
   }
 
 }

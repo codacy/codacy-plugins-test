@@ -8,8 +8,6 @@ import com.codacy.analysis.core
 import com.codacy.analysis.core.model.{CodacyCfg, FullLocation, LineLocation, Pattern}
 import com.codacy.analysis.core.tools.Tool
 import com.codacy.plugins.api._
-import com.codacy.plugins.api.languages.Languages
-import com.codacy.plugins.results.traits.DockerTool
 
 import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool
@@ -30,19 +28,7 @@ object PatternTests extends ITest with CustomMatchers {
         fileNameToTest => testFiles.filter(testFiles => testFiles.file.getName.contains(fileNameToTest))
       }
 
-      val languages = filteredTestFiles.groupBy(_.language).keySet.flatMap(l => Languages.fromName(l.toString))
-
-      val dockerImageName = dockerImage.dockerName
-      val dockerImageVersion = dockerImage.dockerVersion
-
-      val dockerTool = new DockerTool(dockerName = dockerImageName, true, languages,
-        dockerImageName, dockerImageName, dockerImageName, "", "", "", needsCompilation = false, needsPatternsToRun = false, hasUIConfiguration = true) {
-        override lazy val toolVersion: Option[String] = Some(dockerImageVersion)
-        override val dockerTag: String = dockerImageVersion
-        override val dockerImageName: String = dockerName
-      }
-
-      val dockerTools: Map[String, Tool] = languages.map(language => language.name -> new Tool(dockerTool, language))(collection.breakOut)
+      val tools = DockerHelpers.findTools(testFiles, dockerImage)
 
       val testFilesPar = sys.props.get("codacy.tests.threads").flatMap(nrt => Try(nrt.toInt).toOption)
         .map { nrThreads =>
@@ -52,7 +38,7 @@ object PatternTests extends ITest with CustomMatchers {
         }.getOrElse(filteredTestFiles)
 
       testFilesPar.map { testFile =>
-        dockerTools.get(testFile.language.toString).exists(analyseFile(specOpt, sourcePath.toFile, testFile, _))
+        tools.exists(analyseFile(specOpt, sourcePath.toFile, testFile, _))
       }.forall(identity)
     }.forall(identity)
   }
