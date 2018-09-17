@@ -20,36 +20,32 @@ object DockerTest {
   private lazy val possibleTestsWithUda = SourceTests +: possibleTests
   private lazy val possibleTestNames = config.keySet
 
-  def main(args: Array[String]) {
+  def main(args: Array[String]): Unit = {
     val typeOfTests = args.headOption
     val dockerImageNameAndVersionOpt = args.drop(1).headOption
     val optArgs = args.drop(2)
 
-    typeOfTests.collect { case typeOfTest if possibleTestNames.contains(typeOfTest) =>
-      dockerImageNameAndVersionOpt.map { dockerImageNameAndVersion =>
+    typeOfTests.fold(Printer.red(s"[Missing] test type -> [${possibleTestNames.mkString(", ")}]")) {
+      case typeOfTest if possibleTestNames.contains(typeOfTest) =>
+        dockerImageNameAndVersionOpt.fold(Printer.red("[Missing] docker ref -> dockerName:dockerVersion")) {
+          dockerImageNameAndVersion =>
 
-        val testSources = DockerHelpers.testFoldersInDocker(dockerImageNameAndVersion)
+            val testSources = DockerHelpers.testFoldersInDocker(dockerImageNameAndVersion)
 
-        val result = possibleTestsWithUda
-          .map(test => run(testSources, test, typeOfTest, dockerImageNameAndVersion, optArgs))
-          .forall(identity)
+            val result = possibleTestsWithUda
+              .map(test => run(testSources, test, typeOfTest, dockerImageNameAndVersion, optArgs))
+              .forall(identity)
 
-        testSources.foreach(dir => FileUtils.deleteQuietly(dir.toFile))
+            testSources.foreach(dir => FileUtils.deleteQuietly(dir.toFile))
 
-        if (!result) {
-          Printer.red("[Failure] Some tests failed!")
-          System.exit(1)
+            if (!result) {
+              Printer.red("[Failure] Some tests failed!")
+              System.exit(1)
+            }
+
+            Printer.green("[Success] All tests passed!")
         }
-
-        Printer.green("[Success] All tests passed!")
-        result
-      }.orElse {
-        Printer.red("[Missing] docker ref -> dockerName:dockerVersion")
-        None
-      }
-    }.orElse {
-      Printer.red(s"[Missing] test type -> [${possibleTestNames.mkString(", ")}]")
-      None
+      case _ =>
     }
   }
 

@@ -2,6 +2,7 @@ package codacy.plugins.test
 
 import java.io.File
 import java.nio.file.{Path, Paths}
+import java.util.concurrent.ForkJoinPool
 
 import codacy.utils.Printer
 import com.codacy.analysis.core
@@ -11,7 +12,6 @@ import com.codacy.plugins.api._
 import com.codacy.plugins.results.traits.DockerToolDocumentation
 
 import scala.collection.parallel.ForkJoinTaskSupport
-import scala.concurrent.forkjoin.ForkJoinPool
 import scala.util.Try
 
 object PatternTests extends ITest with CustomMatchers {

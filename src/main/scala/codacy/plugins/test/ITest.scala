@@ -128,7 +128,7 @@ trait ITest {
   }
 
   private def filterFileErrors(results: Set[ToolResult]) = {
-    val (issuesResults: Set[Issue], fileErrorsResults: Set[FileError]) = results.foldLeft(Set.empty[Issue], Set.empty[FileError]) {
+    val (issuesResults: Set[Issue], fileErrorsResults: Set[FileError]) = results.foldLeft((Set.empty[Issue], Set.empty[FileError])) {
       case ((issues, fileErrors), res) =>
         res match {
           case issue: Issue => (issues + issue, fileErrors)

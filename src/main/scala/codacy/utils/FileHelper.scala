@@ -2,9 +2,6 @@ package codacy.utils
 
 import java.io.File
 import java.nio.charset.CodingErrorAction
-import java.nio.file.Files
-
-import org.apache.commons.io.FileUtils
 
 import scala.io.{Codec, Source}
 import scala.util.Try
@@ -21,7 +18,7 @@ object FileHelper {
     try {
       sourceOpt.map(_.getLines().toList)
     } catch {
-      case NonFatal(e) =>
+      case NonFatal(_) =>
         None
     } finally {
       sourceOpt.foreach(_.close())
@@ -35,14 +32,4 @@ object FileHelper {
     }
   }
 
-  def withRandomDirectory[A](block: File => A): A = {
-    val randomDir = Files.createTempDirectory("codacy-").toFile
-    val result = block(randomDir)
-    FileUtils.deleteQuietly(randomDir)
-    result
-  }
-
-  private def randomFile(extension: String = "conf"): File = {
-    Files.createTempFile("codacy-", s".$extension").toFile
-  }
 }

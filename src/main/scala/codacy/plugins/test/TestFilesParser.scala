@@ -101,7 +101,7 @@ class TestFilesParser(filesDir: File) {
                     } yield TestFileResult(patternId, line, severity)
                   } match {
                     case Success(result) => result
-                    case Failure(e) =>
+                    case Failure(_) =>
                       Printer.red(s"${file.getName}: Failing to parse Issue $value")
                       System.exit(2)
                       None

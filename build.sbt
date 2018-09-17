@@ -6,6 +6,8 @@ name := """codacy-plugins-test"""
 val scalaBinaryVersionNumber = "2.12"
 scalaVersion := s"$scalaBinaryVersionNumber.6"
 
+scalacOptions ++= Common.compilerFlags
+
 libraryDependencies ++= Seq(
   Dependencies.scalaTest,
   Dependencies.analysisCore,
