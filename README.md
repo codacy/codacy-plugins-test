@@ -45,6 +45,28 @@ function test() {
 }
 ```
 
+Instead of commenting in the line before the error, you can alternatively 
+specify the line of the warning with this syntax:
+
+```
+<LANGUAGE_COMMENT>#Issue: {"severity": "<ERROR_LEVEL>", "line": <LINE_NUMBER_WITH_ISSUE>, "patternId": "PATTERN_ID"}
+```
+
+**Example:**
+
+```javascript
+//#Patterns: design_tag_todo
+//#Issue: {"severity": "Info", "line": 3, "patternId": "design_tag_todo"}
+
+var people={};
+//TODO: remove empty for
+for (var i = 0, person; person = people[i]; i++) {
+
+}
+
+var variable;
+```
+
 ## Usage
 
 > JsonTests
