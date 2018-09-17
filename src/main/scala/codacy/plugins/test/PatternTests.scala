@@ -1,29 +1,36 @@
 package codacy.plugins.test
 
 import java.io.File
-import java.nio.file.Path
+import java.nio.file.{Path, Paths}
+import java.util.concurrent.ForkJoinPool
 
-import codacy.plugins.docker.{DockerPlugin, PluginConfiguration, PluginRequest}
-import codacy.plugins.traits.IResultsPlugin
 import codacy.utils.Printer
+import com.codacy.analysis.core
+import com.codacy.analysis.core.model.{CodacyCfg, FullLocation, LineLocation, Pattern}
+import com.codacy.analysis.core.tools.Tool
+import com.codacy.plugins.api._
+import com.codacy.plugins.results.traits.DockerToolDocumentation
 
 import scala.collection.parallel.ForkJoinTaskSupport
-import scala.concurrent.forkjoin.ForkJoinPool
 import scala.util.Try
-
-case class TestPattern(toolName: String, plugin: IResultsPlugin, patternId: String)
 
 object PatternTests extends ITest with CustomMatchers {
 
   val opt = "pattern"
 
-  def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageName: String, optArgs: Seq[String]): Boolean = {
+  def run(testSources: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     Printer.green(s"Running PatternsTests:")
+
+    val languages = findLanguages(testSources, dockerImage)
+    val dockerTool = createDockerTool(languages, dockerImage)
+    val toolDocumentation = new DockerToolDocumentation(dockerTool)
+    val tools = languages.map(new core.tools.Tool(dockerTool, _))
+
     testSources.map { sourcePath =>
       val testFiles = new TestFilesParser(sourcePath.toFile).getTestFiles
 
       val filteredTestFiles = optArgs.headOption.fold(testFiles) {
-        case fileNameToTest => testFiles.filter(testFiles => testFiles.file.getName.contains(fileNameToTest))
+        fileNameToTest => testFiles.filter(testFiles => testFiles.file.getName.contains(fileNameToTest))
       }
 
       val testFilesPar = sys.props.get("codacy.tests.threads").flatMap(nrt => Try(nrt.toInt).toOption)
@@ -34,34 +41,43 @@ object PatternTests extends ITest with CustomMatchers {
         }.getOrElse(filteredTestFiles)
 
       testFilesPar.map { testFile =>
-        analyseFile(sourcePath.toFile, testFile, plugin)
+        tools
+          .filter(_.languageToRun.name.equalsIgnoreCase(testFile.language.toString))
+          .exists(analyseFile(toolDocumentation.spec, sourcePath.toFile, testFile, _))
       }.forall(identity)
     }.forall(identity)
   }
 
-  private def analyseFile(rootDirectory: File, testFile: PatternTestFile, plugin: DockerPlugin): Boolean = {
+  private def analyseFile(spec: Option[results.Tool.Specification], rootDirectory: File, testFile: PatternTestFile, tool: Tool): Boolean = {
 
-    val testFilePath = testFile.file.getAbsolutePath
-    val filename = toRelativePath(rootDirectory.getAbsolutePath, testFilePath)
+    val filename = toRelativePath(rootDirectory.getAbsolutePath, testFile.file.getAbsolutePath)
 
     Printer.green(s"- $filename should have ${testFile.matches.length} matches with patterns: " +
       testFile.enabledPatterns.map(_.name).mkString(", "))
 
-    val configuration = DockerHelpers.toPatterns(testFile.enabledPatterns)
-
     val testFiles = Seq(testFile.file)
-    val testFilesAbsolutePaths = testFiles.map(_.getAbsolutePath)
+    val testFilesAbsolutePaths = testFiles.map(f => Paths.get(f.getAbsolutePath))
 
-    val filteredResults = {
-      val pluginResult = plugin.run(PluginRequest(rootDirectory.getAbsolutePath, testFilesAbsolutePaths, PluginConfiguration(configuration)))
-      filterResults(rootDirectory.toPath, testFiles, configuration, pluginResult.results)
-    }
+    val patterns: Set[Pattern] = testFile.enabledPatterns.map(p => core.model.Pattern(p.name,
+      p.parameters.fold(Set.empty[core.model.Parameter])(_.map {
+        case (k, v) => core.model.Parameter(k, v.toString)
+      }(collection.breakOut))))(collection.breakOut)
 
-    val matches = filteredResults.map(r => TestFileResult(r.patternIdentifier, r.line, r.level))
+    val codacyCfg = CodacyCfg(patterns)
 
-    val comparison = beEqualTo(testFile.matches).apply(matches)
+    val result = tool.run(better.files.File(rootDirectory.getAbsolutePath), testFilesAbsolutePaths.to[Set], codacyCfg)
 
-    Printer.green(s"  + ${matches.length} matches found in lines: ${matches.map(_.line).sorted.mkString(", ")}")
+    val filteredResults = filterResults(spec, rootDirectory.toPath, testFiles, patterns.to[Seq], result)
+
+    val matches = filteredResults.map(r => TestFileResult(r.patternId.value,
+      r.location match {
+        case fl: FullLocation => fl.line
+        case l: LineLocation => l.line
+      }, r.level))
+
+    val comparison = beEqualTo(testFile.matches).apply(matches.to[Seq])
+
+    Printer.green(s"  + ${matches.size} matches found in lines: ${matches.map(_.line).to[Seq].sorted.mkString(", ")}")
 
     if (!comparison.matches) Printer.red(comparison.rawFailureMessage)
     else Printer.green(comparison.rawNegatedFailureMessage)
@@ -72,5 +88,4 @@ object PatternTests extends ITest with CustomMatchers {
   private def toRelativePath(rootPath: String, absolutePath: String) = {
     absolutePath.stripPrefix(rootPath).stripPrefix(File.separator)
   }
-
 }

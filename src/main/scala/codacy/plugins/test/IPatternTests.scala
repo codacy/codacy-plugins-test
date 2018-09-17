@@ -1,6 +1,6 @@
 package codacy.plugins.test
 
-import codacy.docker.api.Result
+import com.codacy.plugins.api.results.Result
 import org.scalatest.matchers.{MatchResult, Matcher}
 
 import scala.util.Properties

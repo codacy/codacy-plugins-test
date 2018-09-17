@@ -1,12 +1,15 @@
-resolvers += Resolver.sonatypeRepo("releases")
+resolvers ++= Seq(Resolver.sonatypeRepo("releases"),
+  "Codacy Public Mvn bucket" at "https://s3-eu-west-1.amazonaws.com/public.mvn.codacy.com")
 
 name := """codacy-plugins-test"""
 
-scalaVersion := "2.11.7"
+val scalaBinaryVersionNumber = "2.12"
+scalaVersion := s"$scalaBinaryVersionNumber.6"
+
+scalacOptions ++= Common.compilerFlags
 
 libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % "2.2.5",
-  "com.typesafe.play" %% "play-json" % "2.4.8",
-  "com.codacy" %% "codacy-plugins-api" % "0.1.2",
-  "commons-io" % "commons-io" % "2.4"
+  Dependencies.scalaTest,
+  Dependencies.analysisCore,
+  Dependencies.commonsIO
 )

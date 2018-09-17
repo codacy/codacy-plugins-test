@@ -45,6 +45,28 @@ function test() {
 }
 ```
 
+Instead of commenting in the line before the error, you can alternatively 
+specify the line of the warning with this syntax:
+
+```
+<LANGUAGE_COMMENT>#Issue: {"severity": "<ERROR_LEVEL>", "line": <LINE_NUMBER_WITH_ISSUE>, "patternId": "PATTERN_ID"}
+```
+
+**Example:**
+
+```javascript
+//#Patterns: design_tag_todo
+//#Issue: {"severity": "Info", "line": 3, "patternId": "design_tag_todo"}
+
+var people={};
+//TODO: remove empty for
+for (var i = 0, person; person = people[i]; i++) {
+
+}
+
+var variable;
+```
+
 ## Usage
 
 > JsonTests
@@ -52,7 +74,7 @@ function test() {
 Checks if the patterns definitions are in the correct format
 
 ```sh
-sbt "run-main codacy.plugins.DockerTest json codacy/jshint:1.0.3"
+sbt "runMain codacy.plugins.DockerTest json codacy/jshint:1.0.3"
 ```
 
 **Options:**
@@ -64,7 +86,7 @@ sbt "run-main codacy.plugins.DockerTest json codacy/jshint:1.0.3"
 Checks if all the patterns have an occurrence in the test files
 
 ```sh
-sbt "run-main codacy.plugins.DockerTest plugin codacy/jshint:1.0.3"
+sbt "runMain codacy.plugins.DockerTest plugin codacy/jshint:1.0.3"
 ```
 
 > PatternTests
@@ -72,7 +94,7 @@ sbt "run-main codacy.plugins.DockerTest plugin codacy/jshint:1.0.3"
 Check if all the patterns defined in the test files occur in the specified line
 
 ```sh
-sbt "run-main codacy.plugins.DockerTest pattern codacy/jshint:1.0.3"
+sbt "runMain codacy.plugins.DockerTest pattern codacy/jshint:1.0.3"
 sbt test
 ```
 
@@ -80,17 +102,20 @@ sbt test
 
 * `codacy.tests.threads` - number of parallel threads to run the tests
 
+* `codacy.tests.languages` - languages supported by the tool. If this option isn't provided, the languages
+will be inferred from the test files. Example: `-Dcodacy.tests.languages=ruby,java,javascript`
+
 Alternatively, you can run a specific test file:
 
 ```sh
-sbt "run-main codacy.plugins.DockerTest pattern codacy/jshint:1.0.3 no-curly-brackets"
+sbt "runMain codacy.plugins.DockerTest pattern codacy/jshint:1.0.3 no-curly-brackets"
 sbt test
 ```
 
 > All
 
 ```sh
-sbt "run-main codacy.plugins.DockerTest all codacy/jshint:1.0.3"
+sbt "runMain codacy.plugins.DockerTest all codacy/jshint:1.0.3"
 ```
 
 > Debug

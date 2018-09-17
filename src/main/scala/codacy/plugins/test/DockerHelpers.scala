@@ -2,36 +2,16 @@ package codacy.plugins.test
 
 import java.nio.file.{Files, Path}
 
-import codacy.TryExtension
-import codacy.docker.api._
-import codacy.plugins.docker.Pattern
-import play.api.libs.json.Json
-import plugins._
-
 import _root_.scala.sys.process._
-import scala.util.Try
 
 object DockerHelpers {
 
   val dockerRunCmd = List("docker", "run", "--net=none", "--privileged=false", "--user=docker")
 
-  def toPatterns(toolSpec: Tool.Specification): Seq[Pattern] = toolSpec.patterns.map { case patternSpec =>
-    val parameters = patternSpec.parameters.map(_.map { param =>
-      (param.name.value, Json.toJson(param.default))
-    }.toMap)
-
-    Pattern(patternSpec.patternId.value, parameters)
-  }.toSeq
-
-  def toPatterns(patterns: Seq[PatternSimple]): Seq[Pattern] = patterns.map {
-    case pattern =>
-      Pattern(pattern.name, pattern.parameters)
-  }
-
-  def testFoldersInDocker(dockerImageName: DockerImageName): Seq[Path] = {
+  def testFoldersInDocker(dockerImage: DockerImage): Seq[Path] = {
     val sourceDir = Files.createTempDirectory("docker-test-folders")
 
-    val dockerStartedCmd = dockerRunCmd ++ List("-d", "--entrypoint=sh", dockerImageName.value)
+    val dockerStartedCmd = dockerRunCmd ++ List("-d", "--entrypoint=sh", dockerImage.toString)
     val output = dockerStartedCmd.lineStream_!
 
     val containerId = output.head
@@ -50,33 +30,6 @@ object DockerHelpers {
       case dir if dir.exists() =>
         dir.toPath
     }
-  }
-
-  def readRawDoc(dockerImageName: DockerImageName, name: String): Option[String] = {
-    val cmd = dockerRunCmd ++ List("--rm=true", "--entrypoint=cat", dockerImageName.value, s"/docs/$name")
-    Try(cmd.lineStream.toList).map { case rawConfigString =>
-      rawConfigString.mkString(System.lineSeparator())
-    }.toOptionWithLog()
-  }
-
-  def withDocsDirectory[T](dockerImageName: String)(block: Path => T): T = {
-    val sourceDir = Files.createTempDirectory("docker-docs-folders")
-    val dockerStartedCmd = dockerRunCmd ++ List("-d", "--entrypoint=sh", dockerImageName)
-
-    for {
-      output <- Try(dockerStartedCmd.lineStream_!.toList).toOption
-      containerId <- output.headOption
-      // Copy files from running container
-      _ <- Try(List("docker", "cp", s"$containerId:/docs", sourceDir.toString).lineStream_!.toList).toOption
-      // Remove container
-      _ <- Try(List("docker", "rm", "-f", containerId).lineStream_!.toList).toOption
-    } yield ()
-
-    val result = block(sourceDir.resolve("docs"))
-
-    Try(List("rm", "-rf", sourceDir.toString).lineStream_!.toList)
-
-    result
   }
 
 }

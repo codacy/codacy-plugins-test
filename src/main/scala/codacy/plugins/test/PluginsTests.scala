@@ -1,34 +1,48 @@
 package codacy.plugins.test
 
-import java.nio.file.Path
+import java.nio.file.{Path, Paths}
 
-import codacy.plugins.docker.{DockerPlugin, PluginConfiguration, PluginRequest}
 import codacy.utils.{FileHelper, Printer}
+import com.codacy.analysis.core
+import com.codacy.analysis.core.model.{CodacyCfg, Issue, Pattern}
+import com.codacy.plugins.results.traits.DockerToolDocumentation
 
 object PluginsTests extends ITest {
 
   val opt = "plugin"
 
-  def run(plugin: DockerPlugin, testSources: Seq[Path], dockerImageName: String, optArgs: Seq[String]): Boolean = {
+  def run(testSources: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     Printer.green("Running PluginsTests:")
-    plugin.spec.forall { spec =>
+
+    val languages = findLanguages(testSources, dockerImage)
+    val dockerTool = createDockerTool(languages, dockerImage)
+    val specOpt = new DockerToolDocumentation(dockerTool).spec
+
+    specOpt.forall { spec =>
       Printer.green(s"  + ${spec.name} should find results for all patterns")
 
-      val patterns = DockerHelpers.toPatterns(spec)
+      val patterns: Set[Pattern] = spec.patterns.map(p => core.model.Pattern(p.patternId.value,
+        p.parameters.fold(Set.empty[core.model.Parameter])(_.map {
+          parameterSpec => core.model.Parameter(parameterSpec.name.toString(), parameterSpec.default.toString)
+        }(collection.breakOut))))(collection.breakOut)
+      val codacyCfg = CodacyCfg(patterns)
 
-      val resultsUUIDS = testSources.flatMap { sourcePath =>
+      val tools = languages.map(new core.tools.Tool(dockerTool, _))
+
+      val resultsUUIDS: Set[String] = testSources.flatMap { sourcePath =>
         val files = FileHelper.listFiles(sourcePath.toFile)
-        val fileAbsolutePaths = files.map(_.getAbsolutePath)
+        val fileAbsolutePaths: Set[Path] = files.map(file => Paths.get(file.getAbsolutePath))(collection.breakOut)
 
-        val filteredResults = {
-          val pluginResult = plugin.run(PluginRequest(sourcePath.toAbsolutePath.toString, fileAbsolutePaths, PluginConfiguration(patterns)))
-          filterResults(sourcePath, files, patterns, pluginResult.results)
-        }
+        val filteredResults: Set[Issue] = tools.flatMap {
+          tool =>
+            val results = tool.run(better.files.File(sourcePath.toAbsolutePath), fileAbsolutePaths, codacyCfg)
+            filterResults(None, sourcePath, files, patterns.to[Seq], results)
+        }(collection.breakOut)
 
-        filteredResults.map(_.patternIdentifier).distinct
-      }
+        filteredResults.map(_.patternId.value)
+      }(collection.breakOut)
 
-      val missingPatterns = patterns.map(_.patternIdentifier).diff(resultsUUIDS)
+      val missingPatterns = patterns.map(_.id).diff(resultsUUIDS)
 
       if (missingPatterns.nonEmpty) {
         Printer.red(
@@ -44,5 +58,4 @@ object PluginsTests extends ITest {
       }
     }
   }
-
 }

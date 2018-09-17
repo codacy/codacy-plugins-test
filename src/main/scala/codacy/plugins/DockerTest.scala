@@ -2,11 +2,9 @@ package codacy.plugins
 
 import java.nio.file.Path
 
-import codacy.plugins.docker.DockerPlugin
 import codacy.plugins.test._
 import codacy.utils.Printer
 import org.apache.commons.io.FileUtils
-import plugins.DockerImageName
 
 case class Sources(mainSourcePath: Path, directoryPaths: Seq[Path])
 
@@ -15,50 +13,50 @@ object DockerTest {
   private lazy val config = Map(
     "all" -> possibleTests,
     "allWithUdas" -> possibleTestsWithUda
-  ) ++ possibleTestsWithUda.map { case test =>
+  ) ++ possibleTestsWithUda.map { test =>
     test.opt -> Seq(test)
   }
   private lazy val possibleTests = Seq(JsonTests, PluginsTests, PatternTests)
   private lazy val possibleTestsWithUda = SourceTests +: possibleTests
   private lazy val possibleTestNames = config.keySet
 
-  def main(args: Array[String]) {
+  def main(args: Array[String]): Unit = {
     val typeOfTests = args.headOption
-    val dockerImageName = args.drop(1).headOption
+    val dockerImageNameAndVersionOpt = args.drop(1).headOption
     val optArgs = args.drop(2)
 
-    typeOfTests.collect { case typeOfTest if possibleTestNames.contains(typeOfTest) =>
-      dockerImageName.map { dockerName =>
-        val plugin = new DockerPlugin(DockerImageName(dockerName))
-        val testSources = DockerHelpers.testFoldersInDocker(plugin.dockerImageName)
+    typeOfTests.fold(Printer.red(s"[Missing] test type -> [${possibleTestNames.mkString(", ")}]")) {
+      case typeOfTest if possibleTestNames.contains(typeOfTest) =>
+        dockerImageNameAndVersionOpt.fold(Printer.red("[Missing] docker ref -> dockerName:dockerVersion")) {
+          dockerImageNameAndVersion =>
 
-        val result = possibleTestsWithUda
-          .map(test => run(plugin, testSources, test, typeOfTest, dockerName, optArgs))
-          .forall(identity)
+            val dockerImage = parseDockerImage(dockerImageNameAndVersion)
 
-        testSources.foreach(dir => FileUtils.deleteQuietly(dir.toFile))
+            val testSources = DockerHelpers.testFoldersInDocker(dockerImage)
 
-        if (!result) {
-          Printer.red("[Failure] Some tests failed!")
-          System.exit(1)
+            val allTestsPassed = possibleTestsWithUda
+              .map(test => run(testSources, test, typeOfTest, dockerImage, optArgs))
+              .forall(identity)
+
+            testSources.foreach(dir => FileUtils.deleteQuietly(dir.toFile))
+
+            if (!allTestsPassed) {
+              Printer.red("[Failure] Some tests failed!")
+              System.exit(1)
+            }
+
+            Printer.green("[Success] All tests passed!")
         }
-
-        Printer.green("[Success] All tests passed!")
-        result
-      }.orElse {
-        Printer.red("[Missing] docker ref -> dockerName:dockerVersion")
-        None
-      }
-    }.orElse {
-      Printer.red(s"[Missing] test type -> [${possibleTestNames.mkString(", ")}]")
-      None
+      case _ =>
     }
   }
 
-  private def run(plugin: DockerPlugin, testSources: Seq[Path], test: ITest, testRequest: String, dockerImageName: String, optArgs: Seq[String]): Boolean = {
+  private def run(testSources: Seq[Path], test: ITest, testRequest: String, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
+
     config.get(testRequest) match {
       case Some(ts) if ts.contains(test) =>
-        test.run(plugin, testSources, dockerImageName, optArgs) match {
+
+        test.run(testSources, dockerImage, optArgs) match {
           case true =>
             Printer.green(s"[Success] ${test.getClass.getSimpleName}")
             true
@@ -70,5 +68,14 @@ object DockerTest {
         // this test was not selected
         true
     }
+  }
+
+  private def parseDockerImage(dockerImageNameAndVersion: String): DockerImage = {
+    val (dockerImageName, dockerVersion) = dockerImageNameAndVersion.split(":") match {
+      case Array(name, version) => (name, version)
+      case Array(name) => (name, "latest")
+      case _ => throw new RuntimeException("Invalid Docker Name.")
+    }
+    DockerImage(dockerImageName, dockerVersion)
   }
 }
