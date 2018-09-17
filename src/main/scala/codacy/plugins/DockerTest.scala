@@ -4,9 +4,7 @@ import java.nio.file.Path
 
 import codacy.plugins.test._
 import codacy.utils.Printer
-import com.codacy.plugins.api.results.Tool
 import org.apache.commons.io.FileUtils
-import play.api.libs.json.{Format, Json}
 
 case class Sources(mainSourcePath: Path, directoryPaths: Seq[Path])
 
@@ -60,15 +58,13 @@ object DockerTest {
     config.get(testRequest) match {
       case Some(ts) if ts.contains(test) =>
 
-        val spec: Option[Tool.Specification] = readJsonDoc[Tool.Specification](dockerImageNameAndVersion, "patterns.json")
-
         val (dockerImageName, dockerVersion) = dockerImageNameAndVersion.split(":") match {
           case Array(name, version) => (name, version)
           case Array(name) => (name, "latest")
           case _ => throw new RuntimeException("Invalid Docker Name.")
         }
 
-        test.run(spec, testSources, DockerImage(dockerImageName, dockerVersion), optArgs) match {
+        test.run(testSources, DockerImage(dockerImageName, dockerVersion), optArgs) match {
           case true =>
             Printer.green(s"[Success] ${test.getClass.getSimpleName}")
             true
@@ -82,8 +78,5 @@ object DockerTest {
     }
   }
 
-  private def readJsonDoc[T](dockerImageName: String, name: String)(implicit docFmt: Format[T]): Option[T] = {
-    DockerHelpers.readRawDoc(dockerImageName, name).flatMap(Json.parse(_).asOpt[T])
-  }
 
 }

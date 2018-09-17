@@ -3,11 +3,13 @@ package codacy.plugins.test
 import java.io.File
 import java.nio.file.Path
 
-import codacy.plugins.docker.Pattern
 import codacy.utils.Printer
-import com.codacy.analysis.core.model.{FileError, Issue, ToolResult}
+import com.codacy.analysis.core
+import com.codacy.analysis.core.model.{FileError, Issue, Pattern, ToolResult}
 import com.codacy.plugins.api._
-import com.codacy.plugins.api.results.Tool
+import com.codacy.plugins.api.languages.{Language, Languages}
+import com.codacy.plugins.results.traits.DockerTool
+import com.codacy.plugins.utils.PluginHelper
 
 import scala.util.{Failure, Success, Try}
 
@@ -20,7 +22,36 @@ final case class DockerImage(name: String, version: String) {
 trait ITest {
   val opt: String
 
-  def run(spec: Option[Tool.Specification], testSources: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean
+  def run(testSources: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean
+
+
+  protected def findLanguages(testSources: Seq[Path], dockerImage: DockerImage): Set[Language] = {
+    sys.props.get("codacy.tests.languages").map(_.split(",").flatMap(Languages.fromName).to[Set])
+      .orElse {
+        (core.tools.Tool.availableTools ++ PluginHelper.dockerEnterprisePlugins).collectFirst {
+          case tool if tool.dockerName == dockerImage.name && tool.dockerTag == dockerImage.version =>
+            tool.languages
+        }
+      }.getOrElse {
+      (for {
+        sourcePath <- testSources
+        testFile <- new TestFilesParser(sourcePath.toFile).getTestFiles
+        language <- Languages.fromName(testFile.language.toString)
+      } yield language) (collection.breakOut)
+    }
+  }
+
+  protected def createDockerTool(languages: Set[Language], dockerImage: DockerImage): DockerTool = {
+    val dockerImageName = dockerImage.name
+    val dockerImageVersion = dockerImage.version
+
+    new DockerTool(dockerName = dockerImageName, true, languages,
+      dockerImageName, dockerImageName, dockerImageName, "", "", "", needsCompilation = false,
+      needsPatternsToRun = true, hasUIConfiguration = true) {
+      override lazy val toolVersion: Option[String] = Some(dockerImageVersion)
+      override val dockerTag: String = dockerImageVersion
+    }
+  }
 
   protected def filterResults(spec: Option[results.Tool.Specification], sourcePath: Path, files: Seq[File],
                               patterns: Seq[Pattern], toolResults: Try[Set[ToolResult]]): Set[Issue] = {
@@ -56,9 +87,8 @@ trait ITest {
   }
 
   private def filterResultsFromPatterns(issuesResults: Set[Issue], patterns: Seq[Pattern]) = {
-    val requestedPatternIds = patterns.map(_.patternIdentifier)
     val (filteredPatternResults, otherPatternsResults) = issuesResults.partition { result =>
-      requestedPatternIds.contains(result.patternId.value)
+      patterns.map(_.id).contains(result.patternId.value)
     }
 
     if (otherPatternsResults.nonEmpty) {
