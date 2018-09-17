@@ -41,7 +41,9 @@ object PatternTests extends ITest with CustomMatchers {
         }.getOrElse(filteredTestFiles)
 
       testFilesPar.map { testFile =>
-        tools.exists(analyseFile(toolDocumentation.spec, sourcePath.toFile, testFile, _))
+        tools
+          .filter(_.languageToRun.name.equalsIgnoreCase(testFile.language.toString))
+          .exists(analyseFile(toolDocumentation.spec, sourcePath.toFile, testFile, _))
       }.forall(identity)
     }.forall(identity)
   }
