@@ -26,27 +26,29 @@ trait ITest {
 
 
   protected def findLanguages(testSources: Seq[Path], dockerImage: DockerImage): Set[Language] = {
-    sys.props.get("codacy.tests.languages").map(_.split(",").flatMap(Languages.fromName).to[Set])
-      .orElse {
-        (core.tools.Tool.availableTools ++ PluginHelper.dockerEnterprisePlugins).collectFirst {
-          case tool if tool.dockerName == dockerImage.name && tool.dockerTag == dockerImage.version =>
-            tool.languages
-        }
-      }.getOrElse {
-      (for {
-        sourcePath <- testSources
-        testFile <- new TestFilesParser(sourcePath.toFile).getTestFiles
-        language <- Languages.fromName(testFile.language.toString)
-      } yield language) (collection.breakOut)
+    val languagesFromProperties = sys.props.get("codacy.tests.languages").map(_.split(",").flatMap(Languages.fromName).to[Set])
+
+    lazy val languagesFromTool = (core.tools.Tool.availableTools ++ PluginHelper.dockerEnterprisePlugins).collectFirst {
+      case tool if tool.dockerName == dockerImage.name && tool.dockerTag == dockerImage.version =>
+        tool.languages
     }
+
+    lazy val languagesFromFiles: Set[Language] = (for {
+      sourcePath <- testSources
+      testFile <- new TestFilesParser(sourcePath.toFile).getTestFiles
+      language <- Languages.fromName(testFile.language.toString)
+    } yield language) (collection.breakOut)
+
+    languagesFromProperties.orElse(languagesFromTool).getOrElse(languagesFromFiles)
   }
 
   protected def createDockerTool(languages: Set[Language], dockerImage: DockerImage): DockerTool = {
     val dockerImageName = dockerImage.name
     val dockerImageVersion = dockerImage.version
 
-    new DockerTool(dockerName = dockerImageName, true, languages,
-      dockerImageName, dockerImageName, dockerImageName, "", "", "", needsCompilation = false,
+    new DockerTool(dockerName = dockerImageName, isDefault = true, languages = languages,
+      name = dockerImageName, shortName = dockerImageName, uuid = dockerImageName,
+      documentationUrl = "", sourceCodeUrl = "", prefix = "", needsCompilation = false,
       needsPatternsToRun = true, hasUIConfiguration = true) {
       override lazy val toolVersion: Option[String] = Some(dockerImageVersion)
       override val dockerTag: String = dockerImageVersion

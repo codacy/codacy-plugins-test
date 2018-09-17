@@ -30,15 +30,17 @@ object DockerTest {
         dockerImageNameAndVersionOpt.fold(Printer.red("[Missing] docker ref -> dockerName:dockerVersion")) {
           dockerImageNameAndVersion =>
 
-            val testSources = DockerHelpers.testFoldersInDocker(dockerImageNameAndVersion)
+            val dockerImage = parseDockerImage(dockerImageNameAndVersion)
 
-            val result = possibleTestsWithUda
-              .map(test => run(testSources, test, typeOfTest, dockerImageNameAndVersion, optArgs))
+            val testSources = DockerHelpers.testFoldersInDocker(dockerImage)
+
+            val allTestsPassed = possibleTestsWithUda
+              .map(test => run(testSources, test, typeOfTest, dockerImage, optArgs))
               .forall(identity)
 
             testSources.foreach(dir => FileUtils.deleteQuietly(dir.toFile))
 
-            if (!result) {
+            if (!allTestsPassed) {
               Printer.red("[Failure] Some tests failed!")
               System.exit(1)
             }
@@ -49,18 +51,12 @@ object DockerTest {
     }
   }
 
-  private def run(testSources: Seq[Path], test: ITest, testRequest: String, dockerImageNameAndVersion: String, optArgs: Seq[String]): Boolean = {
+  private def run(testSources: Seq[Path], test: ITest, testRequest: String, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
 
     config.get(testRequest) match {
       case Some(ts) if ts.contains(test) =>
 
-        val (dockerImageName, dockerVersion) = dockerImageNameAndVersion.split(":") match {
-          case Array(name, version) => (name, version)
-          case Array(name) => (name, "latest")
-          case _ => throw new RuntimeException("Invalid Docker Name.")
-        }
-
-        test.run(testSources, DockerImage(dockerImageName, dockerVersion), optArgs) match {
+        test.run(testSources, dockerImage, optArgs) match {
           case true =>
             Printer.green(s"[Success] ${test.getClass.getSimpleName}")
             true
@@ -74,5 +70,12 @@ object DockerTest {
     }
   }
 
-
+  private def parseDockerImage(dockerImageNameAndVersion: String): DockerImage = {
+    val (dockerImageName, dockerVersion) = dockerImageNameAndVersion.split(":") match {
+      case Array(name, version) => (name, version)
+      case Array(name) => (name, "latest")
+      case _ => throw new RuntimeException("Invalid Docker Name.")
+    }
+    DockerImage(dockerImageName, dockerVersion)
+  }
 }

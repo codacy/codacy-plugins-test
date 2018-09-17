@@ -8,10 +8,10 @@ object DockerHelpers {
 
   val dockerRunCmd = List("docker", "run", "--net=none", "--privileged=false", "--user=docker")
 
-  def testFoldersInDocker(dockerImageName: String): Seq[Path] = {
+  def testFoldersInDocker(dockerImage: DockerImage): Seq[Path] = {
     val sourceDir = Files.createTempDirectory("docker-test-folders")
 
-    val dockerStartedCmd = dockerRunCmd ++ List("-d", "--entrypoint=sh", dockerImageName)
+    val dockerStartedCmd = dockerRunCmd ++ List("-d", "--entrypoint=sh", dockerImage.toString)
     val output = dockerStartedCmd.lineStream_!
 
     val containerId = output.head
