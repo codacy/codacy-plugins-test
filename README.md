@@ -45,6 +45,26 @@ function test() {
 }
 ```
 
+You can also look for multiple patterns in the same file, just separate them
+with a comma:
+
+**Example:**
+
+```javascript
+//#Patterns: big, boss
+var people={};
+//#Warn: big
+for (var i = 0, person; person = people[i]; i++) {
+
+}
+
+var variable;
+function test() {
+//#Warn: boss
+    return variable = 'test';
+}
+```
+
 Instead of commenting in the line before the error, you can alternatively 
 specify the line of the warning with this syntax:
 
