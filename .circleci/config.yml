@@ -68,7 +68,6 @@ jobs:
         - ~/.ivy2
         - ~/.sbt
         key: sbt-ivy2-dependencies-1.0.0-{{ checksum "/tmp/dependencies.cache.tmp" }}
-
   compile:
     <<: *default_java_job
     steps:
@@ -84,6 +83,16 @@ jobs:
         - ~/workdir/target
         - ~/workdir/project/target
         key: sbt-build-1.0.0-{{ .Branch }}-{{ .Revision }}
+  lint:
+    <<: *default_java_job
+    steps:
+    - *restore_source_code
+    - *setup_dependencies_key
+    - *restore_dependencies
+    - *restore_build
+    - run:
+        name: Lint
+        command: sbt scalafmtCheck
 
 workflows:
   version: 2
@@ -97,3 +106,6 @@ workflows:
         requires:
         - checkout_code
         - sbt_dependencies
+    - lint:
+        requires:
+        - compile
