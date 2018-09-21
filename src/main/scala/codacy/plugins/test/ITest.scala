@@ -24,9 +24,9 @@ trait ITest {
 
   def run(testSources: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean
 
-
   protected def findLanguages(testSources: Seq[Path], dockerImage: DockerImage): Set[Language] = {
-    val languagesFromProperties = sys.props.get("codacy.tests.languages").map(_.split(",").flatMap(Languages.fromName).to[Set])
+    val languagesFromProperties =
+      sys.props.get("codacy.tests.languages").map(_.split(",").flatMap(Languages.fromName).to[Set])
 
     lazy val languagesFromTool = (core.tools.Tool.availableTools ++ PluginHelper.dockerEnterprisePlugins).collectFirst {
       case tool if tool.dockerName == dockerImage.name && tool.dockerTag == dockerImage.version =>
@@ -37,7 +37,7 @@ trait ITest {
       sourcePath <- testSources
       testFile <- new TestFilesParser(sourcePath.toFile).getTestFiles
       language <- Languages.fromName(testFile.language.toString)
-    } yield language) (collection.breakOut)
+    } yield language)(collection.breakOut)
 
     languagesFromProperties.orElse(languagesFromTool).getOrElse(languagesFromFiles)
   }
@@ -46,18 +46,29 @@ trait ITest {
     val dockerImageName = dockerImage.name
     val dockerImageVersion = dockerImage.version
 
-    new DockerTool(dockerName = dockerImageName, isDefault = true, languages = languages,
-      name = dockerImageName, shortName = dockerImageName, uuid = dockerImageName,
-      documentationUrl = "", sourceCodeUrl = "", prefix = "", needsCompilation = false,
-      needsPatternsToRun = true, hasUIConfiguration = true) {
+    new DockerTool(dockerName = dockerImageName,
+                   isDefault = true,
+                   languages = languages,
+                   name = dockerImageName,
+                   shortName = dockerImageName,
+                   uuid = dockerImageName,
+                   documentationUrl = "",
+                   sourceCodeUrl = "",
+                   prefix = "",
+                   needsCompilation = false,
+                   needsPatternsToRun = true,
+                   hasUIConfiguration = true) {
       override lazy val toolVersion: Option[String] = Some(dockerImageVersion)
       override val dockerTag: String = dockerImageVersion
       override val dockerImageName: String = dockerImageFor(Option(dockerImageVersion))
     }
   }
 
-  protected def filterResults(spec: Option[results.Tool.Specification], sourcePath: Path, files: Seq[File],
-                              patterns: Seq[Pattern], toolResults: Try[Set[ToolResult]]): Set[Issue] = {
+  protected def filterResults(spec: Option[results.Tool.Specification],
+                              sourcePath: Path,
+                              files: Seq[File],
+                              patterns: Seq[Pattern],
+                              toolResults: Try[Set[ToolResult]]): Set[Issue] = {
     toolResults match {
       case Failure(e) =>
         Printer.red(e.getMessage)
@@ -74,18 +85,18 @@ trait ITest {
 
         (filterFileErrors _)
           .andThen(filterResultsFromSpecPatterns(_, spec))
-          .andThen(issues =>
-            filterResultsFromFiles(issues, files, sourcePath)
-              .intersect(filterResultsFromPatterns(issues, patterns))
+          .andThen(
+            issues =>
+              filterResultsFromFiles(issues, files, sourcePath)
+                .intersect(filterResultsFromPatterns(issues, patterns))
           )(results)
     }
   }
 
   private def filterResultsFromSpecPatterns(issuesResults: Set[Issue], specOpt: Option[results.Tool.Specification]) = {
-    specOpt.fold(issuesResults) {
-      spec =>
-        val specPatternIds: Set[results.Pattern.Id] = spec.patterns.map(_.patternId)
-        issuesResults.filter(issue => specPatternIds.contains(issue.patternId))
+    specOpt.fold(issuesResults) { spec =>
+      val specPatternIds: Set[results.Pattern.Id] = spec.patterns.map(_.patternId)
+      issuesResults.filter(issue => specPatternIds.contains(issue.patternId))
     }
   }
 
@@ -96,8 +107,7 @@ trait ITest {
 
     if (otherPatternsResults.nonEmpty) {
       Printer.red(s"Some results returned were not requested by the test and were discarded!")
-      Printer.white(
-        s"""
+      Printer.white(s"""
            |Extra results returned:
            |* ${otherPatternsResults.map(_.patternId.value).mkString(", ")}
            |
@@ -117,8 +127,7 @@ trait ITest {
 
     if (otherFilesResults.nonEmpty) {
       Printer.red(s"Some results are not in the files requested and were discarded!")
-      Printer.white(
-        s"""
+      Printer.white(s"""
            |Extra files:
            |  * ${otherFilesResults.map(_.filename).mkString(", ")}
            |
@@ -131,13 +140,14 @@ trait ITest {
   }
 
   private def filterFileErrors(results: Set[ToolResult]) = {
-    val (issuesResults: Set[Issue], fileErrorsResults: Set[FileError]) = results.foldLeft((Set.empty[Issue], Set.empty[FileError])) {
-      case ((issues, fileErrors), res) =>
-        res match {
-          case issue: Issue => (issues + issue, fileErrors)
-          case fileError: FileError => (issues, fileErrors + fileError)
-        }
-    }
+    val (issuesResults: Set[Issue], fileErrorsResults: Set[FileError]) =
+      results.foldLeft((Set.empty[Issue], Set.empty[FileError])) {
+        case ((issues, fileErrors), res) =>
+          res match {
+            case issue: Issue => (issues + issue, fileErrors)
+            case fileError: FileError => (issues, fileErrors + fileError)
+          }
+      }
 
     if (fileErrorsResults.nonEmpty) {
       Printer.red(s"Some files were not analysed because the tool failed analysing them!")

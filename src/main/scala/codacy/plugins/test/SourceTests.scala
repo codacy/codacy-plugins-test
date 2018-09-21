@@ -17,16 +17,17 @@ object SourceTests extends ITest {
     val dockerToolDocumentation = new DockerToolDocumentation(dockerTool)
 
     dockerToolDocumentation.spec match {
-      case Some(spec) => spec.patterns.forall { pattern =>
-        readFile(Paths.get(dockerToolDocumentation.docsRoot), s"patterns/${pattern.patternId.value}.scala") match {
-          case Some(_) =>
-            Printer.green(s"found source for pattern ${pattern.patternId.value}")
-            true
-          case _ =>
-            Printer.red(s"did not find source for pattern ${pattern.patternId.value}")
-            false
+      case Some(spec) =>
+        spec.patterns.forall { pattern =>
+          readFile(Paths.get(dockerToolDocumentation.docsRoot), s"patterns/${pattern.patternId.value}.scala") match {
+            case Some(_) =>
+              Printer.green(s"found source for pattern ${pattern.patternId.value}")
+              true
+            case _ =>
+              Printer.red(s"did not find source for pattern ${pattern.patternId.value}")
+              false
+          }
         }
-      }
       case _ =>
         Printer.red(s"no valid spec")
         false
