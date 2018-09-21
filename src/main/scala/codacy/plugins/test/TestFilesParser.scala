@@ -29,54 +29,54 @@ class TestFilesParser(filesDir: File) {
   val Error = """\s*#Err(?:or)?:\s*([A-Za-z0-9\_\-\.=/]+).*""".r
   val Info = """\s*#Info:\s*([A-Za-z0-9\_\-\.=/]+).*""".r
   val PatternsList = """\s*#Patterns:\s*([\s\,A-Za-z0-9\_\-\.=/]+)""".r
+
   val PatternWithParameters =
     """\s*#Patterns:\s*([A-Za-z0-9\,\_\-\.=/]+)[\s\:]+(.*)""".r
   val IssueWithLineRegex = """\s*#Issue:\s*(.*)""".r
 
-  val languages = Map[Language, Seq[String]](
-    Languages.Javascript -> Seq("//", "/*"),
-    Languages.Scala -> Seq("/*", "//"),
-    Languages.CSS -> Seq("/*"),
-    Languages.LESS -> Seq("/*"),
-    Languages.SASS -> Seq("/*"),
-    Languages.PHP -> Seq("#", "//"),
-    Languages.C -> Seq("/*", "//"),
-    Languages.CPP -> Seq("/*", "//"),
-    Languages.ObjectiveC -> Seq("/*", "//"),
-    Languages.Python -> Seq("#"),
-    Languages.Ruby -> Seq("#"),
-    Languages.Kotlin -> Seq("//", "/*"),
-    Languages.Perl -> Seq("#"),
-    Languages.Java -> Seq("//", "/*"),
-    Languages.CSharp -> Seq("//", "/*"),
-    Languages.VisualBasic -> Seq("'"),
-    Languages.Go -> Seq("//"),
-    Languages.Elixir -> Seq("#"),
-    Languages.Clojure -> Seq("#", ";;"),
-    Languages.CoffeeScript -> Seq("#"),
-    Languages.Rust -> Seq("//"),
-    Languages.Swift -> Seq("//"),
-    Languages.Haskell -> Seq("--"),
-    Languages.Shell -> Seq("#"),
-    Languages.TypeScript -> Seq("//", "/*"),
-    Languages.XML -> Seq("<!--"),
-    Languages.Dockerfile -> Seq("#"),
-    Languages.PLSQL -> Seq("--", "/*"),
-    Languages.JSON -> Seq("//", "/*"),
-    Languages.Apex -> Seq("//", "/*"),
-    Languages.Velocity -> Seq("/*"),
-    Languages.JSP -> Seq("<%--"),
-    Languages.VisualForce -> Seq("<!--"),
-    Languages.R -> Seq("#"),
-    Languages.Powershell -> Seq("#", "<#"),
-    Languages.Solidity -> Seq("//", "/*"),
-    Languages.Markdown -> Seq("<!--")
-  )
+  val languages = Map[Language, Seq[String]](Languages.Javascript -> Seq("//", "/*"),
+                                             Languages.Scala -> Seq("/*", "//"),
+                                             Languages.CSS -> Seq("/*"),
+                                             Languages.LESS -> Seq("/*"),
+                                             Languages.SASS -> Seq("/*"),
+                                             Languages.PHP -> Seq("#", "//"),
+                                             Languages.C -> Seq("/*", "//"),
+                                             Languages.CPP -> Seq("/*", "//"),
+                                             Languages.ObjectiveC -> Seq("/*", "//"),
+                                             Languages.Python -> Seq("#"),
+                                             Languages.Ruby -> Seq("#"),
+                                             Languages.Kotlin -> Seq("//", "/*"),
+                                             Languages.Perl -> Seq("#"),
+                                             Languages.Java -> Seq("//", "/*"),
+                                             Languages.CSharp -> Seq("//", "/*"),
+                                             Languages.VisualBasic -> Seq("'"),
+                                             Languages.Go -> Seq("//"),
+                                             Languages.Elixir -> Seq("#"),
+                                             Languages.Clojure -> Seq("#", ";;"),
+                                             Languages.CoffeeScript -> Seq("#"),
+                                             Languages.Rust -> Seq("//"),
+                                             Languages.Swift -> Seq("//"),
+                                             Languages.Haskell -> Seq("--"),
+                                             Languages.Shell -> Seq("#"),
+                                             Languages.TypeScript -> Seq("//", "/*"),
+                                             Languages.XML -> Seq("<!--"),
+                                             Languages.Dockerfile -> Seq("#"),
+                                             Languages.PLSQL -> Seq("--", "/*"),
+                                             Languages.JSON -> Seq("//", "/*"),
+                                             Languages.Apex -> Seq("//", "/*"),
+                                             Languages.Velocity -> Seq("/*"),
+                                             Languages.JSP -> Seq("<%--"),
+                                             Languages.VisualForce -> Seq("<!--"),
+                                             Languages.R -> Seq("#"),
+                                             Languages.Powershell -> Seq("#", "<#"),
+                                             Languages.Solidity -> Seq("//", "/*"),
+                                             Languages.Markdown -> Seq("<!--"))
 
   def getTestFiles: Seq[PatternTestFile] = {
     FileHelper
       .listFiles(filesDir)
-      .map { file => (file, Languages.forPath(file.getAbsolutePath))
+      .map { file =>
+        (file, Languages.forPath(file.getAbsolutePath))
       }
       .collect { case (file, Some(language)) => (file, language) }
       .map {
@@ -103,9 +103,7 @@ class TestFilesParser(filesDir: File) {
                   } match {
                     case Success(result) => result
                     case Failure(_) =>
-                      Printer.red(
-                        s"${file.getName}: Failing to parse Issue $value"
-                      )
+                      Printer.red(s"${file.getName}: Failing to parse Issue $value")
                       System.exit(2)
                       None
                   }
@@ -143,11 +141,11 @@ class TestFilesParser(filesDir: File) {
       }
   }
 
-  private def getAllComments(file: File,
-                             language: Language): Seq[(Int, String)] = {
+  private def getAllComments(file: File, language: Language): Seq[(Int, String)] = {
     FileHelper.read(file).getOrElse(Seq.empty).zipWithIndex.flatMap {
       case (line, lineNr) =>
-        getComment(language, line).map { comment => (lineNr + 1, comment)
+        getComment(language, line).map { comment =>
+          (lineNr + 1, comment)
         }
     }
   }
@@ -155,10 +153,7 @@ class TestFilesParser(filesDir: File) {
   //Returns the content of a line comment or None if the line is not a comment
   private def getComment(language: Language, line: String): Option[String] = {
     languages(language).collectFirst {
-      case lineComment
-          if line.trim.startsWith(lineComment) && line.trim.endsWith(
-            lineComment.reverse
-          ) =>
+      case lineComment if line.trim.startsWith(lineComment) && line.trim.endsWith(lineComment.reverse) =>
         line.trim.drop(lineComment.length).dropRight(lineComment.length)
       case lineComment if line.trim.startsWith(lineComment) =>
         line.trim.drop(lineComment.length)
