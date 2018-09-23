@@ -20,7 +20,7 @@ object JsonTests extends ITest {
       _ => Printer.green("Read /docs/patterns.json successfully")
     }
 
-    dockerToolDocumentation.descriptions.fold(Printer.red("Could not read /docs/description.json successfully")) {
+    dockerToolDocumentation.descriptions.fold(Printer.red("Could not read /docs/description/description.json successfully")) {
       descriptions =>
         Printer.green("Read /docs/description/description.json successfully")
         descriptions.foreach { patternDescription =>
