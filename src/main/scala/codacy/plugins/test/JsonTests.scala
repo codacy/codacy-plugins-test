@@ -14,6 +14,9 @@ object JsonTests extends ITest {
   def run(testSources: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     Printer.green("Running JsonTests:")
 
+    val ignoreDescriptions: Boolean =
+      sys.props.get("codacy.tests.ignore.descriptions").isDefined || optArgs.contains("--ignore-descriptions")
+
     val dockerToolDocumentation: DockerToolDocumentation = readDockerToolDocumentation(testSources, dockerImage)
 
     dockerToolDocumentation.spec.fold(Printer.red("Could not read /docs/patterns.json successfully")) {
@@ -93,10 +96,11 @@ object JsonTests extends ITest {
                | * ${descriptionsAboveLimit.map(_.patternId).mkString(", ")}
               """.stripMargin)
         }
-        sys.props.get("codacy.tests.ignore.descriptions").isDefined ||
+
+        ignoreDescriptions ||
           (diffResult.newObjects.isEmpty && diffResult.deletedObjects.isEmpty)
 
-      case _ => sys.props.get("codacy.tests.ignore.descriptions").isDefined
+      case _ => ignoreDescriptions
     }
   }
 
