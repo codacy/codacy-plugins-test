@@ -21,10 +21,13 @@ object PluginsTests extends ITest {
     specOpt.forall { spec =>
       Printer.green(s"  + ${spec.name} should find results for all patterns")
 
-      val patterns: Set[Pattern] = spec.patterns.map(p => core.model.Pattern(p.patternId.value,
-        p.parameters.fold(Set.empty[core.model.Parameter])(_.map {
-          parameterSpec => core.model.Parameter(parameterSpec.name.toString(), parameterSpec.default.toString)
-        }(collection.breakOut))))(collection.breakOut)
+      val patterns: Set[Pattern] = spec.patterns.map(
+        p =>
+          core.model.Pattern(p.patternId.value, p.parameters.fold(Set.empty[core.model.Parameter])(_.map {
+            parameterSpec =>
+              core.model.Parameter(parameterSpec.name.toString(), parameterSpec.default.toString)
+          }(collection.breakOut)))
+      )(collection.breakOut)
       val codacyCfg = CodacyCfg(patterns)
 
       val tools = languages.map(new core.tools.Tool(dockerTool, _))
@@ -33,10 +36,9 @@ object PluginsTests extends ITest {
         val files = FileHelper.listFiles(sourcePath.toFile)
         val fileAbsolutePaths: Set[Path] = files.map(file => Paths.get(file.getAbsolutePath))(collection.breakOut)
 
-        val filteredResults: Set[Issue] = tools.flatMap {
-          tool =>
-            val results = tool.run(better.files.File(sourcePath.toAbsolutePath), fileAbsolutePaths, codacyCfg)
-            filterResults(None, sourcePath, files, patterns.to[Seq], results)
+        val filteredResults: Set[Issue] = tools.flatMap { tool =>
+          val results = tool.run(better.files.File(sourcePath.toAbsolutePath), fileAbsolutePaths, codacyCfg)
+          filterResults(None, sourcePath, files, patterns.to[Seq], results)
         }(collection.breakOut)
 
         filteredResults.map(_.patternId.value)
@@ -45,8 +47,7 @@ object PluginsTests extends ITest {
       val missingPatterns = patterns.map(_.id).diff(resultsUUIDS)
 
       if (missingPatterns.nonEmpty) {
-        Printer.red(
-          s"""
+        Printer.red(s"""
              |Some patterns are not tested on plugin ${spec.name}
              |-> Missing patterns:
              |${missingPatterns.mkString(", ")}

@@ -10,12 +10,10 @@ case class Sources(mainSourcePath: Path, directoryPaths: Seq[Path])
 
 object DockerTest {
 
-  private lazy val config = Map(
-    "all" -> possibleTests,
-    "allWithUdas" -> possibleTestsWithUda
-  ) ++ possibleTestsWithUda.map { test =>
-    test.opt -> Seq(test)
-  }
+  private lazy val config = Map("all" -> possibleTests, "allWithUdas" -> possibleTestsWithUda) ++ possibleTestsWithUda
+    .map { test =>
+      test.opt -> Seq(test)
+    }
   private lazy val possibleTests = Seq(JsonTests, PluginsTests, PatternTests)
   private lazy val possibleTestsWithUda = SourceTests +: possibleTests
   private lazy val possibleTestNames = config.keySet
@@ -29,7 +27,6 @@ object DockerTest {
       case typeOfTest if possibleTestNames.contains(typeOfTest) =>
         dockerImageNameAndVersionOpt.fold(Printer.red("[Missing] docker ref -> dockerName:dockerVersion")) {
           dockerImageNameAndVersion =>
-
             val dockerImage = parseDockerImage(dockerImageNameAndVersion)
 
             val testSources = DockerHelpers.testFoldersInDocker(dockerImage)
@@ -51,11 +48,14 @@ object DockerTest {
     }
   }
 
-  private def run(testSources: Seq[Path], test: ITest, testRequest: String, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
+  private def run(testSources: Seq[Path],
+                  test: ITest,
+                  testRequest: String,
+                  dockerImage: DockerImage,
+                  optArgs: Seq[String]): Boolean = {
 
     config.get(testRequest) match {
       case Some(ts) if ts.contains(test) =>
-
         test.run(testSources, dockerImage, optArgs) match {
           case true =>
             Printer.green(s"[Success] ${test.getClass.getSimpleName}")

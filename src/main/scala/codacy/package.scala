@@ -8,7 +8,7 @@ package object codacy {
 
     def toOptionWithLog(logger: String => Unit = defaultLogger): Option[T] = {
       nativeTry match {
-        case success@Success(_) =>
+        case success @ Success(_) =>
           success.toOption
         case Failure(e) =>
           val msg =

@@ -20,9 +20,7 @@ trait CustomMatchers {
       val missingMatches = sortedExpectedMatches.diff(sortedMatches)
       val extraMatches = sortedMatches.diff(sortedExpectedMatches)
 
-      MatchResult(
-        sortedMatches == sortedExpectedMatches,
-        s"""|  -> Found:
+      MatchResult(sortedMatches == sortedExpectedMatches, s"""|  -> Found:
             |   ${printResults(sortedMatches)}
             |  -> Expected:
             |   ${printResults(sortedExpectedMatches)}
@@ -30,16 +28,16 @@ trait CustomMatchers {
             |  -> Missing:
             |   ${printResults(missingMatches)}
             |  -> Extra:
-            |   ${printResults(extraMatches)}""".stripMargin,
-        s"""|  Results found matched the expected:
-            |   ${printResults(sortedMatches)}""".stripMargin
-      )
+            |   ${printResults(extraMatches)}""".stripMargin, s"""|  Results found matched the expected:
+            |   ${printResults(sortedMatches)}""".stripMargin)
     }
 
     private def printResults(results: Seq[TestFileResult]): String = {
-      results.map { result =>
-        (result.patternInternalId, result.line, result.level)
-      }.mkString(s"$sep   ")
+      results
+        .map { result =>
+          (result.patternInternalId, result.line, result.level)
+        }
+        .mkString(s"$sep   ")
     }
   }
 
