@@ -69,7 +69,8 @@ class TestFilesParser(filesDir: File) {
     Languages.VisualForce -> Seq("<!--"),
     Languages.R -> Seq("#"),
     Languages.Powershell -> Seq("#", "<#"),
-    Languages.Solidity -> Seq("//", "/*")
+    Languages.Solidity -> Seq("//", "/*"),
+    Languages.Markdown -> Seq("<!--")
   )
 
   def getTestFiles: Seq[PatternTestFile] = {
