@@ -6,6 +6,7 @@ import codacy.utils.{CollectionHelper, Printer}
 import com.codacy.plugins.api.PatternDescription
 import com.codacy.plugins.api.results.Pattern
 import com.codacy.plugins.results.traits.DockerToolDocumentation
+import com.codacy.plugins.utils.BinaryDockerHelper
 
 object JsonTests extends ITest {
 
@@ -105,7 +106,7 @@ object JsonTests extends ITest {
   private def readDockerToolDocumentation(testSources: Seq[Path], dockerImage: DockerImage) = {
     val languages = findLanguages(testSources, dockerImage)
     val dockerTool = createDockerTool(languages, dockerImage)
-    new DockerToolDocumentation(dockerTool)
+    new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
   }
 
   private def generateUniquePatternSignature(patternName: String, parameters: Seq[String]) = {

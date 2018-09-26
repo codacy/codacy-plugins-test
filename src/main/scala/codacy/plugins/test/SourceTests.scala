@@ -4,6 +4,7 @@ import java.nio.file.{Path, Paths}
 
 import codacy.utils.{FileHelper, Printer}
 import com.codacy.plugins.results.traits.DockerToolDocumentation
+import com.codacy.plugins.utils.BinaryDockerHelper
 
 import scala.util.Properties
 
@@ -14,7 +15,7 @@ object SourceTests extends ITest {
     Printer.green(s"Running SourceTests:")
     val languages = findLanguages(testSources, dockerImage)
     val dockerTool = createDockerTool(languages, dockerImage)
-    val dockerToolDocumentation = new DockerToolDocumentation(dockerTool)
+    val dockerToolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
 
     dockerToolDocumentation.spec match {
       case Some(spec) =>

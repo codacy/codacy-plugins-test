@@ -6,6 +6,7 @@ import codacy.utils.{FileHelper, Printer}
 import com.codacy.analysis.core
 import com.codacy.analysis.core.model.{CodacyCfg, Issue, Pattern}
 import com.codacy.plugins.results.traits.DockerToolDocumentation
+import com.codacy.plugins.utils.BinaryDockerHelper
 
 object PluginsTests extends ITest {
 
@@ -16,7 +17,7 @@ object PluginsTests extends ITest {
 
     val languages = findLanguages(testSources, dockerImage)
     val dockerTool = createDockerTool(languages, dockerImage)
-    val specOpt = new DockerToolDocumentation(dockerTool).spec
+    val specOpt = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false)).spec
 
     specOpt.forall { spec =>
       Printer.green(s"  + ${spec.name} should find results for all patterns")
