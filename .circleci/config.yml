@@ -68,6 +68,7 @@ jobs:
         - ~/.ivy2
         - ~/.sbt
         key: sbt-ivy2-dependencies-1.0.0-{{ checksum "/tmp/dependencies.cache.tmp" }}
+
   compile:
     <<: *default_java_job
     steps:
@@ -83,6 +84,7 @@ jobs:
         - ~/workdir/target
         - ~/workdir/project/target
         key: sbt-build-1.0.0-{{ .Branch }}-{{ .Revision }}
+
   lint:
     <<: *default_java_job
     steps:
@@ -93,6 +95,19 @@ jobs:
     - run:
         name: Lint
         command: sbt scalafmtCheck
+
+  build-native-image:
+    machine: true
+    working_directory: ~/workdir
+    steps:
+      - *restore_source_code
+      - *restore_build
+      - run:
+          name: Build native image
+          command: ./scripts/build-native.sh -n $CIRCLE_PROJECT_REPONAME -m codacy.plugins.DockerTest -t docker -s 2.12 1.0.0-SNAPSHOT-$CIRCLE_BUILD_NUM
+      - store_artifacts:
+          path: codacy-plugins-test-linux
+          destination: codacy-plugins-test-linux
 
 workflows:
   version: 2
@@ -107,5 +122,8 @@ workflows:
         - checkout_code
         - sbt_dependencies
     - lint:
+        requires:
+        - compile
+    - build-native-image:
         requires:
         - compile
