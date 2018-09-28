@@ -94,7 +94,7 @@ var variable;
 Checks if the patterns definitions are in the correct format
 
 ```sh
-sbt "runMain codacy.plugins.DockerTest json codacy/jshint:1.0.3"
+sbt "runMain codacy.plugins.DockerTest json <DOCKER_NAME>:<DOCKER_VERSION>"
 ```
 
 **Options:**
@@ -106,7 +106,7 @@ sbt "runMain codacy.plugins.DockerTest json codacy/jshint:1.0.3"
 Checks if all the patterns have an occurrence in the test files
 
 ```sh
-sbt "runMain codacy.plugins.DockerTest plugin codacy/jshint:1.0.3"
+sbt "runMain codacy.plugins.DockerTest plugin <DOCKER_NAME>:<DOCKER_VERSION>"
 ```
 
 > PatternTests
@@ -114,7 +114,7 @@ sbt "runMain codacy.plugins.DockerTest plugin codacy/jshint:1.0.3"
 Check if all the patterns defined in the test files occur in the specified line
 
 ```sh
-sbt "runMain codacy.plugins.DockerTest pattern codacy/jshint:1.0.3"
+sbt "runMain codacy.plugins.DockerTest pattern <DOCKER_NAME>:<DOCKER_VERSION>"
 sbt test
 ```
 
@@ -128,14 +128,14 @@ will be inferred from the test files. Example: `-Dcodacy.tests.languages=ruby,ja
 Alternatively, you can run a specific test file:
 
 ```sh
-sbt "runMain codacy.plugins.DockerTest pattern codacy/jshint:1.0.3 no-curly-brackets"
+sbt "runMain codacy.plugins.DockerTest pattern <DOCKER_NAME>:<DOCKER_VERSION> no-curly-brackets"
 sbt test
 ```
 
 > All
 
 ```sh
-sbt "runMain codacy.plugins.DockerTest all codacy/jshint:1.0.3"
+sbt "runMain codacy.plugins.DockerTest all <DOCKER_NAME>:<DOCKER_VERSION>"
 ```
 
 > Debug

@@ -10,12 +10,10 @@ case class Sources(mainSourcePath: Path, directoryPaths: Seq[Path])
 
 object DockerTest {
 
-  private lazy val config = Map("all" -> possibleTests, "allWithUdas" -> possibleTestsWithUda) ++ possibleTestsWithUda
-    .map { test =>
-      test.opt -> Seq(test)
-    }
+  private lazy val config = Map("all" -> possibleTests) ++ possibleTests.map { test =>
+    test.opt -> Seq(test)
+  }
   private lazy val possibleTests = Seq(JsonTests, PluginsTests, PatternTests)
-  private lazy val possibleTestsWithUda = SourceTests +: possibleTests
   private lazy val possibleTestNames = config.keySet
 
   def main(args: Array[String]): Unit = {
@@ -31,7 +29,7 @@ object DockerTest {
 
             val testSources = DockerHelpers.testFoldersInDocker(dockerImage)
 
-            val allTestsPassed = possibleTestsWithUda
+            val allTestsPassed = possibleTests
               .map(test => run(testSources, test, typeOfTest, dockerImage, optArgs))
               .forall(identity)
 
