@@ -88,15 +88,15 @@ object PatternTests extends ITest with CustomMatchers {
 
     val filteredResults = filterResults(spec, rootDirectory.toPath, testFiles, patterns.to[Seq], result)
 
-    val matches = filteredResults.map(
+    val matches: Seq[TestFileResult] = filteredResults.map(
       r =>
         TestFileResult(r.patternId.value, r.location match {
           case fl: FullLocation => fl.line
           case l: LineLocation => l.line
         }, r.level)
-    )
+    )(collection.breakOut)
 
-    val comparison = beEqualTo(testFile.matches).apply(matches.to[Seq])
+    val comparison = beEqualTo(testFile.matches).apply(matches)
 
     Printer.green(s"  + ${matches.size} matches found in lines: ${matches.map(_.line).to[Seq].sorted.mkString(", ")}")
 
