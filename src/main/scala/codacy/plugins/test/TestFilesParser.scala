@@ -70,7 +70,8 @@ class TestFilesParser(filesDir: File) {
                                              Languages.R -> Seq("#"),
                                              Languages.Powershell -> Seq("#", "<#"),
                                              Languages.Solidity -> Seq("//", "/*"),
-                                             Languages.Markdown -> Seq("<!--"))
+                                             Languages.Markdown -> Seq("<!--"),
+                                             Languages.YAML -> Seq("#"))
 
   def getTestFiles: Seq[PatternTestFile] = {
     FileHelper
