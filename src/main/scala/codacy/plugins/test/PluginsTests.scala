@@ -7,7 +7,7 @@ import com.codacy.analysis.core
 import com.codacy.analysis.core.model.{CodacyCfg, Issue, Pattern}
 import com.codacy.plugins.api.results.Result
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
-import com.codacy.plugins.traits.BinaryDockerRunner
+import com.codacy.plugins.traits.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
 
 object PluginsTests extends ITest {
@@ -36,7 +36,7 @@ object PluginsTests extends ITest {
       )(collection.breakOut)
       val codacyCfg = CodacyCfg(patterns)
 
-      val tools = languages.map(new core.tools.Tool(runner, dockerRunner.defaultRunTimeout)(dockerTool, _))
+      val tools = languages.map(new core.tools.Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
 
       val resultsUUIDS: Set[String] = testSources.flatMap { sourcePath =>
         val files = FileHelper.listFiles(sourcePath.toFile)

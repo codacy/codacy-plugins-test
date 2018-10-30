@@ -11,7 +11,7 @@ import com.codacy.analysis.core.tools.Tool
 import com.codacy.plugins.api._
 import com.codacy.plugins.api.results.Result
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
-import com.codacy.plugins.traits.BinaryDockerRunner
+import com.codacy.plugins.traits.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
 
 import scala.collection.parallel.ForkJoinTaskSupport
@@ -29,7 +29,7 @@ object PatternTests extends ITest with CustomMatchers {
     val toolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
     val dockerRunner = new BinaryDockerRunner[Result](dockerTool)
     val runner = new ToolRunner(dockerTool, toolDocumentation, dockerRunner)
-    val tools = languages.map(new core.tools.Tool(runner, dockerRunner.defaultRunTimeout)(dockerTool, _))
+    val tools = languages.map(new core.tools.Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
 
     testSources
       .map { sourcePath =>
