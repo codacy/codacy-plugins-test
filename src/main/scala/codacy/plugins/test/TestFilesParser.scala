@@ -71,6 +71,7 @@ class TestFilesParser(filesDir: File) {
                                              Languages.Powershell -> Seq("#", "<#"),
                                              Languages.Solidity -> Seq("//", "/*"),
                                              Languages.Markdown -> Seq("<!--"),
+                                             Languages.Crystal -> Seq("#"),
                                              Languages.YAML -> Seq("#"))
 
   def getTestFiles: Seq[PatternTestFile] = {
