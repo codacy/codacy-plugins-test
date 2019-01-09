@@ -7,6 +7,8 @@ Provide a testing interface for the external docker tools.
 
 ## Test definition
 
+The test files should be placed in `/docs/tests` on the docker of the tool being tested.
+
 **Definition**
 
 ```javascript
@@ -148,9 +150,9 @@ If you need to debug the output of the dockers after the tests you can request t
 
 ## Docs
 
-[Tool Developer Guide](http://docs.codacy.com/v1.5/docs/tool-developer-guide)
+[Tool Developer Guide](https://support.codacy.com/hc/en-us/articles/207994725-Tool-Developer-Guide)
 
-[Tool Developer Guide - Using Scala](http://docs.codacy.com/v1.5/docs/tool-developer-guide-using-scala)
+[Tool Developer Guide - Using Scala](https://support.codacy.com/hc/en-us/articles/207280379-Tool-Developer-Guide-Using-Scala)
 
 ## Troubleshooting
 
