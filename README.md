@@ -150,9 +150,7 @@ If you need to debug the output of the dockers after the tests you can request t
 
 ## Docs
 
-[Tool Developer Guide](https://support.codacy.com/hc/en-us/articles/207994725-Tool-Developer-Guide)
-
-[Tool Developer Guide - Using Scala](https://support.codacy.com/hc/en-us/articles/207280379-Tool-Developer-Guide-Using-Scala)
+Information about the integration with external analysis tools at Codacy available [here](https://github.com/codacy/codacy-engine-scala-seed#docs).
 
 ## Troubleshooting
 
