@@ -62,6 +62,7 @@ class TestFilesParser(filesDir: File) {
                                              Languages.XML -> Seq("<!--"),
                                              Languages.Dockerfile -> Seq("#"),
                                              Languages.PLSQL -> Seq("--", "/*"),
+                                             Languages.SQL -> Seq("--", "/*"),
                                              Languages.JSON -> Seq("//", "/*"),
                                              Languages.Apex -> Seq("//", "/*"),
                                              Languages.Velocity -> Seq("/*"),
