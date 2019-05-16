@@ -27,7 +27,7 @@ object PatternTests extends ITest with CustomMatchers {
     val languages = findLanguages(testSources, dockerImage)
     val dockerTool = createDockerTool(languages, dockerImage)
     val toolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
-    val dockerRunner = new BinaryDockerRunner[Result](dockerTool)
+    val dockerRunner = new BinaryDockerRunner[Result](dockerTool)()
     val runner = new ToolRunner(dockerTool, toolDocumentation, dockerRunner)
     val tools = languages.map(new core.tools.Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
 
