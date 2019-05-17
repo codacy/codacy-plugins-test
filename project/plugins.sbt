@@ -3,3 +3,4 @@ resolvers := Seq("Sonatype OSS Snapshots".at("https://oss.sonatype.org/content/r
 
 // Formating
 addSbtPlugin("com.geirsson" % "sbt-scalafmt" % "1.5.1")
+addSbtPlugin("com.codacy" % "codacy-sbt-plugin" % "15.0.0")
