@@ -120,8 +120,9 @@ workflows:
               - FT-7297-publish_artifacts
         context: CodacyAWS
         cmd: |
-          sbt ";clean;retrieveGPGKeys;definition/publishSigned;+client/publishSigned"
-          sbt -DcatsVersion=1.0.1 -DcirceVersion=0.9.3 ";clean;retrieveGPGKeys;+client/publishSigned"
-          sbt sonatypeReleaseAll
+          sbt ";clean;retrieveGPGKeys"
+          sbt ";project libraries;+publishSigned;sonatypeReleaseAll"
+          sbt ";project genLibraries;^publishSigned;sonatypeReleaseAll"
+          sbt ";^publishSigned;sonatypeReleaseAll"
         requires:
           - compile
