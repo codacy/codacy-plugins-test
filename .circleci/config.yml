@@ -1,4 +1,4 @@
-# CircleCI 2.0 configuration file
+# CircleCI 2.1 configuration file
 version: 2.1
 
 orbs:
@@ -114,6 +114,10 @@ workflows:
         - compile
     - codacy/sbt:
         name: publish_client
+        filters:
+          branches:
+            only:
+              - FT-7297-publish_artifacts
         context: CodacyAWS
         cmd: |
           sbt ";clean;retrieveGPGKeys;definition/publishSigned;+client/publishSigned"
@@ -121,7 +125,3 @@ workflows:
           sbt sonatypeReleaseAll
         requires:
           - compile
-        filters:
-          branches:
-            only:
-              - master
