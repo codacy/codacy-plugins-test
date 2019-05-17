@@ -1,5 +1,8 @@
 # CircleCI 2.0 configuration file
-version: 2
+version: 2.1
+
+orbs:
+  codacy: codacy/base@0.0.8
 
 # Re-usable blocks to reduce boilerplate in job definitions.
 references:
@@ -109,3 +112,16 @@ workflows:
     - lint:
         requires:
         - compile
+    - codacy/sbt:
+        name: publish_client
+        context: CodacyAWS
+        cmd: |
+          sbt ";clean;retrieveGPGKeys;definition/publishSigned;+client/publishSigned"
+          sbt -DcatsVersion=1.0.1 -DcirceVersion=0.9.3 ";clean;retrieveGPGKeys;+client/publishSigned"
+          sbt sonatypeReleaseAll
+        requires:
+          - compile
+        filters:
+          branches:
+            only:
+              - master
