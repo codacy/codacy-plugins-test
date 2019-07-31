@@ -84,15 +84,14 @@ function build_cmd() {
   local BINARY_NAME=$1
   local APP_MAIN_CLASS=$2
   local APP_CLASSPATH=$3
-  local FLAGS="--static -O1"
-  local NATIVE_IMAGE_FLAGS="-H:+ReportUnsupportedElementsAtRuntime -H:+JNI -H:IncludeResourceBundles=com.sun.org.apache.xerces.internal.impl.msg.XMLMessages"
+  local FLAGS="-O1 -H:+ReportUnsupportedElementsAtRuntime"
 
-  if [[ "${OS_TARGET}" == "darwin" ]]
+  if [[ "${OS_TARGET}" != "darwin" ]]
   then
-    FLAGS="-O1"
+    FLAGS="$FLAGS --static"
   fi
 
-  echo 'native-image -cp '"${APP_CLASSPATH}"' '"${FLAGS}"' '"${NATIVE_IMAGE_FLAGS}"' -H:Name='"${BINARY_NAME}"' -H:Class='"${APP_MAIN_CLASS}"
+  echo 'native-image -cp '"${APP_CLASSPATH}"' '"${FLAGS}"' -H:Name='"${BINARY_NAME}"' -H:Class='"${APP_MAIN_CLASS}"
 }
 
 echo "Publishing ${APP_NAME} binary version ${VERSION} for ${OS_TARGET}"
