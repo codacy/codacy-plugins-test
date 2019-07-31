@@ -16,21 +16,20 @@
 #   * Add Oracle JDK 8 bin to the beginning of your PATH.
 #
 # Example:
-# ./scripts/publish-native.sh -n codacy-plugins-test -m codacy.plugins.DockerTest -t docker -s 2.12 1.0.0
+# ./scripts/publish-native.sh -n codacy-plugins-test -m codacy.plugins.DockerTest -t docker 1.0.0
 #
 
 set -e
 
-SCALA_VERSION="2.11"
 VERSION="1.0.0-$(git symbolic-ref --short HEAD)-SNAPSHOT"
 TARGET="docker"
 OS_TARGET="$(uname | awk '{print tolower($0)}')"
 
 function usage() {
-  echo >&2 "Usage: $0 -n <app-name> -m <main-class> [-t target (native)] [-s scala-version (2.12)] [app-version (1.0.0-<branch-name>-SNAPSHOT)]"
+  echo >&2 "Usage: $0 -n <app-name> -m <main-class> [-t target (native)] [app-version (1.0.0-<branch-name>-SNAPSHOT)]"
 }
 
-while getopts :s:t:n:m:h opt
+while getopts :t:n:m:h opt
 do
   case "$opt" in
     t)
@@ -47,9 +46,6 @@ do
       ;;
     m)
       APP_MAIN_CLASS="$OPTARG"
-      ;;
-    s)
-      SCALA_VERSION="$OPTARG"
       ;;
     h | ?)
       usage
@@ -81,7 +77,7 @@ if [ -n "$1" ]; then
 fi
 
 function app_classpath() {
-  echo $(cat /dev/null | sbt 'export runtime:fullClasspath' | tail -n 1)
+  echo $(sbt 'export runtime:fullClasspath' < /dev/null | tail -n 1)
 }
 
 function build_cmd() {
