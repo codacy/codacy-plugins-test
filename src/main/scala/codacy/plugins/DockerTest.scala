@@ -27,23 +27,32 @@ object DockerTest {
           dockerImageNameAndVersion =>
             val dockerImage = parseDockerImage(dockerImageNameAndVersion)
 
-            val testSources = DockerHelpers.testFoldersInDocker(dockerImage)
-
-            val allTestsPassed = possibleTests
-              .map(test => run(testSources, test, typeOfTest, dockerImage, optArgs))
-              .forall(identity)
-
-            testSources.foreach(dir => FileUtils.deleteQuietly(dir.toFile))
-
-            if (!allTestsPassed) {
-              Printer.red("[Failure] Some tests failed!")
-              System.exit(1)
+            def runTests(testSources: Seq[Path]): Either[String, Unit] = {
+              val allTestsPassed = possibleTests
+                .map(test => run(testSources, test, typeOfTest, dockerImage, optArgs))
+                .forall(identity)
+              if (allTestsPassed) Right(()) else Left("[Failure] Some tests failed!")
             }
 
-            Printer.green("[Success] All tests passed!")
+            (for {
+              testSources <- DockerHelpers.testFoldersInDocker(dockerImage)
+              _ <- runTests(testSources).fold(e => {
+                deleteTestSources(testSources)
+                Left(e)
+              }, Right(_))
+            } yield {
+              deleteTestSources(testSources)
+            }).fold(err => {
+              Printer.red(err)
+              System.exit(1)
+            }, _ => Printer.green("[Success] All tests passed!"))
         }
       case _ =>
     }
+  }
+
+  private def deleteTestSources(testSources: Seq[Path]): Unit = {
+    testSources.foreach(dir => FileUtils.deleteQuietly(dir.toFile))
   }
 
   private def run(testSources: Seq[Path],
