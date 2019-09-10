@@ -184,10 +184,6 @@ project/plugins/project/
 .scala_dependencies
 .worksheet
 
-# Metals specific
-.metals
-.bloop
-
 # Generated native-images
 codacy-plugins-test-darwin
 codacy-plugins-test-linux
