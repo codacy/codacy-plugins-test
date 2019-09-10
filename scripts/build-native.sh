@@ -77,7 +77,7 @@ if [ -n "$1" ]; then
 fi
 
 function app_classpath() {
-  echo $(sbt 'export runtime:fullClasspath' < /dev/null | tail -n 1)
+  sbt 'export runtime:fullClasspath' < /dev/null | tail -n 1
 }
 
 function build_cmd() {
