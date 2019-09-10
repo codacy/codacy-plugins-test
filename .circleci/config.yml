@@ -1,8 +1,8 @@
 version: 2.1
 
 orbs:
-  codacy: codacy/base@0.3.3
-
+  codacy: codacy/base@0.3.7
+  
 workflows:
   version: 2
   build-and-deploy:
