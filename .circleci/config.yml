@@ -32,7 +32,7 @@ workflows:
             ./scripts/build-native.sh -n $CIRCLE_PROJECT_REPONAME -m codacy.plugins.DockerTest -t docker $(cat .version)
             curl -T ~/workdir/$CIRCLE_PROJECT_REPONAME-linux-$(cat .version) -ucodacy-ci:$BINTRAY_API_KEY -H "X-Bintray-Package:codacy-coverage-reporter" -H "X-Bintray-Version:$(cat .version)" https://api.bintray.com/content/codacy/Binaries/$(cat .version)/$CIRCLE_PROJECT_REPONAME-linux
             curl -T ~/workdir/target/$CIRCLE_PROJECT_REPONAME-assembly-$(cat .version).jar -ucodacy-ci:$BINTRAY_API_KEY -H "X-Bintray-Package:$CIRCLE_PROJECT_REPONAME" -H "X-Bintray-Version:$(cat .version)" https://api.bintray.com/content/codacy/Binaries/$(cat .version)/$CIRCLE_PROJECT_REPONAME-assembly.jar
-            curl -X POST -ucodacy-ci:$BINTRAY_API_KEY https://api.bintray.com/content/codacy/Binaries/codacy-analysis-git/$(cat .version)/publish
+            curl -X POST -ucodacy-ci:$BINTRAY_API_KEY https://api.bintray.com/content/codacy/Binaries/$CIRCLE_PROJECT_REPONAME/$(cat .version)/publish
             GHR_FLAGS=""
             if [ "$CIRCLE_BRANCH" != "master" ]; then
               GHR_FLAGS+="-prerelease"

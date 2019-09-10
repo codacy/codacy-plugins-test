@@ -8,5 +8,5 @@ resolvers := Seq("Sonatype OSS Snapshots".at("https://oss.sonatype.org/content/r
 
 scalacOptions ++= Common.compilerFlags
 
-libraryDependencies ++= Seq("com.codacy" %% "codacy-analysis-core" % "0.1.0-SNAPSHOT",
+libraryDependencies ++= Seq("com.codacy" %% "codacy-analysis-core" % "0.1.0-alpha3.581",
                             "org.scalatest" %% "scalatest" % "3.0.8")
