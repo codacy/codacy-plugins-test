@@ -11,7 +11,7 @@ import com.codacy.analysis.core.tools.Tool
 import com.codacy.plugins.api._
 import com.codacy.plugins.api.results.Result
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
-import com.codacy.plugins.traits.{BinaryDockerRunner, DockerRunner}
+import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
 
 import scala.collection.parallel.ForkJoinTaskSupport

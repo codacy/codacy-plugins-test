@@ -84,14 +84,14 @@ function build_cmd() {
   local BINARY_NAME=$1
   local APP_MAIN_CLASS=$2
   local APP_CLASSPATH=$3
-  local FLAGS="-O1 -H:+ReportUnsupportedElementsAtRuntime"
+  local FLAGS="-O1 -H:+ReportUnsupportedElementsAtRuntime --initialize-at-build-time"
 
   if [[ "${OS_TARGET}" != "darwin" ]]
   then
     FLAGS="$FLAGS --static"
   fi
 
-  echo 'native-image -cp '"${APP_CLASSPATH}"' '"${FLAGS}"' -H:Name='"${BINARY_NAME}"' -H:Class='"${APP_MAIN_CLASS}"
+  echo 'native-image -J-Xmx6G -cp '"${APP_CLASSPATH}"' '"${FLAGS}"' -H:Name='"${BINARY_NAME}"' -H:Class='"${APP_MAIN_CLASS}"
 }
 
 echo "Publishing ${APP_NAME} binary version ${VERSION} for ${OS_TARGET}"
@@ -112,7 +112,7 @@ case "$TARGET" in
       --entrypoint=bash \
       -v $HOME/.ivy2:$HOME/.ivy2 \
       -v $PWD:$PWD \
-      findepi/graalvm:1.0.0-rc6-all \
+      findepi/graalvm:19.2.0-all \
         -c 'cd /tmp && '"${BUILD_CMD}"' && mv '"$BINARY_NAME $PWD/$BINARY_NAME"
     ;;
   *)

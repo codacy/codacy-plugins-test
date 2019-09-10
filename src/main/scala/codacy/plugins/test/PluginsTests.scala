@@ -7,7 +7,7 @@ import com.codacy.analysis.core
 import com.codacy.analysis.core.model.{CodacyCfg, Issue, Pattern}
 import com.codacy.plugins.api.results.Result
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
-import com.codacy.plugins.traits.{BinaryDockerRunner, DockerRunner}
+import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
 
 object PluginsTests extends ITest {
