@@ -2,7 +2,7 @@ package codacy.plugins.test
 
 import java.io.File
 import java.nio.file.{Path, Paths}
-import java.util.concurrent.ForkJoinPool
+// import java.util.concurrent.ForkJoinPool
 
 import codacy.utils.Printer
 import com.codacy.analysis.core
@@ -14,8 +14,8 @@ import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
 
-import scala.collection.parallel.ForkJoinTaskSupport
-import scala.util.Try
+// import scala.collection.parallel.ForkJoinTaskSupport
+// import scala.util.Try
 
 object PatternTests extends ITest with CustomMatchers {
 
@@ -39,17 +39,17 @@ object PatternTests extends ITest with CustomMatchers {
           testFiles.filter(testFiles => testFiles.file.getName.contains(fileNameToTest))
         }
 
-        val testFilesPar = sys.props
-          .get("codacy.tests.threads")
-          .flatMap(nrt => Try(nrt.toInt).toOption)
-          .map { nrThreads =>
-            val filesPar = filteredTestFiles.par
-            filesPar.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(nrThreads))
-            filesPar
-          }
-          .getOrElse(filteredTestFiles)
+        // val testFilesPar = sys.props
+        //   .get("codacy.tests.threads")
+        //   .flatMap(nrt => Try(nrt.toInt).toOption)
+        //   .map { nrThreads =>
+        //     val filesPar = filteredTestFiles.par
+        //     filesPar.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(nrThreads))
+        //     filesPar
+        //   }
+        //   .getOrElse(filteredTestFiles)
 
-        testFilesPar
+        filteredTestFiles
           .map { testFile =>
             tools
               .filter(_.languageToRun.name.equalsIgnoreCase(testFile.language.toString))

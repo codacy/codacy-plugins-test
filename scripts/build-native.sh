@@ -84,11 +84,13 @@ function build_cmd() {
   local BINARY_NAME=$1
   local APP_MAIN_CLASS=$2
   local APP_CLASSPATH=$3
-  local FLAGS="-O1 -J-Xmx8G -H:+ReportExceptionStackTraces --allow-incomplete-classpath --no-fallback"
+  local FLAGS="-O1 -J-Xmx4G -H:+ReportExceptionStackTraces --no-fallback --initialize-at-build-time --report-unsupported-elements-at-runtime"
+  # Flags for debug
+  # FLAGS+=" --allow-incomplete-classpath -H:+TraceClassInitialization"
 
   if [[ "${OS_TARGET}" != "darwin" ]]
   then
-    FLAGS="$FLAGS --static"
+    FLAGS+=" --static"
   fi
 
   echo 'native-image -cp '"${APP_CLASSPATH}"' '"${FLAGS}"' -H:Name='"${BINARY_NAME}"' -H:Class='"${APP_MAIN_CLASS}"
@@ -110,7 +112,7 @@ case "$TARGET" in
       -e JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS}" \
       --user=root \
       --entrypoint=bash \
-      -v $HOME/.ivy2:$HOME/.ivy2 \
+      -v $HOME:$HOME:ro \
       -v $PWD:$PWD \
       findepi/graalvm:19.2.0-all \
         -c 'cd /tmp && '"${BUILD_CMD}"' && mv '"$BINARY_NAME $PWD/$BINARY_NAME"
