@@ -45,6 +45,10 @@
 # .idea/dynamic.xml
 # .idea/uiDesigner.xml
 
+# Metals scala language server
+.metals
+.bloop
+
 # Gradle:
 # .idea/gradle.xml
 # .idea/libraries
@@ -179,5 +183,7 @@ project/plugins/project/
 # Scala-IDE specific
 .scala_dependencies
 .worksheet
-.metals
-.bloop
+
+# Generated native-images
+codacy-plugins-test-darwin
+codacy-plugins-test-linux

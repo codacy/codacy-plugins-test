@@ -58,7 +58,6 @@ trait ITest {
                    needsCompilation = false,
                    needsPatternsToRun = true,
                    hasUIConfiguration = true) {
-      override lazy val toolVersion: Option[String] = Some(dockerImageVersion)
       override val dockerTag: String = dockerImageVersion
       override val dockerImageName: String = dockerImageFor(Option(dockerImageVersion))
     }
