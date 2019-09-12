@@ -35,7 +35,7 @@ do
     t)
       TARGET="$OPTARG"
 
-      if [[ "${TARGET}" == "docker" && "${OS_TARGET}" == "darwin" ]]
+      if [[ "$TARGET" == "docker" && "$OS_TARGET" == "darwin" ]]
       then
         echo >&2 "Target docker can only build binaries for linux."
         OS_TARGET="linux"
@@ -88,34 +88,34 @@ function build_cmd() {
   # Flags for debug
   # FLAGS+=" --allow-incomplete-classpath -H:+TraceClassInitialization"
 
-  if [[ "${OS_TARGET}" != "darwin" ]]
+  if [[ "$OS_TARGET" != "darwin" ]]
   then
     FLAGS+=" --static"
   fi
 
-  echo 'native-image -cp '"${APP_CLASSPATH}"' '"${FLAGS}"' -H:Name='"${BINARY_NAME}"' -H:Class='"${APP_MAIN_CLASS}"
+  echo 'native-image -cp '"$APP_CLASSPATH"' '"$FLAGS"' -H:Name='"$BINARY_NAME"' -H:Class='"$APP_MAIN_CLASS"
 }
 
-echo "Publishing ${APP_NAME} binary version ${VERSION} for ${OS_TARGET}"
-BINARY_NAME="${APP_NAME}-${OS_TARGET}"
-BUILD_CMD="$(build_cmd ${BINARY_NAME} "${APP_MAIN_CLASS}" "$(app_classpath)")"
+echo "Publishing $APP_NAME binary version $VERSION for $OS_TARGET"
+BINARY_NAME="$APP_NAME-$OS_TARGET-$VERSION"
+BUILD_CMD="$(build_cmd "$BINARY_NAME" "$APP_MAIN_CLASS" "$(app_classpath)")"
 
-echo "Going to run ${BUILD_CMD} ..."
+echo "Going to run $BUILD_CMD ..."
 case "$TARGET" in
   native)
-    ${BUILD_CMD}
+    $BUILD_CMD
     ;;
   docker)
     docker run \
       --rm=true \
       -it \
-      -e JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS}" \
+      -e JAVA_TOOL_OPTIONS="$JAVA_TOOL_OPTIONS" \
       --user=root \
       --entrypoint=bash \
-      -v $HOME:$HOME:ro \
-      -v $PWD:$PWD \
+      -v "$HOME":"$HOME":ro \
+      -v "$PWD":"$PWD" \
       findepi/graalvm:19.2.0-all \
-        -c 'cd /tmp && '"${BUILD_CMD}"' && mv '"$BINARY_NAME $PWD/$BINARY_NAME"
+        -c 'cd /tmp && '"$BUILD_CMD"' && mv '"$BINARY_NAME $PWD/$BINARY_NAME"
     ;;
   *)
     echo >&2 "Could not find command for target $TARGET"
