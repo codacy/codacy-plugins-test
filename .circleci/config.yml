@@ -31,7 +31,6 @@ workflows:
           cmd: |
             ./scripts/build-native.sh -n $CIRCLE_PROJECT_REPONAME -m codacy.plugins.DockerTest -t docker $(cat .version)
             curl -T ~/workdir/$CIRCLE_PROJECT_REPONAME-linux-$(cat .version) -ucodacy-ci:$BINTRAY_API_KEY -H "X-Bintray-Package:$CIRCLE_PROJECT_REPONAME" -H "X-Bintray-Version:$(cat .version)" https://api.bintray.com/content/codacy/Binaries/$(cat .version)/$CIRCLE_PROJECT_REPONAME-linux
-            curl -T ~/workdir/target/$CIRCLE_PROJECT_REPONAME-assembly-$(cat .version).jar -ucodacy-ci:$BINTRAY_API_KEY -H "X-Bintray-Package:$CIRCLE_PROJECT_REPONAME" -H "X-Bintray-Version:$(cat .version)" https://api.bintray.com/content/codacy/Binaries/$(cat .version)/$CIRCLE_PROJECT_REPONAME-assembly.jar
             curl -X POST -ucodacy-ci:$BINTRAY_API_KEY https://api.bintray.com/content/codacy/Binaries/$CIRCLE_PROJECT_REPONAME/$(cat .version)/publish
             GHR_FLAGS=""
             if [ "$CIRCLE_BRANCH" != "master" ]; then
@@ -39,7 +38,6 @@ workflows:
             fi
             mkdir -p /tmp/ghr-publish
             cp ~/workdir/$CIRCLE_PROJECT_REPONAME-linux-$(cat .version) /tmp/ghr-publish
-            cp ~/workdir/target/$CIRCLE_PROJECT_REPONAME-assembly-$(cat .version).jar /tmp/ghr-publish/$CIRCLE_PROJECT_REPONAME-$(cat .version)-assembly.jar
             go get github.com/tcnksm/ghr
             ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME -c $CIRCLE_SHA1 $GHR_FLAGS -delete $(cat .version) /tmp/ghr-publish
           requires:
