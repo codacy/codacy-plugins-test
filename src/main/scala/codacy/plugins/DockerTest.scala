@@ -28,12 +28,11 @@ object DockerTest {
             val dockerImage = parseDockerImage(dockerImageNameAndVersion)
 
             def runTests(testSources: Seq[Path]): Either[String, Unit] = {
-              try {
-                val allTestsPassed = possibleTests
-                  .map(test => run(testSources, test, typeOfTest, dockerImage, optArgs))
-                  .forall(identity)
-                if (allTestsPassed) Right(()) else Left("[Failure] Some tests failed!")
-              } finally deleteTestSources(testSources)
+              val allTestsPassed = possibleTests
+                .map(test => run(testSources, test, typeOfTest, dockerImage, optArgs))
+                .forall(identity)
+              deleteTestSources(testSources)
+              if (allTestsPassed) Right(()) else Left("[Failure] Some tests failed!")
             }
 
             val testRunResult = for {
