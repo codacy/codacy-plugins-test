@@ -28,24 +28,26 @@ object DockerTest {
             val dockerImage = parseDockerImage(dockerImageNameAndVersion)
 
             def runTests(testSources: Seq[Path]): Either[String, Unit] = {
-              val allTestsPassed = possibleTests
-                .map(test => run(testSources, test, typeOfTest, dockerImage, optArgs))
-                .forall(identity)
-              if (allTestsPassed) Right(()) else Left("[Failure] Some tests failed!")
+              try {
+                val allTestsPassed = possibleTests
+                  .map(test => run(testSources, test, typeOfTest, dockerImage, optArgs))
+                  .forall(identity)
+                if (allTestsPassed) Right(()) else Left("[Failure] Some tests failed!")
+              } finally deleteTestSources(testSources)
             }
 
-            (for {
+            val testRunResult = for {
               testSources <- DockerHelpers.testFoldersInDocker(dockerImage)
-              _ <- runTests(testSources).fold(e => {
-                deleteTestSources(testSources)
-                Left(e)
-              }, Right(_))
-            } yield {
-              deleteTestSources(testSources)
-            }).fold(err => {
-              Printer.red(err)
-              System.exit(1)
-            }, _ => Printer.green("[Success] All tests passed!"))
+              res <- runTests(testSources)
+            } yield res
+
+            testRunResult match {
+              case Left(err) =>
+                Printer.red(err)
+                System.exit(1)
+              case Right(()) =>
+                Printer.green("[Success] All tests passed!")
+            }
         }
       case _ =>
     }
