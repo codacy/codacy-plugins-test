@@ -27,7 +27,7 @@ object DockerHelpers {
           List("docker", "rm", "-f", containerId).lineStream_!.toList
         }
         val sourcesDir = sourceDir.resolve("directory-tests")
-        
+
         val pathArr = sourcesDir.toFile.listFiles().collect {
           case dir if dir.exists() =>
             dir.toPath
