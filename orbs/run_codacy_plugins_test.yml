@@ -1,0 +1,51 @@
+version: 2.1
+
+description: "Runs codacy-plugins-test on a tool"
+
+executor: machine
+
+parameters:
+  run_json_tests:
+    type: boolean
+    default: true
+    description: "Run 'json' tests in codacy-plugins-test"
+  run_pattern_tests:
+    type: boolean
+    default: true
+    description: "Run 'pattern' tests in codacy-plugins-test"
+  run_plugin_tests:
+    type: boolean
+    default: false
+    description: "Run 'plugin' tests in codacy-plugins-test"
+
+steps:
+  - attach_workspace:
+      at: ~/
+  - restore_cache:
+      key: codacy-plugins-test-cache-$CODACY_PLUGINS_TEST_VERSION
+  - attach_workspace:
+      at: ~/
+  - run:
+      command: |
+        mkdir -p codacy-plugins-test
+        cd codacy-plugins-test
+        FILENAME=codacy-plugins-test-$CODACY_PLUGINS_TEST_VERSION
+        LINK="https://bintray.com/codacy/Binaries/download_file?file_path=$CODACY_PLUGINS_TEST_VERSION%2Fcodacy-plugins-test-linux"
+        if [ ! -f "$FILENAME" ]; then
+          wget $LINK -O $FILENAME
+          chmod +x $FILENAME
+        fi
+        docker load --input ~/workdir/docker-image.tar
+        if << parameters.run_json_tests >> ; then
+          ./$FILENAME json $CIRCLE_PROJECT_REPONAME:latest
+        fi
+        if << parameters.run_pattern_tests >> ; then
+          ./$FILENAME pattern $CIRCLE_PROJECT_REPONAME:latest
+        fi
+        if << parameters.run_plugin_tests >> ; then
+          ./$FILENAME plugin $CIRCLE_PROJECT_REPONAME:latest
+        fi
+  - save_cache:
+      key: codacy-plugins-test-cache-$CODACY_PLUGINS_TEST_VERSION
+      paths:
+        - ~/codacy-plugins-test
