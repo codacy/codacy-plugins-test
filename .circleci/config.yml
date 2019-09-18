@@ -2,7 +2,51 @@ version: 2.1
 
 orbs:
   codacy: codacy/base@0.3.8
-  
+
+references:
+  circleci_job: &circleci_job
+    docker:
+      - image: circleci/circleci-cli:0.1.5879
+    working_directory: ~/workdir
+
+jobs:
+  pack_and_validate:
+    <<: *circleci_job
+    steps:
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Pack orb
+          command: |
+            # Write the version file
+            echo "enviroment:"$'\n'"  - CODACY_PLUGINS_TEST_VERSION: $(cat .version)" > orbs/version.yml
+            circleci config pack orbs > orb.yml
+      - run:
+          name: Validate orb
+          command: circleci orb validate orb.yml
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - workdir/orb.yml
+
+  publish_dev:
+    <<: *circleci_job
+    steps:
+      - attach_workspace:
+          at: ~/
+      - deploy:
+          name: Publish orb as dev (deleted after 90 days)
+          command: circleci orb publish orb.yml codacy/base@dev:$(cat .version) --token $CIRCLE_TOKEN
+
+  publish_prod:
+    <<: *circleci_job
+    steps:
+      - attach_workspace:
+          at: ~/
+      - deploy:
+          name: Publish final orb
+          command: circleci orb publish orb.yml codacy/base@$(cat .version) --token $CIRCLE_TOKEN
+
 workflows:
   version: 2
   build-and-deploy:
@@ -51,6 +95,23 @@ workflows:
           context: CodacyAWS
           requires:
             - build_native_image
+            - pack_and_validate
+          filters:
+            branches:
+              only:
+                - master
+      - publish_dev:
+          context: CodacyCircleCI
+          requires:
+            - tag_version
+          filters:
+            branches:
+              ignore:
+                - master
+      - publish_prod:
+          context: CodacyCircleCI
+          requires:
+            - tag_version
           filters:
             branches:
               only:
