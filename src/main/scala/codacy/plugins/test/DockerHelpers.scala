@@ -15,17 +15,19 @@ object DockerHelpers {
 
     output.headOption match {
       case Some(containerId) =>
-        //copy files from running container
-        List("docker", "cp", s"$containerId:/docs/directory-tests", sourceDir.toString).lineStream_!.toList
+        try {
+          //copy files from running container
+          List("docker", "cp", s"$containerId:/docs/directory-tests", sourceDir.toString).lineStream_!.toList
 
-        // backwards compatibility, making sure directory tests exist so we can copy the old test dir
-        List("mkdir", "-p", s"$sourceDir/directory-tests").lineStream_!.toList
-        List("docker", "cp", s"$containerId:/docs/tests", s"$sourceDir/directory-tests").lineStream_!.toList
-
-        // Remove container
-        List("docker", "rm", "-f", containerId).lineStream_!.toList
+          // backwards compatibility, making sure directory tests exist so we can copy the old test dir
+          List("mkdir", "-p", s"$sourceDir/directory-tests").lineStream_!.toList
+          List("docker", "cp", s"$containerId:/docs/tests", s"$sourceDir/directory-tests").lineStream_!.toList
+        } finally {
+          // Remove container
+          List("docker", "rm", "-f", containerId).lineStream_!.toList
+        }
         val sourcesDir = sourceDir.resolve("directory-tests")
-
+        
         val pathArr = sourcesDir.toFile.listFiles().collect {
           case dir if dir.exists() =>
             dir.toPath
