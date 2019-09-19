@@ -97,6 +97,7 @@ workflows:
           context: CodacyCircleCI
           requires:
             - tag_version
+            - pack_and_validate
           filters:
             branches:
               ignore:
@@ -105,6 +106,7 @@ workflows:
           context: CodacyCircleCI
           requires:
             - tag_version
+            - pack_and_validate
           filters:
             branches:
               only:
