@@ -88,10 +88,6 @@ workflows:
             ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME -c $CIRCLE_SHA1 $GHR_FLAGS -delete $(cat .version) /tmp/ghr-publish
           requires:
             - compile
-          filters:
-            branches:
-              only:
-                - master
       - codacy/tag_version:
           name: tag_version
           context: CodacyAWS
