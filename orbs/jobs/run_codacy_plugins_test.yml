@@ -1,5 +1,3 @@
-version: 2.1
-
 description: "Runs codacy-plugins-test on a tool"
 
 executor: machine
