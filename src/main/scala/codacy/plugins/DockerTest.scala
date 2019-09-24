@@ -5,6 +5,7 @@ import java.nio.file.Path
 import codacy.plugins.test._
 import codacy.utils.Printer
 import org.apache.commons.io.FileUtils
+import better.files.File
 
 case class Sources(mainSourcePath: Path, directoryPaths: Seq[Path])
 
@@ -35,11 +36,13 @@ object DockerTest {
               } finally deleteTestSources(testSources)
               if (allTestsPassed) Right(()) else Left("[Failure] Some tests failed!")
             }
-
-            val testRunResult = for {
-              testSources <- DockerHelpers.testFoldersInDocker(dockerImage)
-              res <- runTests(testSources)
-            } yield res
+            val tempDirectory = File.newTemporaryDirectory("docker-test-folders")
+            val testRunResult = try {
+              for {
+                testSources <- DockerHelpers.testFoldersInDocker(dockerImage, tempDirectory.path)
+                res <- runTests(testSources)
+              } yield res
+            } finally tempDirectory.delete(swallowIOExceptions = true)
 
             testRunResult match {
               case Left(err) =>
@@ -49,7 +52,8 @@ object DockerTest {
                 Printer.green("[Success] All tests passed!")
             }
         }
-      case _ =>
+      case wrongTypeOfTest =>
+        Printer.red(s"Wrong test type -> $wrongTypeOfTest should be one of [${possibleTestNames.mkString(", ")}]")
     }
   }
 
