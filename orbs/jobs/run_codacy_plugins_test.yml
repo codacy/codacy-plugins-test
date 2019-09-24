@@ -47,3 +47,5 @@ steps:
       key: codacy-plugins-test-cache-$CODACY_PLUGINS_TEST_VERSION
       paths:
         - ~/codacy-plugins-test
+environment:
+  - CODACY_PLUGINS_TEST_VERSION: 1.0.0
