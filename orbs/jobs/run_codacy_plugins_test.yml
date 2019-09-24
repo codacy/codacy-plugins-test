@@ -1,6 +1,6 @@
 description: "Runs codacy-plugins-test on a tool"
 
-executor: machine
+machine: true
 
 parameters:
   run_json_tests:
