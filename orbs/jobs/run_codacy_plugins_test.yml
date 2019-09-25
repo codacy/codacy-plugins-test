@@ -29,8 +29,6 @@ steps:
       at: ~/
   - restore_cache:
       key: codacy-plugins-test-cache-$CODACY_PLUGINS_TEST_VERSION # CODACY_PLUGINS_TEST_VERSION injected in .circle/config.yml
-  - attach_workspace:
-      at: ~/
   - run:
       command: |
         mkdir -p codacy-plugins-test
@@ -45,21 +43,21 @@ steps:
         - run:
             name: RunJsonTests
             command: |
-              ./$FILENAME json << parameters.docker_image_name >>:<< parameters.docker_image_tag >>
+              codacy-plugins-test/$FILENAME json << parameters.docker_image_name >>:<< parameters.docker_image_tag >>
   - when:
       condition: << parameters.run_pattern_tests >>
       steps:
         - run:
             name: RunPatternTests
             command: |
-              ./$FILENAME pattern << parameters.docker_image_name >>:<< parameters.docker_image_tag >>
+              codacy-plugins-test/$FILENAME pattern << parameters.docker_image_name >>:<< parameters.docker_image_tag >>
   - when:
       condition: << parameters.run_plugin_tests >>
       steps:
         - run:
             name: RunPluginTests
             command: |
-              ./$FILENAME plugin << parameters.docker_image_name >>:<< parameters.docker_image_tag >>
+              codacy-plugins-test/$FILENAME plugin << parameters.docker_image_name >>:<< parameters.docker_image_tag >>
   - save_cache:
       key: codacy-plugins-test-cache-$CODACY_PLUGINS_TEST_VERSION
       paths:
