@@ -17,7 +17,10 @@ jobs:
       - run:
           name: Pack orb
           command: |
-            echo "environment:"$'\n'"  - CODACY_PLUGINS_TEST_VERSION: $(cat .version)" >> orbs/jobs/run_codacy_plugins_test.yml
+            echo ""                                                  >> orbs/jobs/run_codacy_plugins_test.yml
+            echo "environment:"                                      >> orbs/jobs/run_codacy_plugins_test.yml
+            echo "  - CODACY_PLUGINS_TEST_VERSION: $(cat .version)"  >> orbs/jobs/run_codacy_plugins_test.yml
+            echo "  - FILENAME: codacy-plugins-test-$(cat .version)" >> orbs/jobs/run_codacy_plugins_test.yml
             circleci config pack orbs > orb.yml
       - run:
           name: Validate orb
