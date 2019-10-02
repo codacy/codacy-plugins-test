@@ -1,0 +1,23 @@
+name: Automate project columns
+
+on: [issues, pull_request]
+
+jobs:
+  automate-project-columns:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Move new issues into New Issues
+        if: github.event_name == 'issues' && github.event.action == 'opened'
+        uses: alex-page/github-project-automation-plus@v0.1.0
+        with:
+          project: Tools & OSS
+          column: New Issues
+          repo-token: ${{ secrets.GITHUB_PAT }}
+
+      - name: Move new pull requests into New Issues
+        if: github.event_name == 'pull_request' && github.event.action == 'opened'
+        uses: alex-page/github-project-automation-plus@v0.1.0
+        with:
+          project: Tools & OSS
+          column: New Issues
+          repo-token: ${{ secrets.GITHUB_PAT }}
