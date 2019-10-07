@@ -4,10 +4,15 @@ import java.io.File
 import java.nio.file.Path
 
 import codacy.utils.Printer
-import com.codacy.analysis.core
 import com.codacy.analysis.core.tools.MetricsTool
 import com.codacy.plugins.api.Source
 import com.codacy.plugins.metrics.traits
+import com.codacy.plugins.api.metrics.FileMetrics
+import com.codacy.plugins.api.metrics.LineComplexity
+
+import scala.util.{Failure, Success}
+
+import Utils._
 
 object MetricsTests extends ITest with CustomMatchers {
 
@@ -18,66 +23,69 @@ object MetricsTests extends ITest with CustomMatchers {
 
     val languages = findLanguages(testSources, dockerImage)
     val metricsTool = new traits.MetricsTool(languages.toList, dockerImage.name, dockerImage.version) {}
-    val tools = languages.map(language => new core.tools.MetricsTool(metricsTool, language))
+    val tools = languages.map(language => new MetricsTool(metricsTool, language))
 
     testSources
       .map { sourcePath =>
-        val testFiles = new TestFilesParser(sourcePath.toFile).getTestFiles
+        val testFiles = new MetricsTestFilesParser(sourcePath.toFile).getTestFiles
 
-        val filteredTestFiles = optArgs.headOption.fold(testFiles) { fileNameToTest =>
-          testFiles.filter(testFiles => testFiles.file.getName.contains(fileNameToTest))
-        }
-
-        filteredTestFiles
-          .map { testFile =>
+        testFiles
+          .map { case (fileMetrics, language) =>
             tools
-              .filter(_.languageToRun.name.equalsIgnoreCase(testFile.language.toString))
-              .exists(analyseFile(sourcePath.toFile, testFile, _))
+              .filter(_.languageToRun.name.equalsIgnoreCase(language.toString))
+              .exists(analyseFile(sourcePath.toFile, fileMetrics, _))
           }
           .forall(identity)
       }
       .forall(identity)
   }
 
-  private def analyseFile(rootDirectory: File, testFile: PatternTestFile, tool: MetricsTool): Boolean = {
+  private def analyseFile(rootDirectory: File, testFile: FileMetrics, tool: MetricsTool): Boolean = {
 
-    val filename = toRelativePath(rootDirectory.getAbsolutePath, testFile.file.getAbsolutePath)
+    val filename = toRelativePath(rootDirectory.getAbsolutePath, testFile.filename)
 
+    def metricsMessage(testFile: FileMetrics) = {
+      val fileResults = Seq(
+      "complexity" -> testFile.complexity,
+      "loc" -> testFile.loc,
+      "cloc" -> testFile.cloc,
+      "nrMethods" -> testFile.nrMethods,
+      "nrClasses" -> testFile.nrClasses).collect {
+        case (key, Some(value)) =>
+          s"$key == $value"
+      }
+      val lineComplexitiesResult = testFile.lineComplexities.map{ case LineComplexity(line, value) => s"complexity $value in line $line" }
+      (fileResults ++ lineComplexitiesResult).mkString(s", ")
+    }
+    
     Printer.green(
-      s"- $filename should have ${testFile.matches.length} matches with patterns: " +
-        testFile.enabledPatterns.map(_.name).mkString(", ")
+      s"- $filename should have: ${metricsMessage(testFile)}"
     )
 
-    val testFiles = Seq(testFile.file)
-    val testFilesSourcePaths: Set[Source.File] = testFiles.map(f => Source.File(f.getAbsolutePath))(collection.breakOut)
+    val testFiles: Set[Source.File] = Set(Source.File(filename))
 
-    val patterns: Set[Pattern] = testFile.enabledPatterns.map(
-      p =>
-        core.model.Pattern(p.name, p.parameters.fold(Set.empty[core.model.Parameter])(_.map {
-          case (k, v) => core.model.Parameter(k, v.toString)
-        }(collection.breakOut)))
-    )(collection.breakOut)
+    val resultTry = tool.run(better.files.File(rootDirectory.getAbsolutePath), Option(testFiles))
 
-    val codacyCfg = CodacyCfg(patterns)
+    val result = resultTry match {
+      case Failure(e) =>
+        Printer.red(e.getMessage)
+        Printer.red(e.getStackTrace.mkString("\n"))
+        Set.empty
+      case Success(res) =>
+        res
+    }
 
-    val result = tool.run(better.files.File(rootDirectory.getAbsolutePath), Option(testFilesSourcePaths), codacyCfg)
+    val comparison = {
+      result.toList match {
+        case List(fileMetrics) if fileMetrics == testFile => true
+        case _ => false
+      }
+    }
 
-    val matches: Seq[TestFileResult] = result.map(
-      r =>
-        TestFileResult(r.patternId.value, r.location match {
-          case fl: FullLocation => fl.line
-          case l: LineLocation => l.line
-        }, r.level)
-    )(collection.breakOut)
+    if (!comparison) Printer.red(s"${result.headOption.map(toCoreModelFileMetrics _ andThen metricsMessage).getOrElse("")} did not match expected result.")
+    else Printer.green("Test passed")
 
-    val comparison = beEqualTo(testFile.matches).apply(matches)
-
-    Printer.green(s"  + ${matches.size} matches found in lines: ${matches.map(_.line).to[Seq].sorted.mkString(", ")}")
-
-    if (!comparison.matches) Printer.red(comparison.rawFailureMessage)
-    else Printer.green(comparison.rawNegatedFailureMessage)
-
-    comparison.matches
+    comparison
   }
 
   private def toRelativePath(rootPath: String, absolutePath: String) = {

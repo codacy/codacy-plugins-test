@@ -101,7 +101,7 @@ object PatternTests extends ITest with CustomMatchers {
     Printer.green(s"  + ${matches.size} matches found in lines: ${matches.map(_.line).to[Seq].sorted.mkString(", ")}")
 
     if (!comparison.matches) Printer.red(comparison.rawFailureMessage)
-    else Printer.green(comparison.rawNegatedFailureMessage)
+    else Printer.green(comparison.rawNegexitatedFailureMessage)
 
     comparison.matches
   }

@@ -1,5 +1,6 @@
 package codacy.plugins.test
 import com.codacy.plugins.api.languages.{Language, Languages}
+import codacy.utils.FileHelper
 
 object Utils {
 
@@ -42,4 +43,33 @@ object Utils {
                                                     Languages.Markdown -> Seq("<!--"),
                                                     Languages.Crystal -> Seq("#"),
                                                     Languages.YAML -> Seq("#"))
+
+  def getAllComments(file: java.io.File, language: Language): Seq[(Int, String)] = {
+    //Returns the content of a line comment or None if the line is not a comment
+    def getComment(language: Language, line: String): Option[String] = {
+      languageComments(language).collectFirst {
+        case lineComment if line.trim.startsWith(lineComment) && line.trim.endsWith(lineComment.reverse) =>
+          line.trim.drop(lineComment.length).dropRight(lineComment.length)
+        case lineComment if line.trim.startsWith(lineComment) =>
+          line.trim.drop(lineComment.length)
+      }
+    }
+    
+    FileHelper.read(file).getOrElse(Seq.empty).zipWithIndex.flatMap {
+      case (line, lineNr) =>
+        getComment(language, line).map { comment =>
+          (lineNr + 1, comment)
+        }
+    }
+  }
+
+  def toCoreModelFileMetrics(fileMetrics: com.codacy.analysis.core.model.FileMetrics) =
+    com.codacy.plugins.api.metrics.FileMetrics(
+      filename = fileMetrics.filename.toString,
+      complexity = fileMetrics.complexity,
+      loc = fileMetrics.loc,
+      cloc = fileMetrics.cloc,
+      nrMethods = fileMetrics.nrClasses,
+      lineComplexities = fileMetrics.lineComplexities
+    )
 }

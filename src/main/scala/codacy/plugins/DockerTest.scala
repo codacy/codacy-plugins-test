@@ -14,7 +14,7 @@ object DockerTest {
   private lazy val config = Map("all" -> possibleTests) ++ possibleTests.map { test =>
     test.opt -> Seq(test)
   }
-  private lazy val possibleTests = Seq(JsonTests, PluginsTests, PatternTests)
+  private lazy val possibleTests = Seq(JsonTests, PluginsTests, PatternTests, MetricsTests)
   private lazy val possibleTestNames = config.keySet
 
   def main(args: Array[String]): Unit = {

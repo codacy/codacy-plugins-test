@@ -4,17 +4,12 @@ import java.io.File
 
 import codacy.utils.FileHelper
 import com.codacy.plugins.api.languages.{Language, Languages}
-import com.codacy.plugins.api.metrics.FileMetrics
+import com.codacy.plugins.api.metrics.{FileMetrics, LineComplexity}
 import play.api.libs.json.Json
 
 import scala.annotation.tailrec
 import scala.util.Try
 import Utils._
-import com.codacy.plugins.api.metrics.LineComplexity
-
-// object ComplexityWithLine {
-//   implicit val formatter = Json.format[ComplexityWithLine]
-// }
 
 class MetricsTestFilesParser(filesDir: File) {
   private case class MetricsHeaderData(complexity: Option[Int],
@@ -27,7 +22,7 @@ class MetricsTestFilesParser(filesDir: File) {
   val MetricsHeader = """\s*#Metrics:\s*(.*)""".r
   val LineComplexityRegex = """\s*#LineComplexity:\s*(.*)""".r
 
-  def getTestFiles: Seq[FileMetrics] = {
+  def getTestFiles: Seq[(FileMetrics, Language)] = {
     FileHelper
       .listFiles(filesDir)
       .map { file =>
@@ -59,37 +54,19 @@ class MetricsTestFilesParser(filesDir: File) {
                 val metricsHeaderData = Json.parse(json).asOpt[MetricsHeaderData]
                 metricsHeaderData.map(
                   data =>
-                    FileMetrics(file.getAbsolutePath,
-                                data.complexity,
-                                data.loc,
-                                data.cloc,
-                                data.nrMethods,
-                                data.nrClasses,
-                                lineComplexities)
+                    (FileMetrics(file.getAbsolutePath,
+                                 data.complexity,
+                                 data.loc,
+                                 data.cloc,
+                                 data.nrMethods,
+                                 data.nrClasses,
+                                 lineComplexities),
+                     language)
                 )
               case _ => None
             }
             .getOrElse(throw new Exception(s"File $file has no metrics header."))
       }
-  }
-
-  private def getAllComments(file: File, language: Language): Seq[(Int, String)] = {
-    FileHelper.read(file).getOrElse(Seq.empty).zipWithIndex.flatMap {
-      case (line, lineNr) =>
-        getComment(language, line).map { comment =>
-          (lineNr + 1, comment)
-        }
-    }
-  }
-
-  //Returns the content of a line comment or None if the line is not a comment
-  private def getComment(language: Language, line: String): Option[String] = {
-    languageComments(language).collectFirst {
-      case lineComment if line.trim.startsWith(lineComment) && line.trim.endsWith(lineComment.reverse) =>
-        line.trim.drop(lineComment.length).dropRight(lineComment.length)
-      case lineComment if line.trim.startsWith(lineComment) =>
-        line.trim.drop(lineComment.length)
-    }
   }
 
   //The match is in the next line that is not a comment
