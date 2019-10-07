@@ -4,37 +4,28 @@ import java.io.File
 
 import codacy.utils.{FileHelper, Printer}
 import com.codacy.plugins.api.languages.{Language, Languages}
-import com.codacy.plugins.api.results.Result
+import com.codacy.plugins.api.metrics.FileMetrics
 import play.api.libs.json.{JsValue, Json}
 
 import scala.annotation.tailrec
 import scala.util.{Failure, Success, Try}
-
 import Utils._
 
-case class PatternTestFile(file: File,
-                           language: Language,
-                           enabledPatterns: Seq[PatternSimple],
-                           matches: Seq[TestFileResult])
+// object ComplexityWithLine {
+//   implicit val formatter = Json.format[ComplexityWithLine]
+// }
 
-case class IssueWithLine(severity: String, line: Int, patternId: String)
+class MetricsTestFilesParser(filesDir: File) {
+  private case class MetricsHeaderData(complexity: Option[Int],
+                                       loc: Option[Int],
+                                       cloc: Option[Int],
+                                       nrMethods: Option[Int],
+                                       nrClasses: Option[Int])
+  private implicit val formatter = Json.format[MetricsHeaderData]
+  
 
-object IssueWithLine {
-  implicit val formatter = Json.format[IssueWithLine]
-}
-
-case class PatternSimple(name: String, parameters: Option[Map[String, JsValue]])
-
-class TestFilesParser(filesDir: File) {
-
-  val Warning = """\s*#Warn(?:ing)?:\s*([A-Za-z0-9\_\-\.=/]+).*""".r
-  val Error = """\s*#Err(?:or)?:\s*([A-Za-z0-9\_\-\.=/]+).*""".r
-  val Info = """\s*#Info:\s*([A-Za-z0-9\_\-\.=/]+).*""".r
-  val PatternsList = """\s*#Patterns:\s*([\s\,A-Za-z0-9\_\-\.=/]+)""".r
-
-  val PatternWithParameters =
-    """\s*#Patterns:\s*([A-Za-z0-9\,\_\-\.=/]+)[\s\:]+(.*)""".r
-  val IssueWithLineRegex = """\s*#Issue:\s*(.*)""".r
+  val MetricsHeader = """\s*#Metrics:\s*(.*)""".r
+  val LineComplexity = """\s*#LineComplexity:\s*(.*)""".r
 
   def getTestFiles: Seq[PatternTestFile] = {
     FileHelper
@@ -81,27 +72,22 @@ class TestFilesParser(filesDir: File) {
               }
           }
 
-          //we probably need to convert this into a smarter regex
-          val enabledPatterns = comments
+          comments.headOption
             .map { case (_, comment) => comment }
-            .flatMap {
+            .map {
               //pattern has no parameters
-              case PatternsList(value) =>
-                value.split(",").map { pattern =>
-                  PatternSimple(pattern.trim, None)
-                }
-
-              case PatternWithParameters(patternIdString, parameters) =>
-                val patternId = patternIdString.trim
-                val params =
-                  Try(cleanParameterTypes(Json.parse(parameters))).toOption
-                    .flatMap(_.asOpt[Map[String, JsValue]])
-                Seq(PatternSimple(patternId, params))
-
-              case _ => Seq.empty
+              case MetricsHeader(json) =>
+                val metricsHeaderData = MetricsHeaderData(complexity, loc, cloc, nrMethods, nrClasses) <- Json
+                
+                FileMetrics(file.getAbsolutePath,
+                            metricsHeaderData.complexity,
+                            metricsHeaderData.loc,
+                            metricsHeaderData.cloc,
+                            metricsHeaderData.nrMethods,
+                            metricsHeaderData.nrClasses,
+                            ???)
+              case _ => throw new Exception(s"File $file has no metrics header.")
             }
-
-          PatternTestFile(file, language, enabledPatterns, matches)
       }
   }
 
