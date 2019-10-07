@@ -2,14 +2,15 @@ package codacy.plugins.test
 
 import java.io.File
 
-import codacy.utils.{FileHelper, Printer}
+import codacy.utils.FileHelper
 import com.codacy.plugins.api.languages.{Language, Languages}
 import com.codacy.plugins.api.metrics.FileMetrics
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.Json
 
 import scala.annotation.tailrec
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 import Utils._
+import com.codacy.plugins.api.metrics.LineComplexity
 
 // object ComplexityWithLine {
 //   implicit val formatter = Json.format[ComplexityWithLine]
@@ -21,13 +22,12 @@ class MetricsTestFilesParser(filesDir: File) {
                                        cloc: Option[Int],
                                        nrMethods: Option[Int],
                                        nrClasses: Option[Int])
-  private implicit val formatter = Json.format[MetricsHeaderData]
-  
+  implicit private val formatter = Json.format[MetricsHeaderData]
 
   val MetricsHeader = """\s*#Metrics:\s*(.*)""".r
-  val LineComplexity = """\s*#LineComplexity:\s*(.*)""".r
+  val LineComplexityRegex = """\s*#LineComplexity:\s*(.*)""".r
 
-  def getTestFiles: Seq[PatternTestFile] = {
+  def getTestFiles: Seq[FileMetrics] = {
     FileHelper
       .listFiles(filesDir)
       .map { file =>
@@ -41,53 +41,35 @@ class MetricsTestFilesParser(filesDir: File) {
             case (commentFile, _) => commentFile
           }
 
-          val matches = comments.flatMap {
+          val lineComplexities: Set[LineComplexity] = comments.flatMap {
             case (line, comment) =>
               val nextLine = getNextCodeLine(line, commentLines)
 
               comment.trim match {
-                case IssueWithLineRegex(value) =>
-                  Try {
-                    for {
-                      IssueWithLine(severityStr, line, patternId) <- Json
-                        .parse(value)
-                        .asOpt[IssueWithLine]
-                      severity <- Result.Level.values
-                        .find(_.toString.startsWith(severityStr))
-                    } yield TestFileResult(patternId, line, severity)
-                  } match {
-                    case Success(result) => result
-                    case Failure(_) =>
-                      Printer.red(s"${file.getName}: Failing to parse Issue $value")
-                      System.exit(2)
-                      None
-                  }
-                case Warning(value) =>
-                  Some(TestFileResult(value, nextLine, Result.Level.Warn))
-                case Error(value) =>
-                  Some(TestFileResult(value, nextLine, Result.Level.Err))
-                case Info(value) =>
-                  Some(TestFileResult(value, nextLine, Result.Level.Info))
+                case LineComplexityRegex(value) =>
+                  Try(value.toInt).toOption.map(LineComplexity(nextLine, _))
                 case _ => None
               }
-          }
+          }.toSet
 
           comments.headOption
-            .map { case (_, comment) => comment }
-            .map {
+            .flatMap {
               //pattern has no parameters
-              case MetricsHeader(json) =>
-                val metricsHeaderData = MetricsHeaderData(complexity, loc, cloc, nrMethods, nrClasses) <- Json
-                
-                FileMetrics(file.getAbsolutePath,
-                            metricsHeaderData.complexity,
-                            metricsHeaderData.loc,
-                            metricsHeaderData.cloc,
-                            metricsHeaderData.nrMethods,
-                            metricsHeaderData.nrClasses,
-                            ???)
-              case _ => throw new Exception(s"File $file has no metrics header.")
+              case (_, MetricsHeader(json)) =>
+                val metricsHeaderData = Json.parse(json).asOpt[MetricsHeaderData]
+                metricsHeaderData.map(
+                  data =>
+                    FileMetrics(file.getAbsolutePath,
+                                data.complexity,
+                                data.loc,
+                                data.cloc,
+                                data.nrMethods,
+                                data.nrClasses,
+                                lineComplexities)
+                )
+              case _ => None
             }
+            .getOrElse(throw new Exception(s"File $file has no metrics header."))
       }
   }
 
@@ -118,13 +100,5 @@ class MetricsTestFilesParser(filesDir: File) {
     } else {
       getNextCodeLine(currentLine + 1, comments)
     }
-  }
-
-  private def cleanParameterTypes(json: JsValue): JsValue = {
-    val jsonString = json.toString()
-    val fixedString = jsonString
-      .replaceAll(""""(true|false)"""", "$1")
-      .replaceAll(""""([0-9]+)"""", "$1")
-    Json.parse(fixedString)
   }
 }
