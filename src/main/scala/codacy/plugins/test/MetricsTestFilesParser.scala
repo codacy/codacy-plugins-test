@@ -7,7 +7,6 @@ import com.codacy.plugins.api.languages.{Language, Languages}
 import com.codacy.plugins.api.metrics.{FileMetrics, LineComplexity}
 import play.api.libs.json.Json
 
-import scala.annotation.tailrec
 import scala.util.Try
 import Utils._
 

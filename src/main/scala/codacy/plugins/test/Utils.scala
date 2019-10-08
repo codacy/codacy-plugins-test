@@ -66,7 +66,7 @@ private [test] object Utils {
 
   //The match is in the next line that is not a comment
   @tailrec
-  private def getNextCodeLine(currentLine: Int, comments: Seq[Int]): Int =
+  def getNextCodeLine(currentLine: Int, comments: Seq[Int]): Int =
     if (comments.contains(currentLine)) getNextCodeLine(currentLine + 1, comments)
     else
       currentLine
