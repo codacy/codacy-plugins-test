@@ -54,7 +54,7 @@ object Utils {
           line.trim.drop(lineComment.length)
       }
     }
-    
+
     FileHelper.read(file).getOrElse(Seq.empty).zipWithIndex.flatMap {
       case (line, lineNr) =>
         getComment(language, line).map { comment =>
@@ -64,12 +64,10 @@ object Utils {
   }
 
   def toCodacyPluginsApiMetricsFileMetrics(fileMetrics: com.codacy.analysis.core.model.FileMetrics) =
-    com.codacy.plugins.api.metrics.FileMetrics(
-      filename = fileMetrics.filename.toString,
-      complexity = fileMetrics.complexity,
-      loc = fileMetrics.loc,
-      cloc = fileMetrics.cloc,
-      nrMethods = fileMetrics.nrClasses,
-      lineComplexities = fileMetrics.lineComplexities
-    )
+    com.codacy.plugins.api.metrics.FileMetrics(filename = fileMetrics.filename.toString,
+                                               complexity = fileMetrics.complexity,
+                                               loc = fileMetrics.loc,
+                                               cloc = fileMetrics.cloc,
+                                               nrMethods = fileMetrics.nrClasses,
+                                               lineComplexities = fileMetrics.lineComplexities)
 }

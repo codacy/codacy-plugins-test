@@ -17,7 +17,7 @@ class MetricsTestFilesParser(filesDir: File) {
                                        cloc: Option[Int],
                                        nrMethods: Option[Int],
                                        nrClasses: Option[Int])
-  implicit private val formatter  = Json.format[MetricsHeaderData]
+  implicit private val formatter = Json.format[MetricsHeaderData]
 
   val MetricsHeader = """\s*#Metrics:\s*(.*)""".r
   val LineComplexityRegex = """\s*#LineComplexity:\s*(.*)""".r
@@ -52,16 +52,15 @@ class MetricsTestFilesParser(filesDir: File) {
               //pattern has no parameters
               case (_, MetricsHeader(json)) =>
                 val metricsHeaderData = Json.parse(json).asOpt[MetricsHeaderData]
-                metricsHeaderData.map{
-                  data =>
-                    (FileMetrics(file.getName(),
-                                 data.complexity,
-                                 data.loc,
-                                 data.cloc,
-                                 data.nrMethods,
-                                 data.nrClasses,
-                                 lineComplexities),
-                     language)
+                metricsHeaderData.map { data =>
+                  (FileMetrics(file.getName(),
+                               data.complexity,
+                               data.loc,
+                               data.cloc,
+                               data.nrMethods,
+                               data.nrClasses,
+                               lineComplexities),
+                   language)
                 }
               case _ => None
             }

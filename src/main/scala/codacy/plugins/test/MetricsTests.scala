@@ -30,10 +30,11 @@ object MetricsTests extends ITest with CustomMatchers {
         val testFiles = new MetricsTestFilesParser(sourcePath.toFile).getTestFiles
 
         testFiles
-          .map { case (fileMetrics, language) =>
-            tools
-              .filter(_.languageToRun.name.equalsIgnoreCase(language.toString))
-              .exists(analyseFile(sourcePath.toFile, fileMetrics, _))
+          .map {
+            case (fileMetrics, language) =>
+              tools
+                .filter(_.languageToRun.name.equalsIgnoreCase(language.toString))
+                .exists(analyseFile(sourcePath.toFile, fileMetrics, _))
           }
           .forall(identity)
       }
@@ -45,16 +46,17 @@ object MetricsTests extends ITest with CustomMatchers {
     val filename = toRelativePath(rootDirectory.getAbsolutePath, testFile.filename)
 
     def metricsMessage(testFile: FileMetrics) = {
-      val fileResults = Seq(
-      "complexity" -> testFile.complexity,
-      "loc" -> testFile.loc,
-      "cloc" -> testFile.cloc,
-      "nrMethods" -> testFile.nrMethods,
-      "nrClasses" -> testFile.nrClasses).collect {
+      val fileResults = Seq("complexity" -> testFile.complexity,
+                            "loc" -> testFile.loc,
+                            "cloc" -> testFile.cloc,
+                            "nrMethods" -> testFile.nrMethods,
+                            "nrClasses" -> testFile.nrClasses).collect {
         case (key, Some(value)) =>
           s"$key == $value"
       }
-      val lineComplexitiesResult = testFile.lineComplexities.map{ case LineComplexity(line, value) => s"complexity $value in line $line" }
+      val lineComplexitiesResult = testFile.lineComplexities.map {
+        case LineComplexity(line, value) => s"complexity $value in line $line"
+      }
       val res = (fileResults ++ lineComplexitiesResult)
       val start = res.init.mkString(", ")
       res.lastOption match {
@@ -63,14 +65,13 @@ object MetricsTests extends ITest with CustomMatchers {
         case None => start
       }
     }
-    
-    Printer.green(
-      s"  - $filename should have: ${metricsMessage(testFile)}"
-    )
+
+    Printer.green(s"  - $filename should have: ${metricsMessage(testFile)}")
 
     val testFiles: Set[Source.File] = Set(Source.File(filename))
 
-    val resultTry = tool.run(better.files.File(rootDirectory.getAbsolutePath), Option(testFiles))
+    val resultTry = tool
+      .run(better.files.File(rootDirectory.getAbsolutePath), Option(testFiles))
       .map(_.map(toCodacyPluginsApiMetricsFileMetrics))
 
     val result = resultTry match {
@@ -84,13 +85,14 @@ object MetricsTests extends ITest with CustomMatchers {
 
     val comparison = {
       result.toList match {
-        case List(fileMetrics) if fileMetrics == testFile => 
+        case List(fileMetrics) if fileMetrics == testFile =>
           true
         case _ => false
       }
     }
 
-    if (!comparison) Printer.red(s"  ${result.headOption.map(metricsMessage).getOrElse("")} did not match expected result.")
+    if (!comparison)
+      Printer.red(s"  ${result.headOption.map(metricsMessage).getOrElse("")} did not match expected result.")
     else Printer.green("  Test passed")
 
     comparison
