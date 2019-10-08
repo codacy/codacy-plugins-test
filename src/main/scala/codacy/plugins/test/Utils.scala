@@ -1,49 +1,68 @@
 package codacy.plugins.test
-import com.codacy.plugins.api.languages.{Language, Languages}
+import com.codacy.plugins.api.languages.Language
+import com.codacy.plugins.api.languages.Languages._
 import codacy.utils.FileHelper
 import scala.annotation.tailrec
 
 private [test] object Utils {
   
-  val languageComments = Map[Language, Seq[String]](Languages.Javascript -> Seq("//", "/*"),
-                                                    Languages.Scala -> Seq("/*", "//"),
-                                                    Languages.CSS -> Seq("/*"),
-                                                    Languages.LESS -> Seq("/*"),
-                                                    Languages.SASS -> Seq("/*"),
-                                                    Languages.PHP -> Seq("#", "//"),
-                                                    Languages.C -> Seq("/*", "//"),
-                                                    Languages.CPP -> Seq("/*", "//"),
-                                                    Languages.ObjectiveC -> Seq("/*", "//"),
-                                                    Languages.Python -> Seq("#"),
-                                                    Languages.Ruby -> Seq("#"),
-                                                    Languages.Kotlin -> Seq("//", "/*"),
-                                                    Languages.Perl -> Seq("#"),
-                                                    Languages.Java -> Seq("//", "/*"),
-                                                    Languages.CSharp -> Seq("//", "/*"),
-                                                    Languages.VisualBasic -> Seq("'"),
-                                                    Languages.Go -> Seq("//"),
-                                                    Languages.Elixir -> Seq("#"),
-                                                    Languages.Clojure -> Seq("#", ";;"),
-                                                    Languages.CoffeeScript -> Seq("#"),
-                                                    Languages.Rust -> Seq("//"),
-                                                    Languages.Swift -> Seq("//"),
-                                                    Languages.Haskell -> Seq("--"),
-                                                    Languages.Shell -> Seq("#"),
-                                                    Languages.TypeScript -> Seq("//", "/*"),
-                                                    Languages.XML -> Seq("<!--"),
-                                                    Languages.Dockerfile -> Seq("#"),
-                                                    Languages.PLSQL -> Seq("--", "/*"),
-                                                    Languages.JSON -> Seq("//", "/*"),
-                                                    Languages.Apex -> Seq("//", "/*"),
-                                                    Languages.Velocity -> Seq("/*"),
-                                                    Languages.JSP -> Seq("<%--"),
-                                                    Languages.VisualForce -> Seq("<!--"),
-                                                    Languages.R -> Seq("#"),
-                                                    Languages.Powershell -> Seq("#", "<#"),
-                                                    Languages.Solidity -> Seq("//", "/*"),
-                                                    Languages.Markdown -> Seq("<!--"),
-                                                    Languages.Crystal -> Seq("#"),
-                                                    Languages.YAML -> Seq("#"))
+  val languageComments: Language => Seq[String] = {
+    case Apex => Seq("//", "/*")
+    case C => Seq("/*", "//")
+    case CPP => Seq("/*", "//")
+    case CSS => Seq("/*")
+    case CSharp => Seq("//", "/*")
+    case Clojure => Seq("#", ";;")
+    case Cobol => Seq()
+    case CoffeeScript => Seq("#")
+    case Crystal => Seq("#")
+    case Dart => Seq("//", "/*")
+    case Dockerfile => Seq("#")
+    case Elixir => Seq("#")
+    case Elm => Seq("--", "{-")
+    case Erlang => Seq("%")
+    case Fortran => Seq("!")
+    case FSharp => Seq("//", "(*")
+    case Go => Seq("//")
+    case Groovy => Seq("//")
+    case Haskell => Seq("--")
+    case HTML => Seq("<!--")
+    case JSON => Seq("//", "/*")
+    case JSP => Seq("<%--")
+    case Java => Seq("//", "/*")
+    case Javascript => Seq("//", "/*")
+    case Julia => Seq("#", "#=")
+    case Kotlin => Seq("//", "/*")
+    case LESS => Seq("/*")
+    case Lisp => Seq(";")
+    case Lua => Seq("--", "--[[")
+    case Markdown => Seq("<!--")
+    case ObjectiveC => Seq("/*", "//")
+    case OCaml => Seq("(*")
+    case PHP => Seq("#", "//")
+    case PLSQL => Seq("--", "/*")
+    case Perl => Seq("#")
+    case Powershell => Seq("#", "<#")
+    case Prolog => Seq("%")
+    case Python => Seq("#")
+    case R => Seq("#")
+    case Ruby => Seq("#")
+    case Rust => Seq("//")
+    case SASS => Seq("/*")
+    case Scala => Seq("/*", "//")
+    case Scratch => Seq()
+    case Shell => Seq("#")
+    case Solidity => Seq("//", "/*")
+    case SQL => Seq("--", "/*")
+    case Swift => Seq("//")
+    case TypeScript => Seq("//", "/*")
+    case Velocity => Seq("/*")
+    case VisualBasic => Seq("'")
+    case VisualForce => Seq("<!--")
+    case XML => Seq("<!--")
+    case YAML => Seq("#")
+    // case _ => Seq()
+  }
 
   def getAllComments(file: java.io.File, language: Language): Seq[(Int, String)] = {
     //Returns the content of a line comment or None if the line is not a comment
