@@ -7,7 +7,6 @@ import com.codacy.plugins.api.languages.{Language, Languages}
 import com.codacy.plugins.api.results.Result
 import play.api.libs.json.{JsValue, Json}
 
-import scala.annotation.tailrec
 import scala.util.{Failure, Success, Try}
 
 import Utils._
@@ -104,17 +103,7 @@ class TestFilesParser(filesDir: File) {
           PatternTestFile(file, language, enabledPatterns, matches)
       }
   }
-
-  //The match is in the next line that is not a comment
-  @tailrec
-  private def getNextCodeLine(currentLine: Int, comments: Seq[Int]): Int = {
-    if (!comments.contains(currentLine)) {
-      currentLine
-    } else {
-      getNextCodeLine(currentLine + 1, comments)
-    }
-  }
-
+  
   private def cleanParameterTypes(json: JsValue): JsValue = {
     val jsonString = json.toString()
     val fixedString = jsonString

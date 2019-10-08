@@ -1,9 +1,10 @@
 package codacy.plugins.test
 import com.codacy.plugins.api.languages.{Language, Languages}
 import codacy.utils.FileHelper
+import scala.annotation.tailrec
 
-object Utils {
-
+private [test] object Utils {
+  
   val languageComments = Map[Language, Seq[String]](Languages.Javascript -> Seq("//", "/*"),
                                                     Languages.Scala -> Seq("/*", "//"),
                                                     Languages.CSS -> Seq("/*"),
@@ -62,6 +63,13 @@ object Utils {
         }
     }
   }
+
+  //The match is in the next line that is not a comment
+  @tailrec
+  private def getNextCodeLine(currentLine: Int, comments: Seq[Int]): Int =
+    if (comments.contains(currentLine)) getNextCodeLine(currentLine + 1, comments)
+    else
+      currentLine
 
   def toCodacyPluginsApiMetricsFileMetrics(fileMetrics: com.codacy.analysis.core.model.FileMetrics) =
     com.codacy.plugins.api.metrics.FileMetrics(filename = fileMetrics.filename.toString,

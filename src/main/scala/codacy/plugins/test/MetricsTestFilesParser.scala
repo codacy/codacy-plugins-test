@@ -67,14 +67,4 @@ class MetricsTestFilesParser(filesDir: File) {
             .getOrElse(throw new Exception(s"File $file has no metrics header."))
       }
   }
-
-  //The match is in the next line that is not a comment
-  @tailrec
-  private def getNextCodeLine(currentLine: Int, comments: Seq[Int]): Int = {
-    if (!comments.contains(currentLine)) {
-      currentLine
-    } else {
-      getNextCodeLine(currentLine + 1, comments)
-    }
-  }
 }
