@@ -63,7 +63,7 @@ object Utils {
     }
   }
 
-  def toCoreModelFileMetrics(fileMetrics: com.codacy.analysis.core.model.FileMetrics) =
+  def toCodacyPluginsApiMetricsFileMetrics(fileMetrics: com.codacy.analysis.core.model.FileMetrics) =
     com.codacy.plugins.api.metrics.FileMetrics(
       filename = fileMetrics.filename.toString,
       complexity = fileMetrics.complexity,

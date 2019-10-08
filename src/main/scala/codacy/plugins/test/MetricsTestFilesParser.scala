@@ -52,9 +52,9 @@ class MetricsTestFilesParser(filesDir: File) {
               //pattern has no parameters
               case (_, MetricsHeader(json)) =>
                 val metricsHeaderData = Json.parse(json).asOpt[MetricsHeaderData]
-                metricsHeaderData.map(
+                metricsHeaderData.map{
                   data =>
-                    (FileMetrics(file.getAbsolutePath,
+                    (FileMetrics(file.getName(),
                                  data.complexity,
                                  data.loc,
                                  data.cloc,
@@ -62,7 +62,7 @@ class MetricsTestFilesParser(filesDir: File) {
                                  data.nrClasses,
                                  lineComplexities),
                      language)
-                )
+                }
               case _ => None
             }
             .getOrElse(throw new Exception(s"File $file has no metrics header."))

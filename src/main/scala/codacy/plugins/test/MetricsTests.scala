@@ -65,12 +65,13 @@ object MetricsTests extends ITest with CustomMatchers {
     }
     
     Printer.green(
-      s"- $filename should have: ${metricsMessage(testFile)}"
+      s"  - $filename should have: ${metricsMessage(testFile)}"
     )
 
     val testFiles: Set[Source.File] = Set(Source.File(filename))
 
     val resultTry = tool.run(better.files.File(rootDirectory.getAbsolutePath), Option(testFiles))
+      .map(_.map(toCodacyPluginsApiMetricsFileMetrics))
 
     val result = resultTry match {
       case Failure(e) =>
@@ -83,13 +84,14 @@ object MetricsTests extends ITest with CustomMatchers {
 
     val comparison = {
       result.toList match {
-        case List(fileMetrics) if fileMetrics == testFile => true
+        case List(fileMetrics) if fileMetrics == testFile => 
+          true
         case _ => false
       }
     }
 
-    if (!comparison) Printer.red(s"${result.headOption.map(toCoreModelFileMetrics _ andThen metricsMessage).getOrElse("")} did not match expected result.")
-    else Printer.green("Test passed")
+    if (!comparison) Printer.red(s"  ${result.headOption.map(metricsMessage).getOrElse("")} did not match expected result.")
+    else Printer.green("  Test passed")
 
     comparison
   }
