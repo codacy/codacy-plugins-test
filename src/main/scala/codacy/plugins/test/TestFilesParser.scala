@@ -105,25 +105,6 @@ class TestFilesParser(filesDir: File) {
       }
   }
 
-  private def getAllComments(file: File, language: Language): Seq[(Int, String)] = {
-    FileHelper.read(file).getOrElse(Seq.empty).zipWithIndex.flatMap {
-      case (line, lineNr) =>
-        getComment(language, line).map { comment =>
-          (lineNr + 1, comment)
-        }
-    }
-  }
-
-  //Returns the content of a line comment or None if the line is not a comment
-  private def getComment(language: Language, line: String): Option[String] = {
-    languageComments(language).collectFirst {
-      case lineComment if line.trim.startsWith(lineComment) && line.trim.endsWith(lineComment.reverse) =>
-        line.trim.drop(lineComment.length).dropRight(lineComment.length)
-      case lineComment if line.trim.startsWith(lineComment) =>
-        line.trim.drop(lineComment.length)
-    }
-  }
-
   //The match is in the next line that is not a comment
   @tailrec
   private def getNextCodeLine(currentLine: Int, comments: Seq[Int]): Int = {

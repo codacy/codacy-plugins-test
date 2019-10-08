@@ -7,8 +7,7 @@ import codacy.utils.Printer
 import com.codacy.analysis.core.tools.MetricsTool
 import com.codacy.plugins.api.Source
 import com.codacy.plugins.metrics.traits
-import com.codacy.plugins.api.metrics.FileMetrics
-import com.codacy.plugins.api.metrics.LineComplexity
+import com.codacy.plugins.api.metrics.{FileMetrics, LineComplexity}
 
 import scala.util.{Failure, Success}
 
