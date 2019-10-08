@@ -24,7 +24,7 @@ private [test] object Utils {
     case Fortran => Seq("!")
     case FSharp => Seq("//", "(*")
     case Go => Seq("//")
-    case Groovy => Seq("//")
+    case Groovy => Seq("//", "/*")
     case Haskell => Seq("--")
     case HTML => Seq("<!--")
     case JSON => Seq("//", "/*")
