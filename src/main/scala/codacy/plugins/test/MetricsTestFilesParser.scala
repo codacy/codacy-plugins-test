@@ -17,7 +17,7 @@ class MetricsTestFilesParser(filesDir: File) {
                                        cloc: Option[Int],
                                        nrMethods: Option[Int],
                                        nrClasses: Option[Int])
-  implicit private val formatter = Json.format[MetricsHeaderData]
+  implicit private val formatter  = Json.format[MetricsHeaderData]
 
   val MetricsHeader = """\s*#Metrics:\s*(.*)""".r
   val LineComplexityRegex = """\s*#LineComplexity:\s*(.*)""".r

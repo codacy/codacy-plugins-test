@@ -55,7 +55,13 @@ object MetricsTests extends ITest with CustomMatchers {
           s"$key == $value"
       }
       val lineComplexitiesResult = testFile.lineComplexities.map{ case LineComplexity(line, value) => s"complexity $value in line $line" }
-      (fileResults ++ lineComplexitiesResult).mkString(s", ")
+      val res = (fileResults ++ lineComplexitiesResult)
+      val start = res.init.mkString(", ")
+      res.lastOption match {
+        case Some(last) =>
+          s"$start and $last"
+        case None => start
+      }
     }
     
     Printer.green(
