@@ -40,60 +40,53 @@ object MetricsTests extends ITest with CustomMatchers {
       .forall(identity)
   }
 
-  private def analyseFile(rootDirectory: File, testFile: FileMetrics, tool: MetricsTool): Boolean = {
-
-    val filename = toRelativePath(rootDirectory.getAbsolutePath, testFile.filename)
-
-    def metricsMessage(testFile: FileMetrics) = {
-      val fileResults = Seq("complexity" -> testFile.complexity,
-                            "loc" -> testFile.loc,
-                            "cloc" -> testFile.cloc,
-                            "nrMethods" -> testFile.nrMethods,
-                            "nrClasses" -> testFile.nrClasses).collect {
-        case (key, Some(value)) =>
-          s"$key == $value"
-      }
-      val lineComplexitiesResult = testFile.lineComplexities.map {
-        case LineComplexity(line, value) => s"complexity $value in line $line"
-      }
-      val res = (fileResults ++ lineComplexitiesResult)
-      val start = res.init.mkString(", ")
-      res.lastOption match {
-        case Some(last) =>
-          s"$start and $last"
-        case None => start
-      }
+  private def metricsMessage(testFile: FileMetrics) = {
+    val fileResults = Seq("complexity" -> testFile.complexity,
+                          "loc" -> testFile.loc,
+                          "cloc" -> testFile.cloc,
+                          "nrMethods" -> testFile.nrMethods,
+                          "nrClasses" -> testFile.nrClasses).collect {
+      case (key, Some(value)) =>
+        s"$key == $value"
     }
+    val lineComplexitiesResult = testFile.lineComplexities.map {
+      case LineComplexity(line, value) => s"complexity $value in line $line"
+    }
+    val res = (fileResults ++ lineComplexitiesResult)
+    val start = res.init.mkString(", ")
+    res.lastOption match {
+      case Some(last) =>
+        s"$start and $last"
+      case None => start
+    }
+  }
 
+  private def analyseFile(rootDirectory: File, testFile: FileMetrics, tool: MetricsTool): Boolean = {
+    val filename = toRelativePath(rootDirectory.getAbsolutePath, testFile.filename)
     Printer.green(s"  - $filename should have: ${metricsMessage(testFile)}")
-
     val testFiles: Set[Source.File] = Set(Source.File(filename))
-
     val resultTry = tool
       .run(better.files.File(rootDirectory.getAbsolutePath), Option(testFiles))
       .map(_.map(toCodacyPluginsApiMetricsFileMetrics))
-
     val result = resultTry match {
       case Failure(e) =>
-        Printer.red(e.getMessage)
-        Printer.red(e.getStackTrace.mkString("\n"))
+        Printer.red((e.getMessage :: e.getStackTrace.toList).mkString("\n"))
         Set.empty
       case Success(res) =>
         res
     }
-
-    val comparison = {
-      result.toList match {
-        case List(fileMetrics) if fileMetrics == testFile =>
-          true
-        case _ => false
+    val comparison = result == Iterable(testFile)
+    if (!comparison) {
+      val errorMessage = result.headOption.map(metricsMessage) match {
+        case Some(message) =>
+          s"  $message did not match expected result."
+        case None =>
+          "  No result received."
       }
+      Printer.red(errorMessage)
     }
-
-    if (!comparison)
-      Printer.red(s"  ${result.headOption.map(metricsMessage).getOrElse("")} did not match expected result.")
     else Printer.green("  Test passed")
-
+    
     comparison
   }
 
