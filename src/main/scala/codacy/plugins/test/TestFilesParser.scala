@@ -103,7 +103,7 @@ class TestFilesParser(filesDir: File) {
           PatternTestFile(file, language, enabledPatterns, matches)
       }
   }
-  
+
   private def cleanParameterTypes(json: JsValue): JsValue = {
     val jsonString = json.toString()
     val fixedString = jsonString

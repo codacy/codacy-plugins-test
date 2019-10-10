@@ -4,8 +4,8 @@ import com.codacy.plugins.api.languages.Languages._
 import codacy.utils.FileHelper
 import scala.annotation.tailrec
 
-private [test] object Utils {
-  
+private[test] object Utils {
+
   val languageComments: Language => Seq[String] = {
     case Apex => Seq("//", "/*")
     case C => Seq("/*", "//")

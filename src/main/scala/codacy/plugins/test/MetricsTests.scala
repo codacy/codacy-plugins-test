@@ -84,9 +84,8 @@ object MetricsTests extends ITest with CustomMatchers {
           "  No result received."
       }
       Printer.red(errorMessage)
-    }
-    else Printer.green("  Test passed")
-    
+    } else Printer.green("  Test passed")
+
     comparison
   }
 
