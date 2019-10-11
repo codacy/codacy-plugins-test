@@ -117,14 +117,7 @@ Check if all the patterns defined in the test files occur in the specified line
 
 ```sh
 sbt "runMain codacy.plugins.DockerTest pattern <DOCKER_NAME>:<DOCKER_VERSION>"
-```
-
-> MetricsTests
-
-Check if the metrics defined in the test files match with same complexieties in the specified lines
-
-```sh
-sbt "runMain codacy.plugins.DockerTest metrics <DOCKER_NAME>:<DOCKER_VERSION>"
+sbt test
 ```
 
 **Options:**
@@ -138,6 +131,7 @@ Alternatively, you can run a specific test file:
 
 ```sh
 sbt "runMain codacy.plugins.DockerTest pattern <DOCKER_NAME>:<DOCKER_VERSION> no-curly-brackets"
+sbt test
 ```
 
 > All

@@ -7,9 +7,8 @@ import com.codacy.plugins.api.languages.{Language, Languages}
 import com.codacy.plugins.api.results.Result
 import play.api.libs.json.{JsValue, Json}
 
+import scala.annotation.tailrec
 import scala.util.{Failure, Success, Try}
-
-import Utils._
 
 case class PatternTestFile(file: File,
                            language: Language,
@@ -34,6 +33,46 @@ class TestFilesParser(filesDir: File) {
   val PatternWithParameters =
     """\s*#Patterns:\s*([A-Za-z0-9\,\_\-\.=/]+)[\s\:]+(.*)""".r
   val IssueWithLineRegex = """\s*#Issue:\s*(.*)""".r
+
+  val languages = Map[Language, Seq[String]](Languages.Javascript -> Seq("//", "/*"),
+                                             Languages.Scala -> Seq("/*", "//"),
+                                             Languages.CSS -> Seq("/*"),
+                                             Languages.LESS -> Seq("/*"),
+                                             Languages.SASS -> Seq("/*"),
+                                             Languages.PHP -> Seq("#", "//"),
+                                             Languages.C -> Seq("/*", "//"),
+                                             Languages.CPP -> Seq("/*", "//"),
+                                             Languages.ObjectiveC -> Seq("/*", "//"),
+                                             Languages.Python -> Seq("#"),
+                                             Languages.Ruby -> Seq("#"),
+                                             Languages.Kotlin -> Seq("//", "/*"),
+                                             Languages.Perl -> Seq("#"),
+                                             Languages.Java -> Seq("//", "/*"),
+                                             Languages.CSharp -> Seq("//", "/*"),
+                                             Languages.VisualBasic -> Seq("'"),
+                                             Languages.Go -> Seq("//"),
+                                             Languages.Elixir -> Seq("#"),
+                                             Languages.Clojure -> Seq("#", ";;"),
+                                             Languages.CoffeeScript -> Seq("#"),
+                                             Languages.Rust -> Seq("//"),
+                                             Languages.Swift -> Seq("//"),
+                                             Languages.Haskell -> Seq("--"),
+                                             Languages.Shell -> Seq("#"),
+                                             Languages.TypeScript -> Seq("//", "/*"),
+                                             Languages.XML -> Seq("<!--"),
+                                             Languages.Dockerfile -> Seq("#"),
+                                             Languages.PLSQL -> Seq("--", "/*"),
+                                             Languages.JSON -> Seq("//", "/*"),
+                                             Languages.Apex -> Seq("//", "/*"),
+                                             Languages.Velocity -> Seq("/*"),
+                                             Languages.JSP -> Seq("<%--"),
+                                             Languages.VisualForce -> Seq("<!--"),
+                                             Languages.R -> Seq("#"),
+                                             Languages.Powershell -> Seq("#", "<#"),
+                                             Languages.Solidity -> Seq("//", "/*"),
+                                             Languages.Markdown -> Seq("<!--"),
+                                             Languages.Crystal -> Seq("#"),
+                                             Languages.YAML -> Seq("#"))
 
   def getTestFiles: Seq[PatternTestFile] = {
     FileHelper
@@ -102,6 +141,35 @@ class TestFilesParser(filesDir: File) {
 
           PatternTestFile(file, language, enabledPatterns, matches)
       }
+  }
+
+  private def getAllComments(file: File, language: Language): Seq[(Int, String)] = {
+    FileHelper.read(file).getOrElse(Seq.empty).zipWithIndex.flatMap {
+      case (line, lineNr) =>
+        getComment(language, line).map { comment =>
+          (lineNr + 1, comment)
+        }
+    }
+  }
+
+  //Returns the content of a line comment or None if the line is not a comment
+  private def getComment(language: Language, line: String): Option[String] = {
+    languages(language).collectFirst {
+      case lineComment if line.trim.startsWith(lineComment) && line.trim.endsWith(lineComment.reverse) =>
+        line.trim.drop(lineComment.length).dropRight(lineComment.length)
+      case lineComment if line.trim.startsWith(lineComment) =>
+        line.trim.drop(lineComment.length)
+    }
+  }
+
+  //The match is in the next line that is not a comment
+  @tailrec
+  private def getNextCodeLine(currentLine: Int, comments: Seq[Int]): Int = {
+    if (!comments.contains(currentLine)) {
+      currentLine
+    } else {
+      getNextCodeLine(currentLine + 1, comments)
+    }
   }
 
   private def cleanParameterTypes(json: JsValue): JsValue = {
