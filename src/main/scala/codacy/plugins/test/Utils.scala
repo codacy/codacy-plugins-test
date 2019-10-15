@@ -95,6 +95,7 @@ private[test] object Utils {
                                                complexity = fileMetrics.complexity,
                                                loc = fileMetrics.loc,
                                                cloc = fileMetrics.cloc,
-                                               nrMethods = fileMetrics.nrClasses,
+                                               nrMethods = fileMetrics.nrMethods,
+                                               nrClasses = fileMetrics.nrClasses,
                                                lineComplexities = fileMetrics.lineComplexities)
 }
