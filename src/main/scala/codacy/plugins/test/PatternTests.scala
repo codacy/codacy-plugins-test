@@ -30,34 +30,21 @@ object PatternTests extends ITest with CustomMatchers {
     val dockerRunner = new BinaryDockerRunner[Result](dockerTool)()
     val runner = new ToolRunner(dockerTool, toolDocumentation, dockerRunner)
     val tools = languages.map(new core.tools.Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
-
     testSources
-      .map { sourcePath =>
+      .forall { sourcePath =>
         val testFiles = new TestFilesParser(sourcePath.toFile).getTestFiles
 
         val filteredTestFiles = optArgs.headOption.fold(testFiles) { fileNameToTest =>
           testFiles.filter(testFiles => testFiles.file.getName.contains(fileNameToTest))
         }
 
-        // val testFilesPar = sys.props
-        //   .get("codacy.tests.threads")
-        //   .flatMap(nrt => Try(nrt.toInt).toOption)
-        //   .map { nrThreads =>
-        //     val filesPar = filteredTestFiles.par
-        //     filesPar.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(nrThreads))
-        //     filesPar
-        //   }
-        //   .getOrElse(filteredTestFiles)
-
-        filteredTestFiles
-          .map { testFile =>
+        filteredTestFiles.par
+          .forall { testFile =>
             tools
               .filter(_.languageToRun.name.equalsIgnoreCase(testFile.language.toString))
               .exists(analyseFile(toolDocumentation.spec, sourcePath.toFile, testFile, _))
           }
-          .forall(identity)
       }
-      .forall(identity)
   }
 
   private def analyseFile(spec: Option[results.Tool.Specification],
