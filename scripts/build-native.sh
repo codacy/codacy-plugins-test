@@ -114,7 +114,7 @@ case "$TARGET" in
       --entrypoint=bash \
       -v "$HOME":"$HOME":ro \
       -v "$PWD":"$PWD" \
-      findepi/graalvm:19.2.0-all \
+      findepi/graalvm:19.2.0.1-native \
         -c 'cd /tmp && '"$BUILD_CMD"' && mv '"$BINARY_NAME $PWD/$BINARY_NAME"
     ;;
   *)
