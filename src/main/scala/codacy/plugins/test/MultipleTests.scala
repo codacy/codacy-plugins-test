@@ -106,10 +106,10 @@ object MultipleTests extends ITest with CustomMatchers {
         case patternId :: parametersList =>
           val parameters = {
             parametersList.map { parameterString =>
-                CSVReader.open(new StringReader(parameterString))(colonFormat).all() match {
-                  case List(List(key, value)) => Parameter(key, value)
-                  case _ => throw new Exception(s"parameters in $parametersList should be in format key:value")
-                }
+              CSVReader.open(new StringReader(parameterString))(colonFormat).all() match {
+                case List(List(key, value)) => Parameter(key, value)
+                case _ => throw new Exception(s"parameters in $parametersList should be in format key:value")
+              }
             }.toSet
           }
           Pattern(patternId, parameters)

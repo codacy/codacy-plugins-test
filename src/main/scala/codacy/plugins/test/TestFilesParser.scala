@@ -24,12 +24,14 @@ object IssueWithLine {
 }
 
 case class PatternSimple(name: String, parameters: Option[Map[String, JsValue]]) {
+
   def toCoreModelPattern: core.model.Pattern = {
     val newParameters: Set[core.model.Parameter] = parameters match {
       case None => Set.empty
-      case Some(map) => map.map {
-        case (k, v) => core.model.Parameter(k, v.toString)
-      }(collection.breakOut)
+      case Some(map) =>
+        map.map {
+          case (k, v) => core.model.Parameter(k, v.toString)
+        }(collection.breakOut)
     }
     core.model.Pattern(name, newParameters)
   }
