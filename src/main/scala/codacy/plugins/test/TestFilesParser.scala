@@ -5,6 +5,7 @@ import java.io.File
 import codacy.utils.{FileHelper, Printer}
 import com.codacy.plugins.api.languages.{Language, Languages}
 import com.codacy.plugins.api.results.Result
+import com.codacy.analysis.core
 import play.api.libs.json.{JsValue, Json}
 
 import scala.util.{Failure, Success, Try}
@@ -22,7 +23,17 @@ object IssueWithLine {
   implicit val formatter = Json.format[IssueWithLine]
 }
 
-case class PatternSimple(name: String, parameters: Option[Map[String, JsValue]])
+case class PatternSimple(name: String, parameters: Option[Map[String, JsValue]]) {
+  def toCoreModelPattern: core.model.Pattern = {
+    val newParameters: Set[core.model.Parameter] = parameters match {
+      case None => Set.empty
+      case Some(map) => map.map {
+        case (k, v) => core.model.Parameter(k, v.toString)
+      }(collection.breakOut)
+    }
+    core.model.Pattern(name, newParameters)
+  }
+}
 
 class TestFilesParser(filesDir: File) {
 

@@ -21,9 +21,9 @@ object PatternTests extends ITest with CustomMatchers {
 
   val opt = "pattern"
 
-  def run(testSources: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
+  def run(testDirectories: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     Printer.green(s"Running PatternsTests:")
-
+    val testSources = testDirectories.filter(_.getFileName.toString == DockerHelpers.testsDirectoryName)
     val languages = findLanguages(testSources, dockerImage)
     val dockerTool = createDockerTool(languages, dockerImage)
     val toolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
@@ -72,7 +72,7 @@ object PatternTests extends ITest with CustomMatchers {
     val codacyCfg = CodacyCfg(patterns)
 
     val result = tool.run(better.files.File(rootDirectory.getAbsolutePath), testFilesAbsolutePaths.to[Set], codacyCfg)
-
+    println(result)
     val filteredResults = filterResults(spec, rootDirectory.toPath, testFiles, patterns.to[Seq], result)
 
     val matches: Seq[TestFileResult] = filteredResults.map(

@@ -4,6 +4,9 @@ import scala.sys.process._
 import java.nio.file.Path
 
 object DockerHelpers {
+  val testsDirectoryName = "tests"
+  val multipleTestsDirectoryName = "multiple-tests"
+
   private val processLogger = ProcessLogger((line: String) => ())
 
   val dockerRunCmd = List("docker", "run", "--net=none", "--privileged=false", "--user=docker")
@@ -19,7 +22,8 @@ object DockerHelpers {
 
           // backwards compatibility, making sure directory tests exist so we can copy the old test dir
           List("mkdir", "-p", s"$sourceDir/directory-tests") ! processLogger
-          List("docker", "cp", s"$containerId:/docs/tests", s"$sourceDir/directory-tests") ! processLogger
+          List("docker", "cp", s"$containerId:/docs/$testsDirectoryName", s"$sourceDir/directory-tests") ! processLogger
+          List("docker", "cp", s"$containerId:/docs/$multipleTestsDirectoryName", s"$sourceDir/directory-tests") ! processLogger
 
           val sourcesDir = sourceDir.resolve("directory-tests")
 

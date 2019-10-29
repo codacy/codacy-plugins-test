@@ -14,8 +14,9 @@ object PluginsTests extends ITest {
 
   val opt = "plugin"
 
-  def run(testSources: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
+  def run(testDirectories: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     Printer.green("Running PluginsTests:")
+    val testSources = testDirectories.filter(_.getFileName.toString == DockerHelpers.testsDirectoryName)
 
     val languages = findLanguages(testSources, dockerImage)
     val dockerTool = createDockerTool(languages, dockerImage)

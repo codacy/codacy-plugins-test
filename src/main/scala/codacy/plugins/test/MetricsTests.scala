@@ -17,7 +17,8 @@ object MetricsTests extends ITest with CustomMatchers {
 
   val opt = "metrics"
 
-  def run(testSources: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
+  def run(testDirectories: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
+    val testSources = testDirectories.filter(_.getFileName.toString == DockerHelpers.testsDirectoryName)
     Printer.green(s"Running MetricsTests:")
 
     val languages = findLanguages(testSources, dockerImage)
