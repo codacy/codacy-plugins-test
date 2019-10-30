@@ -1,13 +1,11 @@
 package codacy.utils
 
+import Console._
+
 object Printer {
+  private def removeColors(s: String) = s.replaceAll("\u001b\\[[0-9]+m", "")
 
-  def white(str: String) = println(s"${Console.WHITE} $str ${Console.WHITE}")
-
-  def yellow(str: String) = println(s"${Console.YELLOW} $str ${Console.WHITE}")
-
-  def red(str: String) = println(s"${Console.RED} $str ${Console.WHITE}")
-
-  def green(str: String) = println(s"${Console.GREEN} $str ${Console.WHITE}")
-
+  def green(str: String) = println(s"${GREEN}${removeColors(str)}${RESET}")
+  
+  def red(str: String) = println(s"${RED}${removeColors(str)}${RESET}")
 }

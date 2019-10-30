@@ -106,7 +106,7 @@ trait ITest {
 
     if (otherPatternsResults.nonEmpty) {
       Printer.red(s"Some results returned were not requested by the test and were discarded!")
-      Printer.white(s"""
+      println(s"""
            |Extra results returned:
            |* ${otherPatternsResults.map(_.patternId.value).mkString(", ")}
            |
@@ -126,7 +126,7 @@ trait ITest {
 
     if (otherFilesResults.nonEmpty) {
       Printer.red(s"Some results are not in the files requested and were discarded!")
-      Printer.white(s"""
+      println(s"""
            |Extra files:
            |  * ${otherFilesResults.map(_.filename).mkString(", ")}
            |
@@ -150,7 +150,7 @@ trait ITest {
 
     if (fileErrorsResults.nonEmpty) {
       Printer.red(s"Some files were not analysed because the tool failed analysing them!")
-      Printer.white(fileErrorsResults.map(fe => s"* File: ${fe.filename}, Error: ${fe.message}").mkString("\n"))
+      println(fileErrorsResults.map(fe => s"* File: ${fe.filename}, Error: ${fe.message}").mkString("\n"))
     }
     issuesResults
   }

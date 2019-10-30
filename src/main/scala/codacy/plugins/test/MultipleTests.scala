@@ -3,26 +3,22 @@ package codacy.plugins.test
 import java.nio.file.Path
 
 import codacy.utils.Printer
-import com.codacy.analysis.core
-import com.codacy.analysis.core.model.{CodacyCfg, FileCfg, FullLocation, LineLocation, Parameter, Pattern}
+import com.codacy.analysis.core.model.{CodacyCfg, Configuration, FileCfg, FileError, FullLocation, Issue, LineLocation, Parameter, Pattern}
 import com.codacy.analysis.core.tools.Tool
 import com.codacy.plugins.api.results.Result
+import com.codacy.plugins.api.results.Result.Level
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
+import com.codacy.plugins.results.PluginResult
 
 import better.files._
 
-import com.github.tototoshi.csv.CSVReader
-import com.codacy.plugins.results.PluginResult
-import com.codacy.plugins.api.results.Result.Level
 import play.api.libs.json.Json
 import java.io.StringReader
-import com.github.tototoshi.csv.DefaultCSVFormat
+import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 
 import scala.util.{Failure, Success, Try}
-import com.codacy.analysis.core.model.{FileError, Issue}
-import com.codacy.analysis.core.model.Configuration
 import com.fasterxml.jackson.core.JsonParseException
 
 object MultipleTests extends ITest with CustomMatchers {
@@ -38,7 +34,7 @@ object MultipleTests extends ITest with CustomMatchers {
     val toolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
     val dockerRunner = new BinaryDockerRunner[Result](dockerTool)()
     val runner = new ToolRunner(dockerTool, toolDocumentation, dockerRunner)
-    val tools = languages.map(new core.tools.Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
+    val tools = languages.map(new Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
     testSources.forall { multipleTestsDir =>
       val testsDirectories = File(multipleTestsDir).list.toList
       testsDirectories.forall { testDir =>
