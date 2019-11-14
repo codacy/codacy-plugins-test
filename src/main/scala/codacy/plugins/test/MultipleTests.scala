@@ -49,12 +49,12 @@ object MultipleTests extends ITest with CustomMatchers {
       testsDirectories.forall { testDir =>
         val srcDir = testDir / "src"
         val resultFile = testDir / "results.xml"
-        val expectedResults = parseResultsCsv(resultFile).toSet
+        val expectedResults = parseResultsXml(resultFile).toSet
         Printer.green(s"${testDir.name} should have ${expectedResults.size} results")
         val configuration = {
           val patternsPath = testDir / "patterns.xml"
           if(patternsPath.exists) {
-            val (patterns, extraValues) = parsePatternsCsv(patternsPath)
+            val (patterns, extraValues) = parsePatternsXml(patternsPath)
             if(patterns.isEmpty) FileCfg(Some(srcDir.pathAsString), extraValues)
             else CodacyCfg(patterns, Some(srcDir.pathAsString), extraValues)
           }
@@ -85,7 +85,7 @@ object MultipleTests extends ITest with CustomMatchers {
     }
   }
 
-  private def parseResultsCsv(file: File) = {
+  private def parseResultsXml(file: File) = {
     for {
       fileTag <- XML.loadFile(file.toJava) \\ "checkstyle" \\ "file"
       fileName = fileTag \@ "name"
@@ -103,7 +103,7 @@ object MultipleTests extends ITest with CustomMatchers {
     } yield PluginResult(patternId, fileName, line.toInt, message, level)
   }
 
-  private def parsePatternsCsv(file: File): (Set[Pattern], Option[Map[String, play.api.libs.json.JsValue]]) = {
+  private def parsePatternsXml(file: File): (Set[Pattern], Option[Map[String, play.api.libs.json.JsValue]]) = {
     val rootModule = XML.loadFile(file.toJava)
     val extraValues = (rootModule \ "property").map { node =>
       val v = node \@ "value"
