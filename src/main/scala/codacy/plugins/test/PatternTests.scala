@@ -72,7 +72,6 @@ object PatternTests extends ITest with CustomMatchers {
     val codacyCfg = CodacyCfg(patterns)
 
     val result = tool.run(better.files.File(rootDirectory.getAbsolutePath), testFilesAbsolutePaths.to[Set], codacyCfg)
-    println(result)
     val filteredResults = filterResults(spec, rootDirectory.toPath, testFiles, patterns.to[Seq], result)
 
     val matches: Seq[TestFileResult] = filteredResults.map(
