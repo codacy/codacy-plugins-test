@@ -3,7 +3,17 @@ package codacy.plugins.test
 import java.nio.file.Path
 
 import codacy.utils.Printer
-import com.codacy.analysis.core.model.{CodacyCfg, Configuration, FileCfg, FileError, FullLocation, Issue, LineLocation, Parameter, Pattern}
+import com.codacy.analysis.core.model.{
+  CodacyCfg,
+  Configuration,
+  FileCfg,
+  FileError,
+  FullLocation,
+  Issue,
+  LineLocation,
+  Parameter,
+  Pattern
+}
 import com.codacy.analysis.core.tools.Tool
 import com.codacy.plugins.api.results.Result
 import com.codacy.plugins.api.results.Result.Level
@@ -15,11 +25,10 @@ import com.codacy.plugins.results.PluginResult
 import better.files._
 
 import play.api.libs.json.Json
-import java.io.StringReader
-import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
 
 import scala.util.{Failure, Success, Try}
 import com.fasterxml.jackson.core.JsonParseException
+import scala.xml.XML
 
 object MultipleTests extends ITest with CustomMatchers {
 
@@ -36,21 +45,23 @@ object MultipleTests extends ITest with CustomMatchers {
     val runner = new ToolRunner(dockerTool, toolDocumentation, dockerRunner)
     val tools = languages.map(new Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
     testSources.forall { multipleTestsDir =>
-      val testsDirectories = File(multipleTestsDir).list.toList
+      val testsDirectories = File(multipleTestsDir).list
       testsDirectories.forall { testDir =>
-        val testFiles = testDir.list(_.isRegularFile).toList
-        val resultFile = testDir / "results"
+        val srcDir = testDir / "src"
+        val resultFile = testDir / "results.xml"
         val expectedResults = parseResultsCsv(resultFile).toSet
         Printer.green(s"${testDir.name} should have ${expectedResults.size} results")
         val configuration = {
-          val extraValues = testFiles.find(_.name == "extraValues").map(parseExtraValuesCsv)
-          testFiles.find(_.name == "patterns") match {
-            case Some(file) => CodacyCfg(parsePatternsCsv(file), Some(testDir.pathAsString), extraValues)
-            case None => FileCfg(Some(testDir.pathAsString), extraValues)
+          val patternsPath = testDir / "patterns.xml"
+          if(patternsPath.exists) {
+            val (patterns, extraValues) = parsePatternsCsv(patternsPath)
+            if(patterns.isEmpty) FileCfg(Some(srcDir.pathAsString), extraValues)
+            else CodacyCfg(patterns, Some(srcDir.pathAsString), extraValues)
           }
+          else FileCfg(Some(srcDir.pathAsString), None)
         }
         tools.exists { tool =>
-          val res = runTool(tool, testDir, configuration)
+          val res = runTool(tool, srcDir, configuration)
           res match {
             case Failure(e) =>
               Printer.red("Got failure in the analysis:")
@@ -75,59 +86,43 @@ object MultipleTests extends ITest with CustomMatchers {
   }
 
   private def parseResultsCsv(file: File) = {
-    CSVReader.open(file.toJava).all().map {
-      case List(patternIdentifier, filename, lineString, message, levelString) =>
-        val level = levelString match {
-          case "Err" => Level.Err
-          case "Warn" => Level.Warn
-          case "Info" => Level.Info
-          case _ => throw new Exception(s"$levelString is not a valid level")
-        }
-        PluginResult(patternIdentifier, filename, lineString.toInt, message, level)
-
-      case l => throw new Exception(s"Line $l has wrong number or comma separated value")
-    }
-  }
-
-  private def parsePatternsCsv(file: File): Set[Pattern] = {
-    val colonFormat = new DefaultCSVFormat {
-      override val delimiter: Char = ':'
-    }
-
-    CSVReader
-      .open(file.toJava)
-      .all()
-      .map {
-        case patternId :: Nil => Pattern(patternId, Set.empty)
-        case patternId :: parametersList =>
-          val parameters = {
-            parametersList.map { parameterString =>
-              CSVReader.open(new StringReader(parameterString))(colonFormat).all() match {
-                case List(List(key, value)) => Parameter(key, value)
-                case _ => throw new Exception(s"parameters in $parametersList should be in format key:value")
-              }
-            }.toSet
-          }
-          Pattern(patternId, parameters)
-        case l => throw new Exception(s"Line $l has wrong number or comma separated value")
+    for {
+      fileTag <- XML.loadFile(file.toJava) \\ "checkstyle" \\ "file"
+      fileName = fileTag \@ "name"
+      errorsTag <- fileTag \\ "error"
+      line = errorsTag \@ "line"
+      patternId = errorsTag \@ "source"
+      message = errorsTag \@ "message"
+      severity = errorsTag \@ "severity"
+      level = severity match {
+        case "info" => Level.Info
+        case "warning" => Level.Warn
+        case "error" => Level.Err
+        case _ => throw new Exception(s"$severity is not a valid level")
       }
-      .toSet
+    } yield PluginResult(patternId, fileName, line.toInt, message, level)
   }
 
-  private def parseExtraValuesCsv(file: File): Map[String, play.api.libs.json.JsValue] = {
-    val list = CSVReader.open(file.toJava).all().map {
-      case List(key, v) =>
-        val value = try {
-          Json.parse(v)
-        } catch {
-          case _: JsonParseException => // support non quoted strings
-            Json.parse(s""""$v"""")
-        }
-        (key, value)
-
-      case l => throw new Exception(s"Line $l has wrong number or comma separated value")
-    }
-    list.toMap
+  private def parsePatternsCsv(file: File): (Set[Pattern], Option[Map[String, play.api.libs.json.JsValue]]) = {
+    val rootModule = XML.loadFile(file.toJava)
+    val extraValues = (rootModule \ "property").map { node =>
+      val v = node \@ "value"
+      val value = try {
+        Json.parse(v)
+      } catch {
+        case _: JsonParseException => // support non quoted strings
+          Json.parse(s""""$v"""")
+      }
+      (node \@ "name", value)
+    }.toMap
+    val patternsList = for {
+      patternTags <- rootModule \ "module"
+      patternId: String = patternTags \@ "name"
+      parameters = (patternTags \ "property").map { node =>
+        Parameter(node \@ "name", node \@ "value")
+      }.toSet
+    } yield Pattern(patternId, parameters)
+    (patternsList.toSet, if(extraValues.isEmpty) None else Some(extraValues))
   }
 
   private def runTool(tool: Tool, testDir: File, configuration: Configuration): Try[Set[PluginResult]] = {
