@@ -53,12 +53,11 @@ object MultipleTests extends ITest with CustomMatchers {
         Printer.green(s"${testDir.name} should have ${expectedResults.size} results")
         val configuration = {
           val patternsPath = testDir / "patterns.xml"
-          if(patternsPath.exists) {
+          if (patternsPath.exists) {
             val (patterns, extraValues) = parsePatternsXml(patternsPath)
-            if(patterns.isEmpty) FileCfg(Some(srcDir.pathAsString), extraValues)
+            if (patterns.isEmpty) FileCfg(Some(srcDir.pathAsString), extraValues)
             else CodacyCfg(patterns, Some(srcDir.pathAsString), extraValues)
-          }
-          else FileCfg(Some(srcDir.pathAsString), None)
+          } else FileCfg(Some(srcDir.pathAsString), None)
         }
         tools.exists { tool =>
           val res = runTool(tool, srcDir, configuration)
@@ -122,7 +121,7 @@ object MultipleTests extends ITest with CustomMatchers {
         Parameter(node \@ "name", node \@ "value")
       }.toSet
     } yield Pattern(patternId, parameters)
-    (patternsList.toSet, if(extraValues.isEmpty) None else Some(extraValues))
+    (patternsList.toSet, if (extraValues.isEmpty) None else Some(extraValues))
   }
 
   private def runTool(tool: Tool, testDir: File, configuration: Configuration): Try[Set[PluginResult]] = {
