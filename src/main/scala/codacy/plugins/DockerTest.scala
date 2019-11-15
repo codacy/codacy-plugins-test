@@ -3,13 +3,14 @@ package codacy.plugins
 import java.nio.file.Path
 
 import codacy.plugins.test._
-import codacy.utils.Printer
+import codacy.plugins.test.multiple.MultipleTests
 import org.apache.commons.io.FileUtils
 import better.files.File
+import wvlet.log.LogSupport
 
 case class Sources(mainSourcePath: Path, directoryPaths: Seq[Path])
 
-object DockerTest {
+object DockerTest extends LogSupport {
 
   private lazy val config = Map("all" -> Seq(JsonTests, PluginsTests, PatternTests)) ++
     possibleTests.map { test =>
@@ -23,9 +24,9 @@ object DockerTest {
     val dockerImageNameAndVersionOpt = args.drop(1).headOption
     val optArgs = args.drop(2)
 
-    typeOfTests.fold(Printer.red(s"[Missing] test type -> [${possibleTestNames.mkString(", ")}]")) {
+    typeOfTests.fold(error(s"[Missing] test type -> [${possibleTestNames.mkString(", ")}]")) {
       case typeOfTest if possibleTestNames.contains(typeOfTest) =>
-        dockerImageNameAndVersionOpt.fold(Printer.red("[Missing] docker ref -> dockerName:dockerVersion")) {
+        dockerImageNameAndVersionOpt.fold(error("[Missing] docker ref -> dockerName:dockerVersion")) {
           dockerImageNameAndVersion =>
             val dockerImage = parseDockerImage(dockerImageNameAndVersion)
 
@@ -47,14 +48,14 @@ object DockerTest {
 
             testRunResult match {
               case Left(err) =>
-                Printer.red(err)
+                error(err)
                 System.exit(1)
               case Right(()) =>
-                Printer.green("[Success] All tests passed!")
+                debug("[Success] All tests passed!")
             }
         }
       case wrongTypeOfTest =>
-        Printer.red(s"Wrong test type -> $wrongTypeOfTest should be one of [${possibleTestNames.mkString(", ")}]")
+        error(s"Wrong test type -> $wrongTypeOfTest should be one of [${possibleTestNames.mkString(", ")}]")
     }
   }
 
@@ -72,10 +73,10 @@ object DockerTest {
       case Some(ts) if ts.contains(test) =>
         test.run(testSources, dockerImage, optArgs) match {
           case true =>
-            Printer.green(s"[Success] ${test.getClass.getSimpleName}")
+            debug(s"[Success] ${test.getClass.getSimpleName}")
             true
           case _ =>
-            Printer.red(s"[Failure] ${test.getClass.getSimpleName}")
+            error(s"[Failure] ${test.getClass.getSimpleName}")
             false
         }
       case _ =>

@@ -3,7 +3,6 @@ package codacy.plugins.test
 import java.io.File
 import java.nio.file.Path
 
-import codacy.utils.Printer
 import com.codacy.analysis.core.tools.MetricsTool
 import com.codacy.plugins.api.Source
 import com.codacy.plugins.metrics.traits
@@ -19,7 +18,7 @@ object MetricsTests extends ITest with CustomMatchers {
 
   def run(testDirectories: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     val testSources = testDirectories.filter(_.getFileName.toString == DockerHelpers.testsDirectoryName)
-    Printer.green(s"Running MetricsTests:")
+    debug(s"Running MetricsTests:")
 
     val languages = findLanguages(testSources, dockerImage)
     val metricsTool = new traits.MetricsTool(languages.toList, dockerImage.name, dockerImage.version) {}
@@ -64,14 +63,14 @@ object MetricsTests extends ITest with CustomMatchers {
 
   private def analyseFile(rootDirectory: File, testFile: FileMetrics, tool: MetricsTool): Boolean = {
     val filename = toRelativePath(rootDirectory.getAbsolutePath, testFile.filename)
-    Printer.green(s"  - $filename should have: ${metricsMessage(testFile)}")
+    debug(s"  - $filename should have: ${metricsMessage(testFile)}")
     val testFiles: Set[Source.File] = Set(Source.File(filename))
     val resultTry = tool
       .run(better.files.File(rootDirectory.getAbsolutePath), Option(testFiles))
       .map(_.map(toCodacyPluginsApiMetricsFileMetrics))
     val result = resultTry match {
       case Failure(e) =>
-        Printer.red((e.getMessage :: e.getStackTrace.toList).mkString("\n"))
+        error((e.getMessage :: e.getStackTrace.toList).mkString("\n"))
         Set.empty
       case Success(res) =>
         res
@@ -84,8 +83,8 @@ object MetricsTests extends ITest with CustomMatchers {
         case None =>
           "  No result received."
       }
-      Printer.red(errorMessage)
-    } else Printer.green("  Test passed")
+      error(errorMessage)
+    } else debug("  Test passed")
 
     comparison
   }

@@ -2,7 +2,7 @@ package codacy.plugins.test
 
 import java.nio.file.{Path, Paths}
 
-import codacy.utils.{FileHelper, Printer}
+import codacy.utils.{FileHelper}
 import com.codacy.analysis.core
 import com.codacy.analysis.core.model.{CodacyCfg, Issue, Pattern}
 import com.codacy.plugins.api.results.Result
@@ -15,7 +15,7 @@ object PluginsTests extends ITest {
   val opt = "plugin"
 
   def run(testDirectories: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
-    Printer.green("Running PluginsTests:")
+    debug("Running PluginsTests:")
     val testSources = testDirectories.filter(_.getFileName.toString == DockerHelpers.testsDirectoryName)
 
     val languages = findLanguages(testSources, dockerImage)
@@ -26,7 +26,7 @@ object PluginsTests extends ITest {
     val runner = new ToolRunner(dockerTool, dockerToolDocumentation, dockerRunner)
 
     specOpt.forall { spec =>
-      Printer.green(s"  + ${spec.name} should find results for all patterns")
+      debug(s"  + ${spec.name} should find results for all patterns")
 
       val patterns: Set[Pattern] = spec.patterns.map(
         p =>
@@ -54,14 +54,14 @@ object PluginsTests extends ITest {
       val missingPatterns = patterns.map(_.id).diff(resultsUUIDS)
 
       if (missingPatterns.nonEmpty) {
-        Printer.red(s"""
+        error(s"""
              |Some patterns are not tested on plugin ${spec.name}
              |-> Missing patterns:
              |${missingPatterns.mkString(", ")}
            """.stripMargin)
         false
       } else {
-        Printer.green("All the patterns have occurrences in the test files.")
+        debug("All the patterns have occurrences in the test files.")
         true
       }
     }

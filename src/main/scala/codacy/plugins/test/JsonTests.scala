@@ -2,7 +2,7 @@ package codacy.plugins.test
 
 import java.nio.file.Path
 
-import codacy.utils.{CollectionHelper, Printer}
+import codacy.utils.{CollectionHelper}
 import com.codacy.plugins.api.PatternDescription
 import com.codacy.plugins.api.results.Pattern
 import com.codacy.plugins.results.traits.DockerToolDocumentation
@@ -14,26 +14,26 @@ object JsonTests extends ITest {
 
   def run(testDirectories: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     val testSources = testDirectories.filter(_.getFileName.toString == DockerHelpers.testsDirectoryName)
-    Printer.green("Running JsonTests:")
+    debug("Running JsonTests:")
 
     val ignoreDescriptions: Boolean =
       sys.props.get("codacy.tests.ignore.descriptions").isDefined || optArgs.contains("--ignore-descriptions")
 
     val dockerToolDocumentation: DockerToolDocumentation = readDockerToolDocumentation(testSources, dockerImage)
 
-    dockerToolDocumentation.spec.fold(Printer.red("Could not read /docs/patterns.json successfully")) { _ =>
-      Printer.green("Read /docs/patterns.json successfully")
+    dockerToolDocumentation.spec.fold(error("Could not read /docs/patterns.json successfully")) { _ =>
+      debug("Read /docs/patterns.json successfully")
     }
 
     dockerToolDocumentation.descriptions.fold(
-      Printer.red("Could not read /docs/description/description.json successfully")
+      error("Could not read /docs/description/description.json successfully")
     ) { descriptions =>
-      Printer.green("Read /docs/description/description.json successfully")
+      debug("Read /docs/description/description.json successfully")
       descriptions.foreach { patternDescription =>
         patternDescription.explanation.fold(
-          Printer.red(s"Could not read /docs/description/${patternDescription.patternId}.md")
+          error(s"Could not read /docs/description/${patternDescription.patternId}.md")
         ) { _ =>
-          Printer.green(s"Read /docs/description/${patternDescription.patternId}.md successfully")
+          debug(s"Read /docs/description/${patternDescription.patternId}.md successfully")
         }
       }
     }
@@ -52,7 +52,7 @@ object JsonTests extends ITest {
 
         val duplicateDescriptions = descriptions.groupBy(_.patternId).filter { case (_, v) => v.size > 1 }
         if (duplicateDescriptions.nonEmpty) {
-          Printer.red(s"""
+          error(s"""
                |Some patterns were duplicated in /docs/description/description.json
                |
                |  * ${duplicateDescriptions.map { case (patternId, _) => patternId }.mkString(",")}
@@ -60,7 +60,7 @@ object JsonTests extends ITest {
         }
 
         if (diffResult.newObjects.nonEmpty) {
-          Printer.red(s"""
+          error(s"""
                |Some patterns were only found in /docs/patterns.json
                |Confirm that all the patterns and parameters present in /docs/patterns.json are also present in /docs/description/description.json
                |
@@ -69,7 +69,7 @@ object JsonTests extends ITest {
         }
 
         if (diffResult.deletedObjects.nonEmpty) {
-          Printer.red(s"""
+          error(s"""
                |Some patterns were only found in /docs/description/description.json
                |Confirm that all the patterns and parameters present in /docs/description/description.json are also present in /docs/patterns.json
                |
@@ -79,7 +79,7 @@ object JsonTests extends ITest {
 
         val titlesAboveLimit = descriptions.filter(_.title.length > 255)
         if (titlesAboveLimit.nonEmpty) {
-          Printer.red(s"""
+          error(s"""
                |Some titles are too big in /docs/description/description.json
                |The max size of a title is 255 characters
                |
@@ -89,7 +89,7 @@ object JsonTests extends ITest {
 
         val descriptionsAboveLimit = descriptions.filter(_.description.getOrElse("").length > 500)
         if (descriptionsAboveLimit.nonEmpty) {
-          Printer.red(s"""
+          error(s"""
                |Some descriptions are too big in /docs/description/description.json
                |The max size of a description is 500 characters
                |

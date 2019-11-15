@@ -1,8 +1,8 @@
-package codacy.plugins.test
+package codacy.plugins.test.multiple
 
+import codacy.plugins.test._
 import java.nio.file.Path
 
-import codacy.utils.Printer
 import com.codacy.analysis.core.model.{
   CodacyCfg,
   Configuration,
@@ -10,13 +10,10 @@ import com.codacy.analysis.core.model.{
   FileError,
   FullLocation,
   Issue,
-  LineLocation,
-  Parameter,
-  Pattern
+  LineLocation
 }
 import com.codacy.analysis.core.tools.Tool
 import com.codacy.plugins.api.results.Result
-import com.codacy.plugins.api.results.Result.Level
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
@@ -24,10 +21,7 @@ import com.codacy.plugins.results.PluginResult
 
 import better.files._
 
-import play.api.libs.json.Json
-
 import scala.util.{Failure, Success, Try}
-import com.fasterxml.jackson.core.JsonParseException
 import scala.xml.XML
 
 object MultipleTests extends ITest with CustomMatchers {
@@ -35,9 +29,8 @@ object MultipleTests extends ITest with CustomMatchers {
   val opt = "multiple"
 
   def run(testDirectories: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
-    Printer.green(s"Running MultipleTests:")
+    debug(s"Running MultipleTests:")
     val testSources = testDirectories.filter(_.getFileName.toString == DockerHelpers.multipleTestsDirectoryName)
-
     val languages = findLanguages(testSources, dockerImage)
     val dockerTool = createDockerTool(languages, dockerImage)
     val toolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
@@ -49,12 +42,14 @@ object MultipleTests extends ITest with CustomMatchers {
       testsDirectories.forall { testDir =>
         val srcDir = testDir / "src"
         val resultFile = testDir / "results.xml"
-        val expectedResults = parseResultsXml(resultFile).toSet
-        Printer.green(s"${testDir.name} should have ${expectedResults.size} results")
+        val resultFileXML = XML.loadFile(resultFile.toJava)
+        val expectedResults = CheckstyleFormatParser.parseResultsXml(resultFileXML).toSet
+        debug(s"${testDir.name} should have ${expectedResults.size} results")
         val configuration = {
           val patternsPath = testDir / "patterns.xml"
           if (patternsPath.exists) {
-            val (patterns, extraValues) = parsePatternsXml(patternsPath)
+            val patternsFileXML = XML.loadFile(patternsPath.toJava)
+            val (patterns, extraValues) = CheckstyleFormatParser.parsePatternsXml(patternsFileXML)
             if (patterns.isEmpty) FileCfg(Some(srcDir.pathAsString), extraValues)
             else CodacyCfg(patterns, Some(srcDir.pathAsString), extraValues)
           } else FileCfg(Some(srcDir.pathAsString), None)
@@ -63,65 +58,25 @@ object MultipleTests extends ITest with CustomMatchers {
           val res = runTool(tool, srcDir, configuration)
           res match {
             case Failure(e) =>
-              Printer.red("Got failure in the analysis:")
+              info("Got failure in the analysis:")
               e.printStackTrace()
               false
             case Success(results) =>
               if (results.sameElements(expectedResults)) {
-                Printer.green(s"Got ${results.size} results.")
+                debug(s"Got ${results.size} results.")
                 true
               } else {
-                Printer.red("Tool results don't match expected results:")
-                Printer.red("Extra: ")
-                pprint.pprintln(results.diff(expectedResults), height = Int.MaxValue)
-                Printer.red("Missing:")
-                pprint.pprintln(expectedResults.diff(results), height = Int.MaxValue)
+                error("Tool results don't match expected results:")
+                error("Extra: ")
+                info(pprint.apply(results.diff(expectedResults), height = Int.MaxValue))
+                error("Missing:")
+                info(pprint.apply(expectedResults.diff(results), height = Int.MaxValue))
                 false
               }
           }
         }
       }
     }
-  }
-
-  private def parseResultsXml(file: File) = {
-    for {
-      fileTag <- XML.loadFile(file.toJava) \\ "checkstyle" \\ "file"
-      fileName = fileTag \@ "name"
-      errorsTag <- fileTag \\ "error"
-      line = errorsTag \@ "line"
-      patternId = errorsTag \@ "source"
-      message = errorsTag \@ "message"
-      severity = errorsTag \@ "severity"
-      level = severity match {
-        case "info" => Level.Info
-        case "warning" => Level.Warn
-        case "error" => Level.Err
-        case _ => throw new Exception(s"$severity is not a valid level")
-      }
-    } yield PluginResult(patternId, fileName, line.toInt, message, level)
-  }
-
-  private def parsePatternsXml(file: File): (Set[Pattern], Option[Map[String, play.api.libs.json.JsValue]]) = {
-    val rootModule = XML.loadFile(file.toJava)
-    val extraValues = (rootModule \ "property").map { node =>
-      val v = node \@ "value"
-      val value = try {
-        Json.parse(v)
-      } catch {
-        case _: JsonParseException => // support non quoted strings
-          Json.parse(s""""$v"""")
-      }
-      (node \@ "name", value)
-    }.toMap
-    val patternsList = for {
-      patternTags <- rootModule \ "module"
-      patternId: String = patternTags \@ "name"
-      parameters = (patternTags \ "property").map { node =>
-        Parameter(node \@ "name", node \@ "value")
-      }.toSet
-    } yield Pattern(patternId, parameters)
-    (patternsList.toSet, if (extraValues.isEmpty) None else Some(extraValues))
   }
 
   private def runTool(tool: Tool, testDir: File, configuration: Configuration): Try[Set[PluginResult]] = {

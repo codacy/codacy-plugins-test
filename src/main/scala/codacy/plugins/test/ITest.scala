@@ -3,7 +3,6 @@ package codacy.plugins.test
 import java.io.File
 import java.nio.file.Path
 
-import codacy.utils.Printer
 import com.codacy.analysis.core
 import com.codacy.analysis.core.model.{FileError, Issue, Pattern, ToolResult}
 import com.codacy.plugins.api._
@@ -12,6 +11,7 @@ import com.codacy.plugins.results.traits.DockerTool
 import com.codacy.plugins.utils.PluginHelper
 
 import scala.util.{Failure, Success, Try}
+import wvlet.log.LogSupport
 
 final case class DockerImage(name: String, version: String) {
   override def toString: String = {
@@ -19,7 +19,7 @@ final case class DockerImage(name: String, version: String) {
   }
 }
 
-trait ITest {
+trait ITest extends LogSupport {
   val opt: String
 
   def run(testSources: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean
@@ -70,16 +70,16 @@ trait ITest {
                               toolResults: Try[Set[ToolResult]]): Set[Issue] = {
     toolResults match {
       case Failure(e) =>
-        Printer.red(e.getMessage)
-        Printer.red(e.getStackTrace.mkString("\n"))
+        error(e.getMessage)
+        error(e.getStackTrace.mkString("\n"))
         Set.empty
       case Success(results) =>
         val receivedResultsTotal = results.size
 
         if (results.nonEmpty) {
-          Printer.green(s"$receivedResultsTotal results received.")
+          debug(s"$receivedResultsTotal results received.")
         } else {
-          Printer.red("No results received!")
+          error("No results received!")
         }
 
         (filterFileErrors _)
@@ -105,8 +105,8 @@ trait ITest {
     }
 
     if (otherPatternsResults.nonEmpty) {
-      Printer.red(s"Some results returned were not requested by the test and were discarded!")
-      println(s"""
+      error(s"Some results returned were not requested by the test and were discarded!")
+      info(s"""
            |Extra results returned:
            |* ${otherPatternsResults.map(_.patternId.value).mkString(", ")}
            |
@@ -125,8 +125,8 @@ trait ITest {
     }
 
     if (otherFilesResults.nonEmpty) {
-      Printer.red(s"Some results are not in the files requested and were discarded!")
-      println(s"""
+      error(s"Some results are not in the files requested and were discarded!")
+      info(s"""
            |Extra files:
            |  * ${otherFilesResults.map(_.filename).mkString(", ")}
            |
@@ -149,8 +149,8 @@ trait ITest {
       }
 
     if (fileErrorsResults.nonEmpty) {
-      Printer.red(s"Some files were not analysed because the tool failed analysing them!")
-      println(fileErrorsResults.map(fe => s"* File: ${fe.filename}, Error: ${fe.message}").mkString("\n"))
+      error(s"Some files were not analysed because the tool failed analysing them!")
+      info(fileErrorsResults.map(fe => s"* File: ${fe.filename}, Error: ${fe.message}").mkString("\n"))
     }
     issuesResults
   }
