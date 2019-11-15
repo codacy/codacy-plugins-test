@@ -16,7 +16,7 @@
 #   * Add Oracle JDK 8 bin to the beginning of your PATH.
 #
 # Example:
-# ./scripts/publish-native.sh -n codacy-plugins-test -m codacy.plugins.DockerTest -t docker 1.0.0
+# ./scripts/build-native.sh -n codacy-plugins-test -m codacy.plugins.DockerTest -t docker 1.0.0
 #
 
 set -e
@@ -84,7 +84,10 @@ function build_cmd() {
   local BINARY_NAME=$1
   local APP_MAIN_CLASS=$2
   local APP_CLASSPATH=$3
-  local FLAGS="-O1 -J-Xmx4G -H:+ReportExceptionStackTraces --no-fallback --initialize-at-build-time --report-unsupported-elements-at-runtime"
+  local FLAGS="-O1 -J-Xmx4G -H:+ReportExceptionStackTraces"
+  FLAGS+=" --no-fallback --initialize-at-build-time"
+  FLAGS+=" --report-unsupported-elements-at-runtime"
+  FLAGS+=" -H:ReflectionConfigurationFiles=scripts/reflection.json"
   # Flags for debug
   # FLAGS+=" --allow-incomplete-classpath -H:+TraceClassInitialization"
 
