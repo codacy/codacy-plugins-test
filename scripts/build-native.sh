@@ -87,7 +87,7 @@ function build_cmd() {
   local FLAGS="-O1 -J-Xmx4G -H:+ReportExceptionStackTraces"
   FLAGS+=" --no-fallback --initialize-at-build-time"
   FLAGS+=" --report-unsupported-elements-at-runtime"
-  FLAGS+=" -H:ReflectionConfigurationFiles=scripts/reflection.json"
+  FLAGS+=" -H:ReflectionConfigurationFiles=$(dirname "$BASH_SOURCE")/reflection.json"
   # Flags for debug
   # FLAGS+=" --allow-incomplete-classpath -H:+TraceClassInitialization"
 
