@@ -61,7 +61,6 @@ private[test] object Utils {
     case VisualForce => Seq("<!--")
     case XML => Seq("<!--")
     case YAML => Seq("#")
-    // case _ => Seq()
   }
 
   def getAllComments(file: java.io.File, language: Language): Seq[(Int, String)] = {

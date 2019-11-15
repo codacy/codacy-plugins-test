@@ -1,6 +1,6 @@
 package codacy.plugins.test
 
-import java.io.File
+import java.io.{File => JFile}
 import java.nio.file.Path
 
 import com.codacy.analysis.core
@@ -12,6 +12,7 @@ import com.codacy.plugins.utils.PluginHelper
 
 import scala.util.{Failure, Success, Try}
 import wvlet.log.LogSupport
+import better.files.File
 
 final case class DockerImage(name: String, version: String) {
   override def toString: String = {
@@ -22,9 +23,9 @@ final case class DockerImage(name: String, version: String) {
 trait ITest extends LogSupport {
   val opt: String
 
-  def run(testSources: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean
+  def run(docsDirectory: File, dockerImage: DockerImage, optArgs: Seq[String]): Boolean
 
-  protected def findLanguages(testSources: Seq[Path], dockerImage: DockerImage): Set[Language] = {
+  protected def findLanguages(testsDirectory: File, dockerImage: DockerImage): Set[Language] = {
     val languagesFromProperties =
       sys.props.get("codacy.tests.languages").map(_.split(",").flatMap(Languages.fromName).to[Set])
 
@@ -34,8 +35,7 @@ trait ITest extends LogSupport {
     }
 
     lazy val languagesFromFiles: Set[Language] = (for {
-      sourcePath <- testSources
-      testFile <- new TestFilesParser(sourcePath.toFile).getTestFiles
+      testFile <- new TestFilesParser(testsDirectory.toJava).getTestFiles
       language <- Languages.fromName(testFile.language.toString)
     } yield language)(collection.breakOut)
 
@@ -65,7 +65,7 @@ trait ITest extends LogSupport {
 
   protected def filterResults(spec: Option[results.Tool.Specification],
                               sourcePath: Path,
-                              files: Seq[File],
+                              files: Seq[JFile],
                               patterns: Seq[Pattern],
                               toolResults: Try[Set[ToolResult]]): Set[Issue] = {
     toolResults match {
@@ -118,7 +118,7 @@ trait ITest extends LogSupport {
     filteredPatternResults
   }
 
-  private def filterResultsFromFiles(issuesResults: Set[Issue], files: Seq[File], sourcePath: Path) = {
+  private def filterResultsFromFiles(issuesResults: Set[Issue], files: Seq[JFile], sourcePath: Path) = {
     val relativeFiles = files.map(file => sourcePath.relativize(file.getAbsoluteFile.toPath).toString)
     val (filteredFileResults, otherFilesResults) = issuesResults.partition { result =>
       relativeFiles.contains(result.filename.toString)
@@ -153,5 +153,9 @@ trait ITest extends LogSupport {
       info(fileErrorsResults.map(fe => s"* File: ${fe.filename}, Error: ${fe.message}").mkString("\n"))
     }
     issuesResults
+  }
+
+  protected def toRelativePath(rootPath: String, absolutePath: String) = {
+    absolutePath.stripPrefix(rootPath).stripPrefix(JFile.separator)
   }
 }

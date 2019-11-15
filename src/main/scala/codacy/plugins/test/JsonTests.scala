@@ -1,41 +1,39 @@
 package codacy.plugins.test
 
-import java.nio.file.Path
-
 import codacy.utils.{CollectionHelper}
 import com.codacy.plugins.api.PatternDescription
 import com.codacy.plugins.api.results.Pattern
 import com.codacy.plugins.results.traits.DockerToolDocumentation
 import com.codacy.plugins.utils.BinaryDockerHelper
+import better.files.File
 
 object JsonTests extends ITest {
 
   val opt = "json"
 
-  def run(testDirectories: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
-    val testSources = testDirectories.filter(_.getFileName.toString == DockerHelpers.testsDirectoryName)
+  def run(docsDirectory: File, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     debug("Running JsonTests:")
 
     val ignoreDescriptions: Boolean =
       sys.props.get("codacy.tests.ignore.descriptions").isDefined || optArgs.contains("--ignore-descriptions")
 
-    val dockerToolDocumentation: DockerToolDocumentation = readDockerToolDocumentation(testSources, dockerImage)
+    val dockerToolDocumentation: DockerToolDocumentation =
+      readDockerToolDocumentation(docsDirectory / DockerHelpers.testsDirectoryName, dockerImage)
 
     dockerToolDocumentation.spec.fold(error("Could not read /docs/patterns.json successfully")) { _ =>
       debug("Read /docs/patterns.json successfully")
     }
 
-    dockerToolDocumentation.descriptions.fold(
-      error("Could not read /docs/description/description.json successfully")
-    ) { descriptions =>
-      debug("Read /docs/description/description.json successfully")
-      descriptions.foreach { patternDescription =>
-        patternDescription.explanation.fold(
-          error(s"Could not read /docs/description/${patternDescription.patternId}.md")
-        ) { _ =>
-          debug(s"Read /docs/description/${patternDescription.patternId}.md successfully")
+    dockerToolDocumentation.descriptions.fold(error("Could not read /docs/description/description.json successfully")) {
+      descriptions =>
+        debug("Read /docs/description/description.json successfully")
+        descriptions.foreach { patternDescription =>
+          patternDescription.explanation.fold(
+            error(s"Could not read /docs/description/${patternDescription.patternId}.md")
+          ) { _ =>
+            debug(s"Read /docs/description/${patternDescription.patternId}.md successfully")
+          }
         }
-      }
     }
 
     (dockerToolDocumentation.spec, dockerToolDocumentation.descriptions) match {
@@ -104,8 +102,8 @@ object JsonTests extends ITest {
     }
   }
 
-  private def readDockerToolDocumentation(testSources: Seq[Path], dockerImage: DockerImage) = {
-    val languages = findLanguages(testSources, dockerImage)
+  private def readDockerToolDocumentation(testsDirectory: File, dockerImage: DockerImage) = {
+    val languages = findLanguages(testsDirectory, dockerImage)
     val dockerTool = createDockerTool(languages, dockerImage)
     new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
   }

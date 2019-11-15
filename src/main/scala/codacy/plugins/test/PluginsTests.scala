@@ -9,16 +9,17 @@ import com.codacy.plugins.api.results.Result
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
+import better.files.File
 
 object PluginsTests extends ITest {
 
   val opt = "plugin"
 
-  def run(testDirectories: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
+  def run(docsDirectory: File, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     debug("Running PluginsTests:")
-    val testSources = testDirectories.filter(_.getFileName.toString == DockerHelpers.testsDirectoryName)
+    val testsDirectory = docsDirectory / DockerHelpers.testsDirectoryName
 
-    val languages = findLanguages(testSources, dockerImage)
+    val languages = findLanguages(testsDirectory, dockerImage)
     val dockerTool = createDockerTool(languages, dockerImage)
     val dockerToolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
     val specOpt = dockerToolDocumentation.spec
@@ -39,17 +40,17 @@ object PluginsTests extends ITest {
 
       val tools = languages.map(new core.tools.Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
 
-      val resultsUUIDS: Set[String] = testSources.flatMap { sourcePath =>
-        val files = FileHelper.listFiles(sourcePath.toFile)
+      val resultsUUIDS: Set[String] = {
+        val files = FileHelper.listFiles(testsDirectory.toJava)
         val fileAbsolutePaths: Set[Path] = files.map(file => Paths.get(file.getAbsolutePath))(collection.breakOut)
 
         val filteredResults: Set[Issue] = tools.flatMap { tool =>
-          val results = tool.run(better.files.File(sourcePath.toAbsolutePath), fileAbsolutePaths, codacyCfg)
-          filterResults(None, sourcePath, files, patterns.to[Seq], results)
+          val results = tool.run(better.files.File(testsDirectory.pathAsString), fileAbsolutePaths, codacyCfg)
+          filterResults(None, testsDirectory.path, files, patterns.to[Seq], results)
         }(collection.breakOut)
 
         filteredResults.map(_.patternId.value)
-      }(collection.breakOut)
+      }
 
       val missingPatterns = patterns.map(_.id).diff(resultsUUIDS)
 

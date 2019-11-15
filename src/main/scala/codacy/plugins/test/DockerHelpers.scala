@@ -1,7 +1,7 @@
 package codacy.plugins.test
 
 import scala.sys.process._
-import java.nio.file.Path
+import better.files.File
 
 object DockerHelpers {
   val testsDirectoryName = "tests"
@@ -11,27 +11,17 @@ object DockerHelpers {
 
   val dockerRunCmd = List("docker", "run", "--net=none", "--privileged=false", "--user=docker")
 
-  def testFoldersInDocker(dockerImage: DockerImage, sourceDir: Path): Either[String, Seq[Path]] = {
+  def usingDocsDirectoryInDockerImage(dockerImage: DockerImage)(f: File => Unit): Either[String, Unit] = {
     val dockerStartedCmd = dockerRunCmd ++ List("-d", "--entrypoint=sh", dockerImage.toString)
     val output = dockerStartedCmd.lineStream_!.headOption
+    val directory = File.newTemporaryDirectory()
     try {
       output match {
         case Some(containerId) =>
           //copy files from running container
-          List("docker", "cp", s"$containerId:/docs/directory-tests", sourceDir.toString) ! processLogger
-
-          // backwards compatibility, making sure directory tests exist so we can copy the old test dir
-          List("mkdir", "-p", s"$sourceDir/directory-tests") ! processLogger
-          List("docker", "cp", s"$containerId:/docs/$testsDirectoryName", s"$sourceDir/directory-tests") ! processLogger
-          List("docker", "cp", s"$containerId:/docs/$multipleTestsDirectoryName", s"$sourceDir/directory-tests") ! processLogger
-
-          val sourcesDir = sourceDir.resolve("directory-tests")
-
-          val pathArr = sourcesDir.toFile.listFiles().collect {
-            case dir if dir.exists() =>
-              dir.toPath
-          }
-          Right(pathArr)
+          List("docker", "cp", s"$containerId:/docs", directory.pathAsString) ! processLogger
+          f(directory / "docs")
+          Right(())
         case None =>
           Left("[Failure] Couldn't get the container id!")
       }
@@ -39,6 +29,7 @@ object DockerHelpers {
       for (containerId <- output) {
         // Remove container
         List("docker", "rm", "-f", containerId) ! processLogger
+        directory.delete(swallowIOExceptions = true)
       }
     }
   }

@@ -1,8 +1,5 @@
 package codacy.plugins.test
 
-import java.io.File
-import java.nio.file.Path
-
 import com.codacy.analysis.core.tools.MetricsTool
 import com.codacy.plugins.api.Source
 import com.codacy.plugins.metrics.traits
@@ -11,31 +8,28 @@ import com.codacy.plugins.api.metrics.{FileMetrics, LineComplexity}
 import scala.util.{Failure, Success}
 
 import Utils._
+import better.files.File
 
 object MetricsTests extends ITest with CustomMatchers {
 
   val opt = "metrics"
 
-  def run(testDirectories: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
-    val testSources = testDirectories.filter(_.getFileName.toString == DockerHelpers.testsDirectoryName)
+  def run(docsDirectory: File, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
+    val testsDirectory = docsDirectory / DockerHelpers.testsDirectoryName
     debug(s"Running MetricsTests:")
 
-    val languages = findLanguages(testSources, dockerImage)
+    val languages = findLanguages(testsDirectory, dockerImage)
     val metricsTool = new traits.MetricsTool(languages.toList, dockerImage.name, dockerImage.version) {}
     val tools = languages.map(language => new MetricsTool(metricsTool, language))
 
-    testSources
-      .map { sourcePath =>
-        val testFiles = new MetricsTestFilesParser(sourcePath.toFile).getTestFiles
+    val testFiles = new MetricsTestFilesParser(testsDirectory.toJava).getTestFiles
 
-        testFiles
-          .map {
-            case (fileMetrics, language) =>
-              tools
-                .filter(_.languageToRun.name.equalsIgnoreCase(language.toString))
-                .exists(analyseFile(sourcePath.toFile, fileMetrics, _))
-          }
-          .forall(identity)
+    testFiles
+      .map {
+        case (fileMetrics, language) =>
+          tools
+            .filter(_.languageToRun.name.equalsIgnoreCase(language.toString))
+            .exists(analyseFile(testsDirectory, fileMetrics, _))
       }
       .forall(identity)
   }
@@ -62,11 +56,11 @@ object MetricsTests extends ITest with CustomMatchers {
   }
 
   private def analyseFile(rootDirectory: File, testFile: FileMetrics, tool: MetricsTool): Boolean = {
-    val filename = toRelativePath(rootDirectory.getAbsolutePath, testFile.filename)
+    val filename = toRelativePath(rootDirectory.pathAsString, testFile.filename)
     debug(s"  - $filename should have: ${metricsMessage(testFile)}")
     val testFiles: Set[Source.File] = Set(Source.File(filename))
     val resultTry = tool
-      .run(better.files.File(rootDirectory.getAbsolutePath), Option(testFiles))
+      .run(better.files.File(rootDirectory.pathAsString), Option(testFiles))
       .map(_.map(toCodacyPluginsApiMetricsFileMetrics))
     val result = resultTry match {
       case Failure(e) =>
@@ -87,9 +81,5 @@ object MetricsTests extends ITest with CustomMatchers {
     } else debug("  Test passed")
 
     comparison
-  }
-
-  private def toRelativePath(rootPath: String, absolutePath: String) = {
-    absolutePath.stripPrefix(rootPath).stripPrefix(File.separator)
   }
 }

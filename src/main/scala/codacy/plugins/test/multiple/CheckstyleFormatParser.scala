@@ -9,7 +9,7 @@ import play.api.libs.json.Json
 import com.fasterxml.jackson.core.JsonParseException
 import scala.xml.Elem
 
-private [multiple] object CheckstyleFormatParser {
+private[multiple] object CheckstyleFormatParser {
 
   def parseResultsXml(root: Elem) = {
     for {

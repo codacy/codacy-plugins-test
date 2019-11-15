@@ -1,7 +1,6 @@
 package codacy.plugins.test
 
-import java.io.File
-import java.nio.file.{Path, Paths}
+import better.files.File
 
 import com.codacy.analysis.core
 import com.codacy.analysis.core.model.{CodacyCfg, FullLocation, LineLocation, Pattern}
@@ -11,34 +10,33 @@ import com.codacy.plugins.api.results.Result
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
+import java.nio.file.Paths
 
 object PatternTests extends ITest with CustomMatchers {
 
   val opt = "pattern"
 
-  def run(testDirectories: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
+  def run(docsDirectory: File, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     debug(s"Running PatternsTests:")
-    val testSources = testDirectories.filter(_.getFileName.toString == DockerHelpers.testsDirectoryName)
-    val languages = findLanguages(testSources, dockerImage)
+    val testsDirectory = docsDirectory / DockerHelpers.testsDirectoryName
+    val languages = findLanguages(testsDirectory, dockerImage)
     val dockerTool = createDockerTool(languages, dockerImage)
     val toolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
     val dockerRunner = new BinaryDockerRunner[Result](dockerTool)()
     val runner = new ToolRunner(dockerTool, toolDocumentation, dockerRunner)
     val tools = languages.map(new core.tools.Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
-    testSources
-      .forall { sourcePath =>
-        val testFiles = new TestFilesParser(sourcePath.toFile).getTestFiles
 
-        val filteredTestFiles = optArgs.headOption.fold(testFiles) { fileNameToTest =>
-          testFiles.filter(testFiles => testFiles.file.getName.contains(fileNameToTest))
-        }
+    val testFiles = new TestFilesParser(testsDirectory.toJava).getTestFiles
 
-        filteredTestFiles.par
-          .forall { testFile =>
-            tools
-              .filter(_.languageToRun.name.equalsIgnoreCase(testFile.language.toString))
-              .exists(analyseFile(toolDocumentation.spec, sourcePath.toFile, testFile, _))
-          }
+    val filteredTestFiles = optArgs.headOption.fold(testFiles) { fileNameToTest =>
+      testFiles.filter(testFiles => testFiles.file.getName.contains(fileNameToTest))
+    }
+
+    filteredTestFiles.par
+      .forall { testFile =>
+        tools
+          .filter(_.languageToRun.name.equalsIgnoreCase(testFile.language.toString))
+          .exists(analyseFile(toolDocumentation.spec, testsDirectory, testFile, _))
       }
   }
 
@@ -47,7 +45,7 @@ object PatternTests extends ITest with CustomMatchers {
                           testFile: PatternTestFile,
                           tool: Tool): Boolean = {
 
-    val filename = toRelativePath(rootDirectory.getAbsolutePath, testFile.file.getAbsolutePath)
+    val filename = toRelativePath(rootDirectory.pathAsString, testFile.file.getAbsolutePath)
 
     debug(
       s"- $filename should have ${testFile.matches.length} matches with patterns: " +
@@ -66,8 +64,8 @@ object PatternTests extends ITest with CustomMatchers {
 
     val codacyCfg = CodacyCfg(patterns)
 
-    val result = tool.run(better.files.File(rootDirectory.getAbsolutePath), testFilesAbsolutePaths.to[Set], codacyCfg)
-    val filteredResults = filterResults(spec, rootDirectory.toPath, testFiles, patterns.to[Seq], result)
+    val result = tool.run(better.files.File(rootDirectory.pathAsString), testFilesAbsolutePaths.to[Set], codacyCfg)
+    val filteredResults = filterResults(spec, rootDirectory.path, testFiles, patterns.to[Seq], result)
 
     val matches: Seq[TestFileResult] = filteredResults.map(
       r =>
@@ -85,9 +83,5 @@ object PatternTests extends ITest with CustomMatchers {
     else debug(comparison.rawNegatedFailureMessage)
 
     comparison.matches
-  }
-
-  private def toRelativePath(rootPath: String, absolutePath: String) = {
-    absolutePath.stripPrefix(rootPath).stripPrefix(File.separator)
   }
 }

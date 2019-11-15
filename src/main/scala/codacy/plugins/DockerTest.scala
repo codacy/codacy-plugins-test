@@ -4,7 +4,6 @@ import java.nio.file.Path
 
 import codacy.plugins.test._
 import codacy.plugins.test.multiple.MultipleTests
-import org.apache.commons.io.FileUtils
 import better.files.File
 import wvlet.log.LogSupport
 
@@ -30,22 +29,15 @@ object DockerTest extends LogSupport {
           dockerImageNameAndVersion =>
             val dockerImage = parseDockerImage(dockerImageNameAndVersion)
 
-            def runTests(testSources: Seq[Path]): Either[String, Unit] = {
-              val allTestsPassed = try {
-                possibleTests
-                  .map(test => run(testSources, test, typeOfTest, dockerImage, optArgs))
-                  .forall(identity)
-              } finally deleteTestSources(testSources)
+            def runTests(docsDirectory: File): Either[String, Unit] = {
+              val allTestsPassed = possibleTests
+                .map(test => run(docsDirectory, test, typeOfTest, dockerImage, optArgs))
+                .forall(identity)
               if (allTestsPassed) Right(()) else Left("[Failure] Some tests failed!")
             }
-            val tempDirectory = File.newTemporaryDirectory("docker-test-folders")
-            val testRunResult = try {
-              for {
-                testSources <- DockerHelpers.testFoldersInDocker(dockerImage, tempDirectory.path)
-                res <- runTests(testSources)
-              } yield res
-            } finally tempDirectory.delete(swallowIOExceptions = true)
-
+            val testRunResult = DockerHelpers.usingDocsDirectoryInDockerImage(dockerImage) { docsDirectory =>
+              runTests(docsDirectory)
+            }
             testRunResult match {
               case Left(err) =>
                 error(err)
@@ -59,11 +51,7 @@ object DockerTest extends LogSupport {
     }
   }
 
-  private def deleteTestSources(testSources: Seq[Path]): Unit = {
-    testSources.foreach(dir => FileUtils.deleteQuietly(dir.toFile))
-  }
-
-  private def run(testSources: Seq[Path],
+  private def run(docsDirectory: File,
                   test: ITest,
                   testRequest: String,
                   dockerImage: DockerImage,
@@ -71,7 +59,7 @@ object DockerTest extends LogSupport {
 
     config.get(testRequest) match {
       case Some(ts) if ts.contains(test) =>
-        test.run(testSources, dockerImage, optArgs) match {
+        test.run(docsDirectory, dockerImage, optArgs) match {
           case true =>
             debug(s"[Success] ${test.getClass.getSimpleName}")
             true
