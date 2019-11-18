@@ -87,7 +87,8 @@ function build_cmd() {
   local FLAGS="-O1 -J-Xmx4G -H:+ReportExceptionStackTraces"
   FLAGS+=" --no-fallback --initialize-at-build-time"
   FLAGS+=" --report-unsupported-elements-at-runtime"
-  FLAGS+=" -H:ReflectionConfigurationFiles=$(dirname "$BASH_SOURCE")/reflection.json"
+  SCRIPT_PATH="$( cd "$(dirname "$0")" ; pwd -P )"
+  FLAGS+=' -H:ReflectionConfigurationFiles='$SCRIPT_PATH"/reflection.json"
   # Flags for debug
   # FLAGS+=" --allow-incomplete-classpath -H:+TraceClassInitialization"
 
@@ -118,7 +119,7 @@ case "$TARGET" in
       -v "$HOME":"$HOME":ro \
       -v "$PWD":"$PWD" \
       findepi/graalvm:19.2.0.1-native \
-        -c "$BUILD_CMD"
+        -c 'cd /tmp && '"$BUILD_CMD"' && mv '"$BINARY_NAME $PWD/$BINARY_NAME"
     ;;
   *)
     echo >&2 "Could not find command for target $TARGET"
