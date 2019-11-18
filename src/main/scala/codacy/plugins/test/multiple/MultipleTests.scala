@@ -31,20 +31,22 @@ object MultipleTests extends ITest {
     val dockerRunner = new BinaryDockerRunner[Result](dockerTool)()
     val runner = new ToolRunner(dockerTool, toolDocumentation, dockerRunner)
     val tools = languages.map(new Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
-    val srcDir = multipleTestsDirectory / "src"
-    val resultFile = multipleTestsDirectory / "results.xml"
-    val resultFileXML = XML.loadFile(resultFile.toJava)
-    val expectedResults = CheckstyleFormatParser.parseResultsXml(resultFileXML).toSet
-    debug(s"${multipleTestsDirectory.name} should have ${expectedResults.size} results")
-    val configuration = createConfiguration(multipleTestsDirectory, srcDir)
-    tools.exists { tool =>
-      val res = runTool(tool, srcDir, configuration)
-      ResultPrinter.printToolResults(res, expectedResults)
+    multipleTestsDirectory.list.forall { testDirectory =>
+      val srcDir = testDirectory / "src"
+      val resultFile = testDirectory / "results.xml"
+      val resultFileXML = XML.loadFile(resultFile.toJava)
+      val expectedResults = CheckstyleFormatParser.parseResultsXml(resultFileXML).toSet
+      debug(s"${testDirectory.name} should have ${expectedResults.size} results")
+      val configuration = createConfiguration(testDirectory, srcDir)
+      tools.exists { tool =>
+        val res = runTool(tool, srcDir, configuration)
+        ResultPrinter.printToolResults(res, expectedResults)
+      }
     }
   }
 
-  private def createConfiguration(multipleTestsDirectory: File, srcDir: File) = {
-    val patternsPath = multipleTestsDirectory / "patterns.xml"
+  private def createConfiguration(testDirectory: File, srcDir: File) = {
+    val patternsPath = testDirectory / "patterns.xml"
     if (patternsPath.exists) {
       val patternsFileXML = XML.loadFile(patternsPath.toJava)
       val (patterns, extraValues) = CheckstyleFormatParser.parsePatternsXml(patternsFileXML)
