@@ -44,13 +44,7 @@ object PatternTests extends ITest with CustomMatchers {
                           rootDirectory: File,
                           testFile: PatternTestFile,
                           tool: Tool): Boolean = {
-
     val filename = toRelativePath(rootDirectory.pathAsString, testFile.file.getAbsolutePath)
-
-    debug(
-      s"- $filename should have ${testFile.matches.length} matches with patterns: " +
-        testFile.enabledPatterns.map(_.name).mkString(", ")
-    )
 
     val testFiles = Seq(testFile.file)
     val testFilesAbsolutePaths = testFiles.map(f => Paths.get(f.getAbsolutePath))
@@ -76,11 +70,16 @@ object PatternTests extends ITest with CustomMatchers {
     )(collection.breakOut)
 
     val comparison = beEqualTo(testFile.matches).apply(matches)
+    synchronized {
+      debug(
+        s"- $filename should have ${testFile.matches.length} matches with patterns: " +
+          testFile.enabledPatterns.map(_.name).mkString(", ")
+      )
+      debug(s"  + ${matches.size} matches found in lines: ${matches.map(_.line).to[Seq].sorted.mkString(", ")}")
 
-    debug(s"  + ${matches.size} matches found in lines: ${matches.map(_.line).to[Seq].sorted.mkString(", ")}")
-
-    if (!comparison.matches) error(comparison.rawFailureMessage)
-    else debug(comparison.rawNegatedFailureMessage)
+      if (!comparison.matches) error(comparison.rawFailureMessage)
+      else debug(comparison.rawNegatedFailureMessage)
+    }
 
     comparison.matches
   }

@@ -5,11 +5,13 @@ import java.nio.file.Path
 import codacy.plugins.test._
 import codacy.plugins.test.multiple.MultipleTests
 import better.files.File
-import wvlet.log.LogSupport
+import wvlet.log.{ LogFormatter, Logger, LogLevel, LogSupport }
 
 case class Sources(mainSourcePath: Path, directoryPaths: Seq[Path])
 
 object DockerTest extends LogSupport {
+  Logger.setDefaultFormatter(LogFormatter.SimpleLogFormatter)
+  Logger.setDefaultLogLevel(LogLevel.ALL)
 
   private lazy val config = Map("all" -> Seq(JsonTests, PluginsTests, PatternTests)) ++
     possibleTests.map { test =>
