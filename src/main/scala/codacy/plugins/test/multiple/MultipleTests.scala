@@ -14,8 +14,11 @@ import better.files._
 
 import scala.util.{Failure, Success, Try}
 import scala.xml.XML
+import com.codacy.analysis.core.model.ToolResult
+import com.codacy.analysis.core.model.Location
+import scala.util.Properties
 
-object MultipleTests extends ITest with CustomMatchers {
+object MultipleTests extends ITest {
 
   val opt = "multiple"
 
@@ -33,57 +36,52 @@ object MultipleTests extends ITest with CustomMatchers {
     val resultFileXML = XML.loadFile(resultFile.toJava)
     val expectedResults = CheckstyleFormatParser.parseResultsXml(resultFileXML).toSet
     debug(s"${multipleTestsDirectory.name} should have ${expectedResults.size} results")
-    val configuration = {
-      val patternsPath = multipleTestsDirectory / "patterns.xml"
-      if (patternsPath.exists) {
-        val patternsFileXML = XML.loadFile(patternsPath.toJava)
-        val (patterns, extraValues) = CheckstyleFormatParser.parsePatternsXml(patternsFileXML)
-        if (patterns.isEmpty) FileCfg(Some(srcDir.pathAsString), extraValues)
-        else CodacyCfg(patterns, Some(srcDir.pathAsString), extraValues)
-      } else FileCfg(Some(srcDir.pathAsString), None)
-    }
+    val configuration = createConfiguration(multipleTestsDirectory, srcDir)
     tools.exists { tool =>
       val res = runTool(tool, srcDir, configuration)
-      res match {
-        case Failure(e) =>
-          info("Got failure in the analysis:")
-          e.printStackTrace()
-          false
-        case Success(results) =>
-          if (results.sameElements(expectedResults)) {
-            debug(s"Got ${results.size} results.")
-            true
-          } else {
-            error("Tool results don't match expected results:")
-            error("Extra: ")
-            info(pprint.apply(results.diff(expectedResults), height = Int.MaxValue))
-            error("Missing:")
-            info(pprint.apply(expectedResults.diff(results), height = Int.MaxValue))
-            false
-          }
-      }
+      ResultPrinter.printToolResults(res, expectedResults)
     }
+  }
 
+  private def createConfiguration(multipleTestsDirectory: File, srcDir: File) = {
+    val patternsPath = multipleTestsDirectory / "patterns.xml"
+    if (patternsPath.exists) {
+      val patternsFileXML = XML.loadFile(patternsPath.toJava)
+      val (patterns, extraValues) = CheckstyleFormatParser.parsePatternsXml(patternsFileXML)
+      if (patterns.isEmpty) FileCfg(Some(srcDir.pathAsString), extraValues)
+      else CodacyCfg(patterns, Some(srcDir.pathAsString), extraValues)
+    } else FileCfg(Some(srcDir.pathAsString), None)
+  }
+
+  private def convertResults(resultSet: Set[ToolResult]): Set[Either[String, PluginResult]] = resultSet.map {
+    case Issue(patternId, filename, message, level, category, location: Location) =>
+      val line = location match {
+        case FullLocation(line, column) => line
+        case LineLocation(line) => line
+      }
+      Right(PluginResult(patternId.value, filename.getFileName().toString(), line, message.text, level))
+    case FileError(file, error) => Left(s"  error $error in file $file")
   }
 
   private def runTool(tool: Tool,
                       multipleTestsDirectory: File,
                       configuration: Configuration): Try[Set[PluginResult]] = {
-    val builder = Set.newBuilder[PluginResult]
-    for {
-      set <- tool.run(multipleTestsDirectory,
-                      multipleTestsDirectory.list.filter(_.isRegularFile).map(_.path).toSet,
-                      configuration)
-      toolResult <- set
-    } toolResult match {
-      case Issue(patternId, filename, message, level, category, location) =>
-        val line = location match {
-          case fl: FullLocation => fl.line
-          case l: LineLocation => l.line
-        }
-        builder += PluginResult(patternId.value, filename.getFileName().toString(), line, message.text, level)
-      case FileError(file, error) => return Failure(new Exception(s"Got error $error on file $file"))
+    val toolRunResult: Try[Set[ToolResult]] = tool.run(
+      multipleTestsDirectory,
+      multipleTestsDirectory.list.filter(_.isRegularFile).map(_.path).toSet,
+      configuration
+    )
+
+    toolRunResult.flatMap { resultSet =>
+      val resultEithers = convertResults(resultSet)
+      val failures = resultEithers.collect { case Left(error) => error }
+      if (failures.isEmpty) {
+        Success(resultEithers.collect { case Right(value) => value })
+      } else {
+        val errorsString =
+          failures.mkString(Properties.lineSeparator)
+        Failure(new Exception(s"Got errors in ${failures.size} files:${Properties.lineSeparator}$errorsString"))
+      }
     }
-    Success(builder.result())
   }
 }
