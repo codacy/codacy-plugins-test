@@ -2,7 +2,7 @@ package codacy.plugins.test
 
 import java.io.File
 
-import codacy.utils.{FileHelper}
+import codacy.utils.FileHelper
 import com.codacy.plugins.api.languages.{Language, Languages}
 import com.codacy.plugins.api.results.Result
 import play.api.libs.json.{JsValue, Json}

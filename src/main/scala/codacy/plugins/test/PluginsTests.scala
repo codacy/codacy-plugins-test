@@ -2,7 +2,7 @@ package codacy.plugins.test
 
 import java.nio.file.{Path, Paths}
 
-import codacy.utils.{FileHelper}
+import codacy.utils.FileHelper
 import com.codacy.analysis.core
 import com.codacy.analysis.core.model.{CodacyCfg, Issue, Pattern}
 import com.codacy.plugins.api.results.Result

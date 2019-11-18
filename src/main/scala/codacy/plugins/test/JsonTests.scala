@@ -1,6 +1,6 @@
 package codacy.plugins.test
 
-import codacy.utils.{CollectionHelper}
+import codacy.utils.CollectionHelper
 import com.codacy.plugins.api.PatternDescription
 import com.codacy.plugins.api.results.Pattern
 import com.codacy.plugins.results.traits.DockerToolDocumentation
