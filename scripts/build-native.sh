@@ -118,7 +118,7 @@ case "$TARGET" in
       -v "$HOME":"$HOME":ro \
       -v "$PWD":"$PWD" \
       findepi/graalvm:19.2.0.1-native \
-        -c 'cd /tmp && '"$BUILD_CMD"' && mv '"$BINARY_NAME $PWD/$BINARY_NAME"
+        -c "$BUILD_CMD"
     ;;
   *)
     echo >&2 "Could not find command for target $TARGET"
