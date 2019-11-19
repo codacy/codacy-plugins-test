@@ -9,17 +9,18 @@ import com.codacy.plugins.api.results.Result
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
-import better.files.File
+import better.files._
+import java.io.{ File => JFile }
 
 object PluginsTests extends ITest {
 
   val opt = "plugin"
 
-  def run(docsDirectory: File, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
+  def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     debug("Running PluginsTests:")
-    val testsDirectory = docsDirectory / DockerHelpers.testsDirectoryName
+    val testsDirectory = docsDirectory.toScala / DockerHelpers.testsDirectoryName
 
-    val languages = findLanguages(testsDirectory, dockerImage)
+    val languages = findLanguages(testsDirectory.toJava, dockerImage)
     val dockerTool = createDockerTool(languages, dockerImage)
     val dockerToolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
     val specOpt = dockerToolDocumentation.spec

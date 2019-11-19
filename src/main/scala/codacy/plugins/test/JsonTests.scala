@@ -5,20 +5,21 @@ import com.codacy.plugins.api.PatternDescription
 import com.codacy.plugins.api.results.Pattern
 import com.codacy.plugins.results.traits.DockerToolDocumentation
 import com.codacy.plugins.utils.BinaryDockerHelper
-import better.files.File
+import better.files._
+import java.io.{ File => JFile }
 
 object JsonTests extends ITest {
 
   val opt = "json"
 
-  def run(docsDirectory: File, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
+  def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     debug("Running JsonTests:")
 
     val ignoreDescriptions: Boolean =
       sys.props.get("codacy.tests.ignore.descriptions").isDefined || optArgs.contains("--ignore-descriptions")
 
     val dockerToolDocumentation: DockerToolDocumentation =
-      readDockerToolDocumentation(docsDirectory / DockerHelpers.testsDirectoryName, dockerImage)
+      readDockerToolDocumentation(docsDirectory.toScala / DockerHelpers.testsDirectoryName, dockerImage)
 
     dockerToolDocumentation.spec.fold(error("Could not read /docs/patterns.json successfully")) { _ =>
       debug("Read /docs/patterns.json successfully")
@@ -103,7 +104,7 @@ object JsonTests extends ITest {
   }
 
   private def readDockerToolDocumentation(testsDirectory: File, dockerImage: DockerImage) = {
-    val languages = findLanguages(testsDirectory, dockerImage)
+    val languages = findLanguages(testsDirectory.toJava, dockerImage)
     val dockerTool = createDockerTool(languages, dockerImage)
     new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
   }

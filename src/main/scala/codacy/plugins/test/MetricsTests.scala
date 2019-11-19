@@ -8,17 +8,19 @@ import com.codacy.plugins.api.metrics.{FileMetrics, LineComplexity}
 import scala.util.{Failure, Success}
 
 import Utils._
-import better.files.File
+import better.files._
+import java.io.{ File => JFile }
+import java.nio.file.Paths
 
 object MetricsTests extends ITest with CustomMatchers {
 
   val opt = "metrics"
 
-  def run(docsDirectory: File, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
-    val testsDirectory = docsDirectory / DockerHelpers.testsDirectoryName
+  def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
+    val testsDirectory = docsDirectory.toScala / DockerHelpers.testsDirectoryName
     debug(s"Running MetricsTests:")
 
-    val languages = findLanguages(testsDirectory, dockerImage)
+    val languages = findLanguages(testsDirectory.toJava, dockerImage)
     val metricsTool = new traits.MetricsTool(languages.toList, dockerImage.name, dockerImage.version) {}
     val tools = languages.map(language => new MetricsTool(metricsTool, language))
 
@@ -56,11 +58,11 @@ object MetricsTests extends ITest with CustomMatchers {
   }
 
   private def analyseFile(rootDirectory: File, testFile: FileMetrics, tool: MetricsTool): Boolean = {
-    val filename = toRelativePath(rootDirectory.pathAsString, testFile.filename)
+    val filename = rootDirectory.relativize(Paths.get(testFile.filename)).toString
     debug(s"  - $filename should have: ${metricsMessage(testFile)}")
     val testFiles: Set[Source.File] = Set(Source.File(filename))
     val resultTry = tool
-      .run(better.files.File(rootDirectory.pathAsString), Option(testFiles))
+      .run(rootDirectory, Option(testFiles))
       .map(_.map(toCodacyPluginsApiMetricsFileMetrics))
     val result = resultTry match {
       case Failure(e) =>

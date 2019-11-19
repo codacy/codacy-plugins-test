@@ -1,6 +1,6 @@
 package codacy.plugins.test
 
-import java.io.File
+import java.io.{ File => JFile }
 
 import codacy.utils.FileHelper
 import com.codacy.plugins.api.languages.{Language, Languages}
@@ -10,7 +10,7 @@ import play.api.libs.json.Json
 import scala.util.Try
 import Utils._
 
-class MetricsTestFilesParser(filesDir: File) {
+class MetricsTestFilesParser(filesDir: JFile) {
   private case class MetricsHeaderData(complexity: Option[Int],
                                        loc: Option[Int],
                                        cloc: Option[Int],

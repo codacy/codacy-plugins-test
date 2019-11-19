@@ -1,6 +1,6 @@
 package codacy.plugins.test
 
-import java.io.File
+import java.io.{File => JFile}
 
 import codacy.utils.FileHelper
 import com.codacy.plugins.api.languages.{Language, Languages}
@@ -12,7 +12,7 @@ import scala.util.{Failure, Success, Try}
 import Utils._
 import wvlet.log.LogSupport
 
-case class PatternTestFile(file: File,
+case class PatternTestFile(file: JFile,
                            language: Language,
                            enabledPatterns: Seq[PatternSimple],
                            matches: Seq[TestFileResult])
@@ -25,7 +25,7 @@ object IssueWithLine {
 
 case class PatternSimple(name: String, parameters: Option[Map[String, JsValue]])
 
-class TestFilesParser(filesDir: File) extends LogSupport {
+class TestFilesParser(filesDir: JFile) extends LogSupport {
 
   val Warning = """\s*#Warn(?:ing)?:\s*([A-Za-z0-9\_\-\.=/]+).*""".r
   val Error = """\s*#Err(?:or)?:\s*([A-Za-z0-9\_\-\.=/]+).*""".r

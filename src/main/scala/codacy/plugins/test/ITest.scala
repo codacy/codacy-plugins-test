@@ -12,7 +12,6 @@ import com.codacy.plugins.utils.PluginHelper
 
 import scala.util.{Failure, Success, Try}
 import wvlet.log.LogSupport
-import better.files.File
 
 final case class DockerImage(name: String, version: String) {
   override def toString: String = {
@@ -23,9 +22,9 @@ final case class DockerImage(name: String, version: String) {
 trait ITest extends LogSupport {
   val opt: String
 
-  def run(docsDirectory: File, dockerImage: DockerImage, optArgs: Seq[String]): Boolean
+  def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean
 
-  protected def findLanguages(testsDirectory: File, dockerImage: DockerImage): Set[Language] = {
+  protected def findLanguages(testsDirectory: JFile, dockerImage: DockerImage): Set[Language] = {
     val languagesFromProperties =
       sys.props.get("codacy.tests.languages").map(_.split(",").flatMap(Languages.fromName).to[Set])
 
@@ -35,7 +34,7 @@ trait ITest extends LogSupport {
     }
 
     lazy val languagesFromFiles: Set[Language] = (for {
-      testFile <- new TestFilesParser(testsDirectory.toJava).getTestFiles
+      testFile <- new TestFilesParser(testsDirectory).getTestFiles
       language <- Languages.fromName(testFile.language.toString)
     } yield language)(collection.breakOut)
 
@@ -145,9 +144,5 @@ trait ITest extends LogSupport {
       info(fileErrorsResults.map(fe => s"* File: ${fe.filename}, Error: ${fe.message}").mkString("\n"))
     }
     issuesResults
-  }
-
-  protected def toRelativePath(rootPath: String, absolutePath: String) = {
-    absolutePath.stripPrefix(rootPath).stripPrefix(JFile.separator)
   }
 }

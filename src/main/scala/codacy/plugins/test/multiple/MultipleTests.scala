@@ -11,6 +11,7 @@ import com.codacy.plugins.utils.BinaryDockerHelper
 import com.codacy.plugins.results.PluginResult
 
 import better.files._
+import java.io.{ File => JFile }
 
 import scala.util.{Failure, Success, Try}
 import scala.xml.XML
@@ -22,10 +23,10 @@ object MultipleTests extends ITest {
 
   val opt = "multiple"
 
-  def run(docsDirectory: File, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
+  def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     debug(s"Running MultipleTests:")
-    val multipleTestsDirectory = docsDirectory / DockerHelpers.multipleTestsDirectoryName
-    val languages = findLanguages(multipleTestsDirectory, dockerImage)
+    val multipleTestsDirectory = docsDirectory.toScala / DockerHelpers.multipleTestsDirectoryName
+    val languages = findLanguages(multipleTestsDirectory.toJava, dockerImage)
     val dockerTool = createDockerTool(languages, dockerImage)
     val toolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
     val dockerRunner = new BinaryDockerRunner[Result](dockerTool)()

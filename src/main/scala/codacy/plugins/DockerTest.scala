@@ -4,7 +4,7 @@ import java.nio.file.Path
 
 import codacy.plugins.test._
 import codacy.plugins.test.multiple.MultipleTests
-import better.files.File
+import java.io.{File => JFile}
 import wvlet.log.{LogFormatter, LogLevel, LogSupport, Logger}
 
 case class Sources(mainSourcePath: Path, directoryPaths: Seq[Path])
@@ -50,7 +50,7 @@ object DockerTest extends LogSupport {
     }
   }
 
-  private def run(docsDirectory: File,
+  private def run(docsDirectory: JFile,
                   test: ITest,
                   testRequest: String,
                   dockerImage: DockerImage,

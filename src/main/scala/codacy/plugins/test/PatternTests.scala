@@ -1,6 +1,6 @@
 package codacy.plugins.test
 
-import better.files.File
+import better.files._
 
 import com.codacy.analysis.core
 import com.codacy.analysis.core.model.{CodacyCfg, FullLocation, LineLocation, Pattern}
@@ -11,15 +11,16 @@ import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
 import java.nio.file.Paths
+import java.io.{ File => JFile }
 
 object PatternTests extends ITest with CustomMatchers {
 
   val opt = "pattern"
 
-  def run(docsDirectory: File, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
+  def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     debug(s"Running PatternsTests:")
-    val testsDirectory = docsDirectory / DockerHelpers.testsDirectoryName
-    val languages = findLanguages(testsDirectory, dockerImage)
+    val testsDirectory = docsDirectory.toScala / DockerHelpers.testsDirectoryName
+    val languages = findLanguages(testsDirectory.toJava, dockerImage)
     val dockerTool = createDockerTool(languages, dockerImage)
     val toolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
     val dockerRunner = new BinaryDockerRunner[Result](dockerTool)()
