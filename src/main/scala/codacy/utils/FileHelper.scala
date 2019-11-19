@@ -1,6 +1,6 @@
 package codacy.utils
 
-import java.io.{ File => JFile }
+import java.io.{File => JFile}
 import java.nio.charset.CodingErrorAction
 
 import scala.io.{Codec, Source}

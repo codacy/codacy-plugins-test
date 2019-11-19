@@ -10,7 +10,7 @@ import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
 import better.files._
-import java.io.{ File => JFile }
+import java.io.{File => JFile}
 
 object PluginsTests extends ITest {
 

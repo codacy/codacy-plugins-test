@@ -11,7 +11,7 @@ import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
 import java.nio.file.Paths
-import java.io.{ File => JFile }
+import java.io.{File => JFile}
 
 object PatternTests extends ITest with CustomMatchers {
 

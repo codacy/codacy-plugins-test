@@ -9,7 +9,7 @@ import scala.util.{Failure, Success}
 
 import Utils._
 import better.files._
-import java.io.{ File => JFile }
+import java.io.{File => JFile}
 import java.nio.file.Paths
 
 object MetricsTests extends ITest with CustomMatchers {

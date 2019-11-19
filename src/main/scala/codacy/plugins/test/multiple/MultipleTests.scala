@@ -11,7 +11,7 @@ import com.codacy.plugins.utils.BinaryDockerHelper
 import com.codacy.plugins.results.PluginResult
 
 import better.files._
-import java.io.{ File => JFile }
+import java.io.{File => JFile}
 
 import scala.util.{Failure, Success, Try}
 import scala.xml.XML

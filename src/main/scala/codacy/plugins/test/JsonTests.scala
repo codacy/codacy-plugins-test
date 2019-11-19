@@ -6,7 +6,7 @@ import com.codacy.plugins.api.results.Pattern
 import com.codacy.plugins.results.traits.DockerToolDocumentation
 import com.codacy.plugins.utils.BinaryDockerHelper
 import better.files._
-import java.io.{ File => JFile }
+import java.io.{File => JFile}
 
 object JsonTests extends ITest {
 

@@ -1,6 +1,6 @@
 package codacy.plugins.test
 
-import java.io.{ File => JFile }
+import java.io.{File => JFile}
 
 import codacy.utils.FileHelper
 import com.codacy.plugins.api.languages.{Language, Languages}
