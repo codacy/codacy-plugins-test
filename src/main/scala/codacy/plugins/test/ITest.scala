@@ -74,14 +74,6 @@ trait ITest extends LogSupport {
         error(e.getStackTrace.mkString("\n"))
         Set.empty
       case Success(results) =>
-        val receivedResultsTotal = results.size
-
-        if (results.nonEmpty) {
-          debug(s"$receivedResultsTotal results received.")
-        } else {
-          error("No results received!")
-        }
-
         (filterFileErrors _)
           .andThen(filterResultsFromSpecPatterns(_, spec))
           .andThen(

@@ -31,14 +31,11 @@ object DockerTest extends LogSupport {
           dockerImageNameAndVersion =>
             val dockerImage = parseDockerImage(dockerImageNameAndVersion)
 
-            def runTests(docsDirectory: File): Either[String, Unit] = {
+            val testRunResult = DockerHelpers.usingDocsDirectoryInDockerImage(dockerImage) { docsDirectory =>
               val allTestsPassed = possibleTests
                 .map(test => run(docsDirectory, test, typeOfTest, dockerImage, optArgs))
                 .forall(identity)
               if (allTestsPassed) Right(()) else Left("[Failure] Some tests failed!")
-            }
-            val testRunResult = DockerHelpers.usingDocsDirectoryInDockerImage(dockerImage) { docsDirectory =>
-              runTests(docsDirectory)
             }
             testRunResult match {
               case Left(err) =>
@@ -61,15 +58,13 @@ object DockerTest extends LogSupport {
 
     config.get(testRequest) match {
       case Some(ts) if ts.contains(test) =>
-        test.run(docsDirectory, dockerImage, optArgs) match {
-          case true =>
-            debug(s"[Success] ${test.getClass.getSimpleName}")
-            true
-          case _ =>
-            error(s"[Failure] ${test.getClass.getSimpleName}")
-            false
-        }
-      case _ =>
+        val isSuccess = test.run(docsDirectory, dockerImage, optArgs)
+        if (isSuccess)
+          debug(s"[Success] ${test.getClass.getSimpleName}")
+        else
+          error(s"[Failure] ${test.getClass.getSimpleName}")
+        isSuccess
+      case a =>
         // this test was not selected
         true
     }

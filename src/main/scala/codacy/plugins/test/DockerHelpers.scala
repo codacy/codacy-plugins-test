@@ -11,7 +11,7 @@ object DockerHelpers {
 
   val dockerRunCmd = List("docker", "run", "--net=none", "--privileged=false", "--user=docker")
 
-  def usingDocsDirectoryInDockerImage(dockerImage: DockerImage)(f: File => Unit): Either[String, Unit] = {
+  def usingDocsDirectoryInDockerImage(dockerImage: DockerImage)(f: File => Either[String, Unit]): Either[String, Unit] = {
     val dockerStartedCmd = dockerRunCmd ++ List("-d", "--entrypoint=sh", dockerImage.toString)
     val output = dockerStartedCmd.lineStream_!.headOption
     val directory = File.newTemporaryDirectory()
@@ -21,7 +21,6 @@ object DockerHelpers {
           //copy files from running container
           List("docker", "cp", s"$containerId:/docs", directory.pathAsString) ! processLogger
           f(directory / "docs")
-          Right(())
         case None =>
           Left("[Failure] Couldn't get the container id!")
       }
