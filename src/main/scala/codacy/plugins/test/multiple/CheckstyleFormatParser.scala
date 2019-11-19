@@ -37,6 +37,7 @@ private[multiple] object CheckstyleFormatParser {
       } catch {
         case _: JsonParseException => // support non quoted strings
           Json.parse(s""""$v"""")
+        case e: Throwable => throw e
       }
       (node \@ "name", value)
     }.toMap
