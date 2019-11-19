@@ -3,6 +3,7 @@ import com.codacy.plugins.api.languages.Language
 import com.codacy.plugins.api.languages.Languages._
 import codacy.utils.FileHelper
 import scala.annotation.tailrec
+import java.io.{File => JFile}
 
 private[test] object Utils {
 
@@ -61,10 +62,9 @@ private[test] object Utils {
     case VisualForce => Seq("<!--")
     case XML => Seq("<!--")
     case YAML => Seq("#")
-    // case _ => Seq()
   }
 
-  def getAllComments(file: java.io.File, language: Language): Seq[(Int, String)] = {
+  def getAllComments(file: JFile, language: Language): Seq[(Int, String)] = {
     //Returns the content of a line comment or None if the line is not a comment
     def getComment(language: Language, line: String): Option[String] = {
       languageComments(language).collectFirst {

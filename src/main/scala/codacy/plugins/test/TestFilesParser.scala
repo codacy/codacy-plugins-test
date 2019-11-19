@@ -1,8 +1,8 @@
 package codacy.plugins.test
 
-import java.io.File
+import java.io.{File => JFile}
 
-import codacy.utils.{FileHelper, Printer}
+import codacy.utils.FileHelper
 import com.codacy.plugins.api.languages.{Language, Languages}
 import com.codacy.plugins.api.results.Result
 import play.api.libs.json.{JsValue, Json}
@@ -10,8 +10,9 @@ import play.api.libs.json.{JsValue, Json}
 import scala.util.{Failure, Success, Try}
 
 import Utils._
+import wvlet.log.LogSupport
 
-case class PatternTestFile(file: File,
+case class PatternTestFile(file: JFile,
                            language: Language,
                            enabledPatterns: Seq[PatternSimple],
                            matches: Seq[TestFileResult])
@@ -24,7 +25,7 @@ object IssueWithLine {
 
 case class PatternSimple(name: String, parameters: Option[Map[String, JsValue]])
 
-class TestFilesParser(filesDir: File) {
+class TestFilesParser(filesDir: JFile) extends LogSupport {
 
   val Warning = """\s*#Warn(?:ing)?:\s*([A-Za-z0-9\_\-\.=/]+).*""".r
   val Error = """\s*#Err(?:or)?:\s*([A-Za-z0-9\_\-\.=/]+).*""".r
@@ -66,7 +67,7 @@ class TestFilesParser(filesDir: File) {
                   } match {
                     case Success(result) => result
                     case Failure(_) =>
-                      Printer.red(s"${file.getName}: Failing to parse Issue $value")
+                      error(s"${file.getName}: Failing to parse Issue $value")
                       System.exit(2)
                       None
                   }

@@ -1,9 +1,5 @@
 package codacy.plugins.test
 
-import java.io.File
-import java.nio.file.Path
-
-import codacy.utils.Printer
 import com.codacy.analysis.core.tools.MetricsTool
 import com.codacy.plugins.api.Source
 import com.codacy.plugins.metrics.traits
@@ -12,30 +8,30 @@ import com.codacy.plugins.api.metrics.{FileMetrics, LineComplexity}
 import scala.util.{Failure, Success}
 
 import Utils._
+import better.files._
+import java.io.{File => JFile}
+import java.nio.file.Paths
 
 object MetricsTests extends ITest with CustomMatchers {
 
   val opt = "metrics"
 
-  def run(testSources: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
-    Printer.green(s"Running MetricsTests:")
+  def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
+    val testsDirectory = docsDirectory.toScala / DockerHelpers.testsDirectoryName
+    debug(s"Running MetricsTests:")
 
-    val languages = findLanguages(testSources, dockerImage)
+    val languages = findLanguages(testsDirectory.toJava, dockerImage)
     val metricsTool = new traits.MetricsTool(languages.toList, dockerImage.name, dockerImage.version) {}
     val tools = languages.map(language => new MetricsTool(metricsTool, language))
 
-    testSources
-      .map { sourcePath =>
-        val testFiles = new MetricsTestFilesParser(sourcePath.toFile).getTestFiles
+    val testFiles = new MetricsTestFilesParser(testsDirectory.toJava).getTestFiles
 
-        testFiles
-          .map {
-            case (fileMetrics, language) =>
-              tools
-                .filter(_.languageToRun.name.equalsIgnoreCase(language.toString))
-                .exists(analyseFile(sourcePath.toFile, fileMetrics, _))
-          }
-          .forall(identity)
+    testFiles
+      .map {
+        case (fileMetrics, language) =>
+          tools
+            .filter(_.languageToRun.name.equalsIgnoreCase(language.toString))
+            .exists(analyseFile(testsDirectory, fileMetrics, _))
       }
       .forall(identity)
   }
@@ -62,15 +58,15 @@ object MetricsTests extends ITest with CustomMatchers {
   }
 
   private def analyseFile(rootDirectory: File, testFile: FileMetrics, tool: MetricsTool): Boolean = {
-    val filename = toRelativePath(rootDirectory.getAbsolutePath, testFile.filename)
-    Printer.green(s"  - $filename should have: ${metricsMessage(testFile)}")
+    val filename = rootDirectory.relativize(Paths.get(testFile.filename)).toString
+    debug(s"  - $filename should have: ${metricsMessage(testFile)}")
     val testFiles: Set[Source.File] = Set(Source.File(filename))
     val resultTry = tool
-      .run(better.files.File(rootDirectory.getAbsolutePath), Option(testFiles))
+      .run(rootDirectory, Option(testFiles))
       .map(_.map(toCodacyPluginsApiMetricsFileMetrics))
     val result = resultTry match {
       case Failure(e) =>
-        Printer.red((e.getMessage :: e.getStackTrace.toList).mkString("\n"))
+        error((e.getMessage :: e.getStackTrace.toList).mkString("\n"))
         Set.empty
       case Success(res) =>
         res
@@ -83,13 +79,9 @@ object MetricsTests extends ITest with CustomMatchers {
         case None =>
           "  No result received."
       }
-      Printer.red(errorMessage)
-    } else Printer.green("  Test passed")
+      error(errorMessage)
+    } else debug("  Test passed")
 
     comparison
-  }
-
-  private def toRelativePath(rootPath: String, absolutePath: String) = {
-    absolutePath.stripPrefix(rootPath).stripPrefix(File.separator)
   }
 }

@@ -1,9 +1,8 @@
 package codacy.plugins.test
 
-import java.io.File
+import java.io.{File => JFile}
 import java.nio.file.Path
 
-import codacy.utils.Printer
 import com.codacy.analysis.core
 import com.codacy.analysis.core.model.{FileError, Issue, Pattern, ToolResult}
 import com.codacy.plugins.api._
@@ -12,6 +11,7 @@ import com.codacy.plugins.results.traits.DockerTool
 import com.codacy.plugins.utils.PluginHelper
 
 import scala.util.{Failure, Success, Try}
+import wvlet.log.LogSupport
 
 final case class DockerImage(name: String, version: String) {
   override def toString: String = {
@@ -19,12 +19,12 @@ final case class DockerImage(name: String, version: String) {
   }
 }
 
-trait ITest {
+trait ITest extends LogSupport {
   val opt: String
 
-  def run(testSources: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean
+  def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean
 
-  protected def findLanguages(testSources: Seq[Path], dockerImage: DockerImage): Set[Language] = {
+  protected def findLanguages(testsDirectory: JFile, dockerImage: DockerImage): Set[Language] = {
     val languagesFromProperties =
       sys.props.get("codacy.tests.languages").map(_.split(",").flatMap(Languages.fromName).to[Set])
 
@@ -34,8 +34,7 @@ trait ITest {
     }
 
     lazy val languagesFromFiles: Set[Language] = (for {
-      sourcePath <- testSources
-      testFile <- new TestFilesParser(sourcePath.toFile).getTestFiles
+      testFile <- new TestFilesParser(testsDirectory).getTestFiles
       language <- Languages.fromName(testFile.language.toString)
     } yield language)(collection.breakOut)
 
@@ -65,23 +64,15 @@ trait ITest {
 
   protected def filterResults(spec: Option[results.Tool.Specification],
                               sourcePath: Path,
-                              files: Seq[File],
+                              files: Seq[JFile],
                               patterns: Seq[Pattern],
                               toolResults: Try[Set[ToolResult]]): Set[Issue] = {
     toolResults match {
       case Failure(e) =>
-        Printer.red(e.getMessage)
-        Printer.red(e.getStackTrace.mkString("\n"))
+        error(e.getMessage)
+        error(e.getStackTrace.mkString("\n"))
         Set.empty
       case Success(results) =>
-        val receivedResultsTotal = results.size
-
-        if (results.nonEmpty) {
-          Printer.green(s"$receivedResultsTotal results received.")
-        } else {
-          Printer.red("No results received!")
-        }
-
         (filterFileErrors _)
           .andThen(filterResultsFromSpecPatterns(_, spec))
           .andThen(
@@ -105,8 +96,8 @@ trait ITest {
     }
 
     if (otherPatternsResults.nonEmpty) {
-      Printer.red(s"Some results returned were not requested by the test and were discarded!")
-      Printer.white(s"""
+      error(s"Some results returned were not requested by the test and were discarded!")
+      info(s"""
            |Extra results returned:
            |* ${otherPatternsResults.map(_.patternId.value).mkString(", ")}
            |
@@ -118,15 +109,15 @@ trait ITest {
     filteredPatternResults
   }
 
-  private def filterResultsFromFiles(issuesResults: Set[Issue], files: Seq[File], sourcePath: Path) = {
+  private def filterResultsFromFiles(issuesResults: Set[Issue], files: Seq[JFile], sourcePath: Path) = {
     val relativeFiles = files.map(file => sourcePath.relativize(file.getAbsoluteFile.toPath).toString)
     val (filteredFileResults, otherFilesResults) = issuesResults.partition { result =>
       relativeFiles.contains(result.filename.toString)
     }
 
     if (otherFilesResults.nonEmpty) {
-      Printer.red(s"Some results are not in the files requested and were discarded!")
-      Printer.white(s"""
+      error(s"Some results are not in the files requested and were discarded!")
+      info(s"""
            |Extra files:
            |  * ${otherFilesResults.map(_.filename).mkString(", ")}
            |
@@ -149,8 +140,8 @@ trait ITest {
       }
 
     if (fileErrorsResults.nonEmpty) {
-      Printer.red(s"Some files were not analysed because the tool failed analysing them!")
-      Printer.white(fileErrorsResults.map(fe => s"* File: ${fe.filename}, Error: ${fe.message}").mkString("\n"))
+      error(s"Some files were not analysed because the tool failed analysing them!")
+      info(fileErrorsResults.map(fe => s"* File: ${fe.filename}, Error: ${fe.message}").mkString("\n"))
     }
     issuesResults
   }

@@ -185,5 +185,5 @@ project/plugins/project/
 .worksheet
 
 # Generated native-images
-codacy-plugins-test-darwin
-codacy-plugins-test-linux
+codacy-plugins-test-darwin*
+codacy-plugins-test-linux*

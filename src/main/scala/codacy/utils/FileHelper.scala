@@ -1,6 +1,6 @@
 package codacy.utils
 
-import java.io.File
+import java.io.{File => JFile}
 import java.nio.charset.CodingErrorAction
 
 import scala.io.{Codec, Source}
@@ -12,7 +12,7 @@ object FileHelper {
   codec.onMalformedInput(CodingErrorAction.REPLACE)
   codec.onUnmappableCharacter(CodingErrorAction.REPLACE)
 
-  def read(file: File): Option[Seq[String]] = {
+  def read(file: JFile): Option[Seq[String]] = {
     val sourceOpt = Try(Source.fromFile(file)).toOption
 
     try {
@@ -25,7 +25,7 @@ object FileHelper {
     }
   }
 
-  def listFiles(file: File): Seq[File] = {
+  def listFiles(file: JFile): Seq[JFile] = {
     file.isDirectory match {
       case true => file.listFiles().flatMap(listFiles)
       case _ => Seq(file)

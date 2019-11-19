@@ -19,6 +19,10 @@ parameters:
     type: boolean
     default: false
     description: "Run 'metrics' tests in codacy-plugins-test"
+  run_multiple_tests:
+    type: boolean
+    default: false
+    description: "Run 'multiple' tests in codacy-plugins-test"
   docker_image_name:
     type: string
     default: $CIRCLE_PROJECT_REPONAME
@@ -69,6 +73,13 @@ steps:
             name: RunMetricsTests
             command: |
               codacy-plugins-test/$FILENAME metrics << parameters.docker_image_name >>:<< parameters.docker_image_tag >>
+  - when:
+      condition: << parameters.run_multiple_tests >>
+      steps:
+        - run:
+            name: RunMultipleTests
+            command: |
+              codacy-plugins-test/$FILENAME multiple << parameters.docker_image_name >>:<< parameters.docker_image_tag >>
   - save_cache:
       key: codacy-plugins-test-cache-$CODACY_PLUGINS_TEST_VERSION
       paths:

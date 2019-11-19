@@ -1,10 +1,7 @@
 package codacy.plugins.test
 
-import java.io.File
-import java.nio.file.{Path, Paths}
-// import java.util.concurrent.ForkJoinPool
+import better.files._
 
-import codacy.utils.Printer
 import com.codacy.analysis.core
 import com.codacy.analysis.core.model.{CodacyCfg, FullLocation, LineLocation, Pattern}
 import com.codacy.analysis.core.tools.Tool
@@ -13,52 +10,60 @@ import com.codacy.plugins.api.results.Result
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
-
-// import scala.collection.parallel.ForkJoinTaskSupport
-// import scala.util.Try
+import java.nio.file.Paths
+import java.io.{File => JFile}
 
 object PatternTests extends ITest with CustomMatchers {
 
   val opt = "pattern"
 
-  def run(testSources: Seq[Path], dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
-    Printer.green(s"Running PatternsTests:")
-
-    val languages = findLanguages(testSources, dockerImage)
+  def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
+    debug(s"Running PatternsTests:")
+    val testsDirectory = docsDirectory.toScala / DockerHelpers.testsDirectoryName
+    val languages = findLanguages(testsDirectory.toJava, dockerImage)
     val dockerTool = createDockerTool(languages, dockerImage)
     val toolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
     val dockerRunner = new BinaryDockerRunner[Result](dockerTool)()
     val runner = new ToolRunner(dockerTool, toolDocumentation, dockerRunner)
     val tools = languages.map(new core.tools.Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
-    testSources
-      .forall { sourcePath =>
-        val testFiles = new TestFilesParser(sourcePath.toFile).getTestFiles
 
-        val filteredTestFiles = optArgs.headOption.fold(testFiles) { fileNameToTest =>
-          testFiles.filter(testFiles => testFiles.file.getName.contains(fileNameToTest))
-        }
+    val testFiles = new TestFilesParser(testsDirectory.toJava).getTestFiles
 
-        filteredTestFiles.par
-          .forall { testFile =>
-            tools
-              .filter(_.languageToRun.name.equalsIgnoreCase(testFile.language.toString))
-              .exists(analyseFile(toolDocumentation.spec, sourcePath.toFile, testFile, _))
-          }
-      }
+    val filteredTestFiles = optArgs.headOption.fold(testFiles) { fileNameToTest =>
+      testFiles.filter(testFiles => testFiles.file.getName.contains(fileNameToTest))
+    }
+
+    val matchResults = filteredTestFiles.par.flatMap { testFile =>
+      tools
+        .filter(_.languageToRun.name.equalsIgnoreCase(testFile.language.toString))
+        .map(tool => (testFile, analyseFile(toolDocumentation.spec, testsDirectory, testFile, tool)))
+    }.seq
+
+    val comparisons = for {
+      (testFile, matches) <- matchResults
+      comparison = beEqualTo(testFile.matches).apply(matches)
+    } yield comparison
+
+    for (((testFile, matches), comparison) <- matchResults.zip(comparisons)) {
+      val filename = testsDirectory.path.relativize(testFile.file.toPath())
+      debug(s"""- $filename should have ${testFile.matches.length} matches with patterns: ${testFile.enabledPatterns
+                 .map(_.name)
+                 .mkString(", ")}
+               |  + ${matches.size} matches found in lines: ${matches
+                 .map(_.line)
+                 .to[Seq]
+                 .sorted
+                 .mkString(", ")}""".stripMargin)
+      if (!comparison.matches) error(comparison.rawFailureMessage)
+      else debug(comparison.rawNegatedFailureMessage)
+    }
+    comparisons.forall(_.matches)
   }
 
   private def analyseFile(spec: Option[results.Tool.Specification],
                           rootDirectory: File,
                           testFile: PatternTestFile,
-                          tool: Tool): Boolean = {
-
-    val filename = toRelativePath(rootDirectory.getAbsolutePath, testFile.file.getAbsolutePath)
-
-    Printer.green(
-      s"- $filename should have ${testFile.matches.length} matches with patterns: " +
-        testFile.enabledPatterns.map(_.name).mkString(", ")
-    )
-
+                          tool: Tool): Seq[TestFileResult] = {
     val testFiles = Seq(testFile.file)
     val testFilesAbsolutePaths = testFiles.map(f => Paths.get(f.getAbsolutePath))
 
@@ -71,9 +76,9 @@ object PatternTests extends ITest with CustomMatchers {
 
     val codacyCfg = CodacyCfg(patterns)
 
-    val result = tool.run(better.files.File(rootDirectory.getAbsolutePath), testFilesAbsolutePaths.to[Set], codacyCfg)
+    val result = tool.run(better.files.File(rootDirectory.pathAsString), testFilesAbsolutePaths.to[Set], codacyCfg)
 
-    val filteredResults = filterResults(spec, rootDirectory.toPath, testFiles, patterns.to[Seq], result)
+    val filteredResults = filterResults(spec, rootDirectory.path, testFiles, patterns.to[Seq], result)
 
     val matches: Seq[TestFileResult] = filteredResults.map(
       r =>
@@ -83,17 +88,6 @@ object PatternTests extends ITest with CustomMatchers {
         }, r.level)
     )(collection.breakOut)
 
-    val comparison = beEqualTo(testFile.matches).apply(matches)
-
-    Printer.green(s"  + ${matches.size} matches found in lines: ${matches.map(_.line).to[Seq].sorted.mkString(", ")}")
-
-    if (!comparison.matches) Printer.red(comparison.rawFailureMessage)
-    else Printer.green(comparison.rawNegatedFailureMessage)
-
-    comparison.matches
-  }
-
-  private def toRelativePath(rootPath: String, absolutePath: String) = {
-    absolutePath.stripPrefix(rootPath).stripPrefix(File.separator)
+    matches
   }
 }
