@@ -3,6 +3,7 @@ package codacy.plugins.test
 import scala.sys.process._
 import java.io.{File => JFile}
 import better.files.File
+import scala.util.Try
 
 object DockerHelpers {
   val testsDirectoryName = "tests"
@@ -30,7 +31,7 @@ object DockerHelpers {
     } finally {
       for (containerId <- output) {
         // Remove container
-        List("docker", "rm", "-f", containerId) ! processLogger
+        Try(List("docker", "rm", "-f", containerId) ! processLogger)
         directory.delete(swallowIOExceptions = true)
       }
     }
