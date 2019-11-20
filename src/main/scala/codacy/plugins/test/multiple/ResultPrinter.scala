@@ -10,7 +10,7 @@ object ResultPrinter extends LogSupport {
       error(e.getStackTraceString)
       false
     case Success(results) =>
-      if (results.sameElements(expectedResults)) {
+      if (results == expectedResults) {
         debug(s"Got ${results.size} results.")
         true
       } else {

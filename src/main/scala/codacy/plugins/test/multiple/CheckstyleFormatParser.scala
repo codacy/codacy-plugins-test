@@ -29,7 +29,7 @@ private[multiple] object CheckstyleFormatParser {
     } yield PluginResult(patternId, fileName, line.toInt, message, level)
   }
 
-  def parsePatternsXml(root: Elem): (Set[Pattern], Option[Map[String, play.api.libs.json.JsValue]]) = {
+  def parsePatternsXml(root: Elem): (Set[Pattern], Option[Map[String, play.api.libs.json.JsValue]], Option[String]) = {
     val extraValues = (root \ "property").map { node =>
       val v = node \@ "value"
       val value = try {
@@ -42,12 +42,31 @@ private[multiple] object CheckstyleFormatParser {
       (node \@ "name", value)
     }.toMap
     val patternsList = for {
-      patternTags <- root \ "module"
-      patternId: String = patternTags \@ "name"
-      parameters = (patternTags \ "property").map { node =>
+      rootChildren <- root \ "module"
+      if rootChildren \@ "name" != "BeforeExecutionExclusionFileFilter"
+      patternId: String = rootChildren \@ "name"
+      parameters = (rootChildren \ "property").map { node =>
         Parameter(node \@ "name", node \@ "value")
       }.toSet
     } yield Pattern(patternId, parameters)
-    (patternsList.toSet, if (extraValues.isEmpty) None else Some(extraValues))
+
+    val excludedFilesRegex: Option[String] = {
+      val rootChildren = root \ "module"
+      val fileFilterOption = rootChildren.find(_ \@ "name" == "BeforeExecutionExclusionFileFilter")
+      fileFilterOption.map { fileFilter =>
+        val property = fileFilter \ "property"
+        if (property \@ "name" == "fileNamePattern")
+          property \@ "value"
+        else
+          throw new Exception(
+            """"BeforeExecutionExclusionFileFilter" module should have a "property" tag with name="fileNamePattern"
+              |Example:
+              |<module name="BeforeExecutionExclusionFileFilter">
+              |  <property name="fileNamePattern" value="module\-info\.java$"/>
+              |</module>""".stripMargin
+          )
+      }
+    }
+    (patternsList.toSet, if (extraValues.isEmpty) None else Some(extraValues), excludedFilesRegex)
   }
 }
