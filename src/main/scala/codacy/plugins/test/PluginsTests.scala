@@ -11,6 +11,7 @@ import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
 import better.files._
 import java.io.{File => JFile}
+import scala.util.{Failure, Success, Try}
 
 object PluginsTests extends ITest {
 
@@ -41,30 +42,40 @@ object PluginsTests extends ITest {
 
       val tools = languages.map(new core.tools.Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
 
-      val resultsUUIDS: Set[String] = {
+      val resultsUUIDSTry: Try[Set[String]] = {
         val files = FileHelper.listFiles(testsDirectory.toJava)
         val fileAbsolutePaths: Set[Path] = files.map(file => Paths.get(file.getAbsolutePath))(collection.breakOut)
 
-        val filteredResults: Set[Issue] = tools.flatMap { tool =>
-          val results = tool.run(better.files.File(testsDirectory.pathAsString), fileAbsolutePaths, codacyCfg)
-          filterResults(None, testsDirectory.path, files, patterns.to[Seq], results)
-        }(collection.breakOut)
+        val filteredResults: Try[Set[Issue]] = {
+          val setOfTryOfSets = tools.map { tool =>
+            val resultsTry = tool.run(better.files.File(testsDirectory.pathAsString), fileAbsolutePaths, codacyCfg)
+            resultsTry.map(results => filterResults(None, testsDirectory.path, files, patterns.to[Seq], results))
+          }
+          setOfTryOfSets.fold(Success(Set.empty[Issue])) { (acc, resultsTry) =>
+            acc.flatMap(set => resultsTry.map(set.union(_)))
+          }
+        }
 
-        filteredResults.map(_.patternId.value)
+        filteredResults.map(_.map(_.patternId.value))
       }
 
-      val missingPatterns = patterns.map(_.id).diff(resultsUUIDS)
-
-      if (missingPatterns.nonEmpty) {
-        error(s"""
-             |Some patterns are not tested on plugin ${spec.name}
-             |-> Missing patterns:
-             |${missingPatterns.mkString(", ")}
-           """.stripMargin)
-        false
-      } else {
-        debug("All the patterns have occurrences in the test files.")
-        true
+      val missingPatternsTry = resultsUUIDSTry.map(resultsUUIDS => patterns.map(_.id).diff(resultsUUIDS))
+      missingPatternsTry match {
+        case Success(missingPatterns) =>
+          if (missingPatterns.nonEmpty) {
+            error(s"""
+                |Some patterns are not tested on plugin ${spec.name}
+                |-> Missing patterns:
+                |${missingPatterns.mkString(", ")}
+              """.stripMargin)
+            false
+          } else {
+            debug("All the patterns have occurrences in the test files.")
+            true
+          }
+        case Failure(exception) =>
+          error(s"Error happened launching the tool: ${exception.getStackTraceString}")
+          false
       }
     }
   }
