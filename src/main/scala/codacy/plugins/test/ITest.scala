@@ -10,7 +10,6 @@ import com.codacy.plugins.api.languages.{Language, Languages}
 import com.codacy.plugins.results.traits.DockerTool
 import com.codacy.plugins.utils.PluginHelper
 
-import scala.util.{Failure, Success, Try}
 import wvlet.log.LogSupport
 
 final case class DockerImage(name: String, version: String) {
@@ -66,21 +65,13 @@ trait ITest extends LogSupport {
                               sourcePath: Path,
                               files: Seq[JFile],
                               patterns: Seq[Pattern],
-                              toolResults: Try[Set[ToolResult]]): Set[Issue] = {
-    toolResults match {
-      case Failure(e) =>
-        error(e.getMessage)
-        error(e.getStackTrace.mkString("\n"))
-        Set.empty
-      case Success(results) =>
-        (filterFileErrors _)
-          .andThen(filterResultsFromSpecPatterns(_, spec))
-          .andThen(
-            issues =>
-              filterResultsFromFiles(issues, files, sourcePath)
-                .intersect(filterResultsFromPatterns(issues, patterns))
-          )(results)
-    }
+                              toolResults: Set[ToolResult]): Set[Issue] = {
+    val filtered = filterFileErrors(toolResults)
+    val filteredFromSpec = filterResultsFromSpecPatterns(filtered, spec)
+
+    val filteredFromFiles = filterResultsFromFiles(filteredFromSpec, files, sourcePath)
+    val filteredFromPatterns = filterResultsFromPatterns(filteredFromSpec, patterns)
+    filteredFromFiles.intersect(filteredFromPatterns)
   }
 
   private def filterResultsFromSpecPatterns(issuesResults: Set[Issue], specOpt: Option[results.Tool.Specification]) = {
