@@ -26,14 +26,14 @@ object MultipleTests extends ITest {
   def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     debug(s"Running MultipleTests:")
     val multipleTestsDirectory = docsDirectory.toScala / DockerHelpers.multipleTestsDirectoryName
-    val languages = findLanguages(multipleTestsDirectory.toJava, dockerImage)
-    val dockerTool = createDockerTool(languages, dockerImage)
-    val toolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
-    val dockerRunner = new BinaryDockerRunner[Result](dockerTool)()
-    val runner = new ToolRunner(dockerTool, toolDocumentation, dockerRunner)
-    val tools = languages.map(new Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
     multipleTestsDirectory.list.forall { testDirectory =>
       val srcDir = testDirectory / "src"
+      val languages = findLanguages(srcDir.toJava, dockerImage)
+      val dockerTool = createDockerTool(languages, dockerImage)
+      val toolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
+      val dockerRunner = new BinaryDockerRunner[Result](dockerTool)()
+      val runner = new ToolRunner(dockerTool, toolDocumentation, dockerRunner)
+      val tools = languages.map(new Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
       val resultFile = testDirectory / "results.xml"
       val resultFileXML = XML.loadFile(resultFile.toJava)
       val expectedResults = CheckstyleFormatParser.parseResultsXml(resultFileXML).toSet
