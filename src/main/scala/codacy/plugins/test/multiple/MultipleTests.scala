@@ -26,7 +26,7 @@ object MultipleTests extends ITest {
   def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     debug(s"Running MultipleTests:")
     val multipleTestsDirectory = docsDirectory.toScala / DockerHelpers.multipleTestsDirectoryName
-    multipleTestsDirectory.list.forall { testDirectory =>
+    multipleTestsDirectory.list.toList.map { testDirectory =>
       val srcDir = testDirectory / "src"
       val languages = findLanguages(srcDir.toJava, dockerImage)
       val dockerTool = createDockerTool(languages, dockerImage)
@@ -43,7 +43,7 @@ object MultipleTests extends ITest {
         val res = runTool(tool, srcDir, configuration, excludedFilesRegex)
         ResultPrinter.printToolResults(res, expectedResults)
       }
-    }
+    }.forall(identity)
   }
 
   private def createConfiguration(testDirectory: File, srcDir: File): (Configuration, Option[String]) = {
@@ -83,9 +83,9 @@ object MultipleTests extends ITest {
     toolRunResult.flatMap { resultSet =>
       val resultEithers = convertResults(resultSet)
       val failures = resultEithers.collect { case Left(error) => error }
-      if (failures.isEmpty) {
+      if (failures.isEmpty)
         Success(resultEithers.collect { case Right(value) => value })
-      } else {
+      else {
         val errorsString =
           failures.mkString(Properties.lineSeparator)
         Failure(new Exception(s"Got errors in ${failures.size} files:${Properties.lineSeparator}$errorsString"))
