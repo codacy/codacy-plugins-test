@@ -26,34 +26,38 @@ object MultipleTests extends ITest {
   def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     debug(s"Running MultipleTests:")
     val multipleTestsDirectory = docsDirectory.toScala / DockerHelpers.multipleTestsDirectoryName
-    multipleTestsDirectory.list.forall { testDirectory =>
-      val srcDir = testDirectory / "src"
-      val languages = findLanguages(srcDir.toJava, dockerImage)
-      val dockerTool = createDockerTool(languages, dockerImage)
-      val toolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
-      val dockerRunner = new BinaryDockerRunner[Result](dockerTool)()
-      val runner = new ToolRunner(dockerTool, toolDocumentation, dockerRunner)
-      val tools = languages.map(new Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
-      val resultFile = testDirectory / "results.xml"
-      val resultFileXML = XML.loadFile(resultFile.toJava)
-      val expectedResults = CheckstyleFormatParser.parseResultsXml(resultFileXML).toSet
-      debug(s"${testDirectory.name} should have ${expectedResults.size} results")
-      val configuration = createConfiguration(testDirectory, srcDir)
-      tools.exists { tool =>
-        val res = runTool(tool, srcDir, configuration)
-        ResultPrinter.printToolResults(res, expectedResults)
+    multipleTestsDirectory.list.toList
+      .map { testDirectory =>
+        val srcDir = testDirectory / "src"
+        val languages = findLanguages(srcDir.toJava, dockerImage)
+        val dockerTool = createDockerTool(languages, dockerImage)
+        val toolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
+        val dockerRunner = new BinaryDockerRunner[Result](dockerTool)()
+        val runner = new ToolRunner(dockerTool, toolDocumentation, dockerRunner)
+        val tools = languages.map(new Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
+        val resultFile = testDirectory / "results.xml"
+        val resultFileXML = XML.loadFile(resultFile.toJava)
+        val expectedResults = CheckstyleFormatParser.parseResultsXml(resultFileXML).toSet
+        debug(s"${testDirectory.name} should have ${expectedResults.size} results")
+        val (configuration, excludedFilesRegex) = createConfiguration(testDirectory, srcDir)
+        tools.exists { tool =>
+          val res = runTool(tool, srcDir, configuration, excludedFilesRegex)
+          ResultPrinter.printToolResults(res, expectedResults)
+        }
       }
-    }
+      .forall(identity)
   }
 
-  private def createConfiguration(testDirectory: File, srcDir: File) = {
+  private def createConfiguration(testDirectory: File, srcDir: File): (Configuration, Option[String]) = {
     val patternsPath = testDirectory / "patterns.xml"
     if (patternsPath.exists) {
       val patternsFileXML = XML.loadFile(patternsPath.toJava)
-      val (patterns, extraValues) = CheckstyleFormatParser.parsePatternsXml(patternsFileXML)
-      if (patterns.isEmpty) FileCfg(Some(srcDir.pathAsString), extraValues)
-      else CodacyCfg(patterns, Some(srcDir.pathAsString), extraValues)
-    } else FileCfg(Some(srcDir.pathAsString), None)
+      val (patterns, extraValues, excludedFilesRegex) = CheckstyleFormatParser.parsePatternsXml(patternsFileXML)
+      val configuration =
+        if (patterns.isEmpty) FileCfg(Some(srcDir.pathAsString), extraValues)
+        else CodacyCfg(patterns, Some(srcDir.pathAsString), extraValues)
+      (configuration, excludedFilesRegex)
+    } else (FileCfg(Some(srcDir.pathAsString), None), None)
   }
 
   private def convertResults(resultSet: Set[ToolResult]): Set[Either[String, PluginResult]] = resultSet.map {
@@ -68,19 +72,22 @@ object MultipleTests extends ITest {
 
   private def runTool(tool: Tool,
                       multipleTestsDirectory: File,
-                      configuration: Configuration): Try[Set[PluginResult]] = {
-    val toolRunResult: Try[Set[ToolResult]] = tool.run(
-      multipleTestsDirectory,
-      multipleTestsDirectory.list.filter(_.isRegularFile).map(_.path).toSet,
-      configuration
-    )
+                      configuration: Configuration,
+                      excludedFilesRegex: Option[String]): Try[Set[PluginResult]] = {
+    val optRegex = excludedFilesRegex.map(_.r)
+    def toExclude(file: File) = optRegex.exists(_.findFirstIn(file.name).nonEmpty)
+    val filesToTest = for {
+      file <- multipleTestsDirectory.listRecursively
+      if file.isRegularFile && !toExclude(file)
+    } yield file.path
+    val toolRunResult: Try[Set[ToolResult]] = tool.run(multipleTestsDirectory, filesToTest.toSet, configuration)
 
     toolRunResult.flatMap { resultSet =>
       val resultEithers = convertResults(resultSet)
       val failures = resultEithers.collect { case Left(error) => error }
-      if (failures.isEmpty) {
+      if (failures.isEmpty)
         Success(resultEithers.collect { case Right(value) => value })
-      } else {
+      else {
         val errorsString =
           failures.mkString(Properties.lineSeparator)
         Failure(new Exception(s"Got errors in ${failures.size} files:${Properties.lineSeparator}$errorsString"))

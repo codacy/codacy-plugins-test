@@ -3,8 +3,7 @@ package codacy.plugins.test
 import better.files._
 
 import com.codacy.analysis.core
-import com.codacy.analysis.core.model.{CodacyCfg, FullLocation, LineLocation, Pattern}
-import com.codacy.analysis.core.tools.Tool
+import com.codacy.analysis.core.model.{CodacyCfg, FullLocation, Issue, LineLocation, Pattern}
 import com.codacy.plugins.api._
 import com.codacy.plugins.api.results.Result
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
@@ -12,6 +11,7 @@ import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
 import java.nio.file.Paths
 import java.io.{File => JFile}
+import scala.util.{Failure, Success, Try}
 
 object PatternTests extends ITest with CustomMatchers {
 
@@ -33,37 +33,45 @@ object PatternTests extends ITest with CustomMatchers {
       testFiles.filter(testFiles => testFiles.file.getName.contains(fileNameToTest))
     }
 
-    val matchResults = filteredTestFiles.par.flatMap { testFile =>
+    val matchResultsAndComparisons = filteredTestFiles.par.flatMap { testFile =>
       tools
         .filter(_.languageToRun.name.equalsIgnoreCase(testFile.language.toString))
-        .map(tool => (testFile, analyseFile(toolDocumentation.spec, testsDirectory, testFile, tool)))
+        .map { tool =>
+          val analysisResultTry = analyseFile(toolDocumentation.spec, testsDirectory, testFile, tool)
+          (testFile, analysisResultTry.map(matches => (matches, beEqualTo(testFile.matches).apply(matches))))
+        }
     }.seq
 
-    val comparisons = for {
-      (testFile, matches) <- matchResults
-      comparison = beEqualTo(testFile.matches).apply(matches)
-    } yield comparison
-
-    for (((testFile, matches), comparison) <- matchResults.zip(comparisons)) {
+    for ((testFile, matchResultsAndComparisonsTry) <- matchResultsAndComparisons) {
       val filename = testsDirectory.path.relativize(testFile.file.toPath())
-      debug(s"""- $filename should have ${testFile.matches.length} matches with patterns: ${testFile.enabledPatterns
-                 .map(_.name)
-                 .mkString(", ")}
+      matchResultsAndComparisonsTry match {
+        case Success((matches, comparison)) =>
+          debug(s"""- $filename should have ${testFile.matches.length} matches with patterns: ${testFile.enabledPatterns
+                     .map(_.name)
+                     .mkString(", ")}
                |  + ${matches.size} matches found in lines: ${matches
-                 .map(_.line)
-                 .to[Seq]
-                 .sorted
-                 .mkString(", ")}""".stripMargin)
-      if (!comparison.matches) error(comparison.rawFailureMessage)
-      else debug(comparison.rawNegatedFailureMessage)
+                     .map(_.line)
+                     .to[Seq]
+                     .sorted
+                     .mkString(", ")}""".stripMargin)
+          if (!comparison.matches) error(comparison.rawFailureMessage)
+          else debug(comparison.rawNegatedFailureMessage)
+        case Failure(e) =>
+          error(s"Error executing tool on $filename: ${e.getStackTraceString}")
+      }
     }
-    comparisons.forall(_.matches)
+    matchResultsAndComparisons.forall {
+      case (testFile, matchResultsAndComparisonsTry) =>
+        matchResultsAndComparisonsTry
+          .map { case (matches, comparison) => comparison.matches }
+          .getOrElse(false)
+    }
   }
 
   private def analyseFile(spec: Option[results.Tool.Specification],
                           rootDirectory: File,
                           testFile: PatternTestFile,
-                          tool: Tool): Seq[TestFileResult] = {
+                          tool: core.tools.Tool): Try[Seq[TestFileResult]] = {
     val testFiles = Seq(testFile.file)
     val testFilesAbsolutePaths = testFiles.map(f => Paths.get(f.getAbsolutePath))
 
@@ -76,18 +84,20 @@ object PatternTests extends ITest with CustomMatchers {
 
     val codacyCfg = CodacyCfg(patterns)
 
-    val result = tool.run(better.files.File(rootDirectory.pathAsString), testFilesAbsolutePaths.to[Set], codacyCfg)
+    val resultTry = tool.run(better.files.File(rootDirectory.pathAsString), testFilesAbsolutePaths.to[Set], codacyCfg)
 
-    val filteredResults = filterResults(spec, rootDirectory.path, testFiles, patterns.to[Seq], result)
+    val filteredResultsTry: Try[Set[Issue]] =
+      resultTry.map(result => filterResults(spec, rootDirectory.path, testFiles, patterns.to[Seq], result))
 
-    val matches: Seq[TestFileResult] = filteredResults.map(
-      r =>
-        TestFileResult(r.patternId.value, r.location match {
-          case fl: FullLocation => fl.line
-          case l: LineLocation => l.line
-        }, r.level)
-    )(collection.breakOut)
-
-    matches
+    filteredResultsTry.map(
+      filteredResults =>
+        filteredResults.map(
+          r =>
+            TestFileResult(r.patternId.value, r.location match {
+              case fl: FullLocation => fl.line
+              case l: LineLocation => l.line
+            }, r.level)
+        )(collection.breakOut)
+    )
   }
 }
