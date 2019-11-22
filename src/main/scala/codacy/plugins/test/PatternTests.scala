@@ -34,6 +34,7 @@ object PatternTests extends ITest with CustomMatchers {
     }
 
     val matchResultsAndComparisons = filteredTestFiles.par.flatMap { testFile =>
+      info(s"Analysing ${testFile.file.getName()}")
       tools
         .filter(_.languageToRun.name.equalsIgnoreCase(testFile.language.toString))
         .map { tool =>
