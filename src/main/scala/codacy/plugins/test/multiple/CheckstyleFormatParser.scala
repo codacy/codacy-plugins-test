@@ -24,7 +24,7 @@ private[multiple] object CheckstyleFormatParser {
         case "info" => Level.Info
         case "warning" => Level.Warn
         case "error" => Level.Err
-        case _ => throw new Exception(s"$severity is not a valid level")
+        case _ => throw new Exception(s"""$severity is not a valid level. Use one of ["info", "warning", "error"]""")
       }
     } yield PluginResult(patternId, fileName, line.toInt, message, level)
   }
