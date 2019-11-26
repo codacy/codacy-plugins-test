@@ -74,8 +74,8 @@ object PluginsTests extends ITest {
             debug("All the patterns have occurrences in the test files.")
             true
           }
-        case Failure(exception) =>
-          error(s"Error happened launching the tool: ${exceptionToString(exception)}")
+        case Failure(e) =>
+          error(s"Error happened launching the tool: ${exceptionToString(e)}")
           false
       }
     }
