@@ -11,6 +11,7 @@ import Utils._
 import better.files._
 import java.io.{File => JFile}
 import java.nio.file.Paths
+import scala.util.Try
 
 object MetricsTests extends ITest with CustomMatchers {
 
@@ -31,7 +32,15 @@ object MetricsTests extends ITest with CustomMatchers {
         case (fileMetrics, language) =>
           tools
             .filter(_.languageToRun.name.equalsIgnoreCase(language.toString))
-            .exists(analyseFile(testsDirectory, fileMetrics, _))
+            .exists { tool =>
+              val result = analyseFile(testsDirectory, fileMetrics, tool)
+              result match {
+                case Success(res) => res
+                case Failure(e) =>
+                  exceptionToString(e)
+                  false
+              }
+            }
       }
       .forall(identity)
   }
@@ -57,31 +66,26 @@ object MetricsTests extends ITest with CustomMatchers {
     }
   }
 
-  private def analyseFile(rootDirectory: File, testFile: FileMetrics, tool: MetricsTool): Boolean = {
+  private def analyseFile(rootDirectory: File, testFile: FileMetrics, tool: MetricsTool): Try[Boolean] = {
     val filename = rootDirectory.relativize(Paths.get(testFile.filename)).toString
     debug(s"  - $filename should have: ${metricsMessage(testFile)}")
     val testFiles: Set[Source.File] = Set(Source.File(filename))
     val resultTry = tool
       .run(rootDirectory, Option(testFiles))
       .map(_.map(toCodacyPluginsApiMetricsFileMetrics))
-    val result = resultTry match {
-      case Failure(e) =>
-        error((e.getMessage :: e.getStackTrace.toList).mkString("\n"))
-        Set.empty
-      case Success(res) =>
-        res
-    }
-    val comparison = result == Iterable(testFile)
-    if (!comparison) {
-      val errorMessage = result.headOption.map(metricsMessage) match {
-        case Some(message) =>
-          s"  $message did not match expected result."
-        case None =>
-          "  No result received."
-      }
-      error(errorMessage)
-    } else debug("  Test passed")
+    resultTry.map { result =>
+      val comparison = result == Iterable(testFile)
+      if (!comparison) {
+        val errorMessage = result.headOption.map(metricsMessage) match {
+          case Some(message) =>
+            s"  $message did not match expected result."
+          case None =>
+            "  No result received."
+        }
+        error(errorMessage)
+      } else debug("  Test passed")
 
-    comparison
+      comparison
+    }
   }
 }

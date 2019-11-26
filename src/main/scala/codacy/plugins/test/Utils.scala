@@ -98,4 +98,10 @@ private[test] object Utils {
                                                nrMethods = fileMetrics.nrMethods,
                                                nrClasses = fileMetrics.nrClasses,
                                                lineComplexities = fileMetrics.lineComplexities)
+
+  def exceptionToString(e: Throwable): String = {
+    s"""${e.getMessage()}
+    |Stacktrace:
+    |${e.getStackTraceString}""".stripMargin
+  }
 }
