@@ -9,6 +9,7 @@ import com.codacy.plugins.api.results.Result
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
+import codacy.plugins.test.Utils.exceptionToString
 import java.nio.file.Paths
 import java.io.{File => JFile}
 import scala.util.{Failure, Success, Try}
@@ -58,7 +59,7 @@ object PatternTests extends ITest with CustomMatchers {
           if (!comparison.matches) error(comparison.rawFailureMessage)
           else debug(comparison.rawNegatedFailureMessage)
         case Failure(e) =>
-          error(s"Error executing tool on $filename: ${e.getStackTraceString}")
+          error(s"Error executing tool on $filename: ${exceptionToString(e)}")
       }
     }
     matchResultsAndComparisons.forall {

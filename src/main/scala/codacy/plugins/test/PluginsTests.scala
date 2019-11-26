@@ -9,6 +9,7 @@ import com.codacy.plugins.api.results.Result
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
+import codacy.plugins.test.Utils.exceptionToString
 import better.files._
 import java.io.{File => JFile}
 import scala.util.{Failure, Success, Try}
@@ -73,8 +74,8 @@ object PluginsTests extends ITest {
             debug("All the patterns have occurrences in the test files.")
             true
           }
-        case Failure(exception) =>
-          error(s"Error happened launching the tool: ${exception.getStackTraceString}")
+        case Failure(e) =>
+          error(s"Error happened launching the tool: ${exceptionToString(e)}")
           false
       }
     }

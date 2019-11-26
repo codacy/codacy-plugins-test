@@ -1,13 +1,14 @@
 package codacy.plugins.test.multiple
 import scala.util.{Failure, Success, Try}
 import com.codacy.plugins.results.PluginResult
+import codacy.plugins.test.Utils.exceptionToString
 import wvlet.log.LogSupport
 
 object ResultPrinter extends LogSupport {
   private[multiple] def printToolResults(res: Try[Set[PluginResult]], expectedResults: Set[PluginResult]) = res match {
     case Failure(e) =>
       info("Got failure in the analysis:")
-      error(e.getStackTraceString)
+      error(exceptionToString(e))
       false
     case Success(results) =>
       if (results == expectedResults) {
