@@ -89,6 +89,45 @@ for (var i = 0, person; person = people[i]; i++) {
 var variable;
 ```
 
+## Multiple test definition
+
+The multiple tests are define inside `/docs/tests/multiple-tests/` on the docker of the tool being tested.
+
+There are some type of tests that can be added:
+
+- `with-config-file`
+- `without-config-file`
+
+Each test folder should have a `patterns.xml` and `results.xml` with the following structure:
+
+### `patterns.xml` Structure
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module name="root">
+    <module name="rule-name" />
+    <module name="rule-with-parameters">
+        <property name="parameter-key" value="parameter-value" />
+    </module>
+    <!-- For the configuration file pattern matching -->
+    <module name="BeforeExecutionExclusionFileFilter">
+        <property name="fileNamePattern" value="config-file\.xml"/>
+    </module>
+</module>
+```
+
+### `results.xml` Structure
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<checkstyle version="4.3">
+    <file name="file-name.ext">
+        <error source="rule-name" line="20" message="reported message from the tool" severity="info|warning|error" />
+    </file>
+</checkstyle>
+```
+
 ## Usage
 
 > JsonTests
@@ -119,14 +158,6 @@ Check if all the patterns defined in the test files occur in the specified line
 sbt "runMain codacy.plugins.DockerTest pattern <DOCKER_NAME>:<DOCKER_VERSION>"
 ```
 
-> MetricsTests
-
-Check if the metrics defined in the test files match with same complexieties in the specified lines
-
-```sh
-sbt "runMain codacy.plugins.DockerTest metrics <DOCKER_NAME>:<DOCKER_VERSION>"
-```
-
 **Options:**
 
 * `codacy.tests.threads` - number of parallel threads to run the tests
@@ -138,6 +169,22 @@ Alternatively, you can run a specific test file:
 
 ```sh
 sbt "runMain codacy.plugins.DockerTest pattern <DOCKER_NAME>:<DOCKER_VERSION> no-curly-brackets"
+```
+
+> MetricsTests
+
+Check if the metrics defined in the test files match with same complexieties in the specified lines
+
+```sh
+sbt "runMain codacy.plugins.DockerTest metrics <DOCKER_NAME>:<DOCKER_VERSION>"
+```
+
+> MultipleTests
+
+Check if the tool runs with multiple patterns and test files at the same time and configuration file behavior as well
+
+```sh
+sbt "runMain codacy.plugins.DockerTest multiple <DOCKER_NAME>:<DOCKER_VERSION>"
 ```
 
 > All
