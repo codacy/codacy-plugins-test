@@ -11,7 +11,7 @@ case class Sources(mainSourcePath: Path, directoryPaths: Seq[Path])
 
 object DockerTest extends LogSupport {
   Logger.setDefaultFormatter(LogFormatter.SimpleLogFormatter)
-  Logger.setDefaultLogLevel(LogLevel.ALL)
+  Logger.setDefaultLogLevel(LogLevel.DEBUG)
 
   private lazy val config = Map("all" -> Seq(JsonTests, PluginsTests, PatternTests)) ++
     possibleTests.map { test =>
