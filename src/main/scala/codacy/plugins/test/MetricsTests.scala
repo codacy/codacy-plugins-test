@@ -11,7 +11,6 @@ import scala.util.{Failure, Success}
 import Utils._
 import better.files._
 import java.io.{File => JFile}
-import java.nio.file.Paths
 import scala.util.Try
 
 object MetricsTests extends ITest with CustomMatchers {
@@ -68,7 +67,8 @@ object MetricsTests extends ITest with CustomMatchers {
   }
 
   private def analyseFile(rootDirectory: File, testFile: FileMetrics, tool: MetricsTool): Try[Boolean] = {
-    val filename = rootDirectory.relativize(Paths.get(testFile.filename)).toString
+    println(rootDirectory)
+    val filename = testFile.filename
     debug(s"  - $filename should have: ${metricsMessage(testFile)}")
     val testFiles: Set[Source.File] = Set(Source.File(filename))
     val resultTry = tool

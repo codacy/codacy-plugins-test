@@ -25,11 +25,7 @@ object FileHelper {
     }
   }
 
-  def listFiles(file: JFile): Seq[JFile] = {
-    file.isDirectory match {
-      case true => file.listFiles().flatMap(listFiles)
-      case _ => Seq(file)
-    }
-  }
-
+  def listFiles(file: JFile): Seq[JFile] =
+    if (file.isDirectory) file.listFiles().flatMap(listFiles)
+    else Seq(file)
 }
