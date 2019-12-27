@@ -31,6 +31,10 @@ parameters:
     type: string
     default: latest
     description: "Tool docker image tag"
+  docker_tar_path:
+    type: string
+    default: ~/workdir/docker-image.tar
+    description: Path to the docker tar
 
 steps:
   - attach_workspace:
@@ -44,7 +48,7 @@ steps:
         LINK="https://bintray.com/codacy/Binaries/download_file?file_path=$CODACY_PLUGINS_TEST_VERSION%2Fcodacy-plugins-test-linux"
         wget -nc $LINK -O $FILENAME # FILENAME injected in .circle/config.yml
         chmod +x $FILENAME
-        docker load --input ~/workdir/docker-image.tar
+        docker load --input << parameters.docker_tar_path >>
   - when:
       condition: << parameters.run_json_tests >>
       steps:
