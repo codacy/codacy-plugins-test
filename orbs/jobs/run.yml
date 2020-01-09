@@ -38,7 +38,7 @@ parameters:
 
 steps:
   - attach_workspace:
-      at: ~/
+      at: ~/workdir
   - restore_cache:
       key: codacy-plugins-test-cache-$CODACY_PLUGINS_TEST_VERSION # CODACY_PLUGINS_TEST_VERSION injected in .circle/config.yml
   - run:
