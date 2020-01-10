@@ -8,6 +8,8 @@ Provide a testing interface for the external docker tools.
 ## Test definition
 
 The test files should be placed in `/docs/tests` on the docker of the tool being tested.
+ * hi there! 
+* hello!
 
 **Definition**
 
