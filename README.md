@@ -194,6 +194,16 @@ sbt "runMain codacy.plugins.DockerTest all <DOCKER_NAME>:<DOCKER_VERSION>"
 
 If you need to debug the output of the dockers after the tests you can request the runner to not remove them with:
 
+**Options:**
+
+-   `codacy.tests.noremove` - do not remove dockers after running tests
+
+## Dockers that need to use the internet
+
+Some of the tools may need to access the internet to pull external dependencies in run-time (for tools that compile code this is usually a must have).
+
+The version of this test interface that is available in the `master` branch does not allow this. To run `codacy-plugins-test` for this scenario use the version of the code available in the `compilation` branch.
+
 ## Docs
 
 Information about the integration with external analysis tools at Codacy available [here](https://github.com/codacy/codacy-engine-scala-seed#docs).
