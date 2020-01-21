@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  codacy: codacy/base@2.0.0
+  codacy: codacy/base@2.1.1
 references:
   circleci_job: &circleci_job
     docker:
@@ -71,8 +71,8 @@ workflows:
           requires:
             - populate_cache
       - codacy/sbt:
-          name: compile
-          cmd: sbt "compile;test:compile"
+          name: test
+          cmd: sbt "compile;test:compile;test"
           requires:
             - populate_cache
       - codacy/sbt:
@@ -90,7 +90,7 @@ workflows:
             go get github.com/tcnksm/ghr
             ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME -c $CIRCLE_SHA1 $GHR_FLAGS -delete $(cat .version) /tmp/ghr-publish
           requires:
-            - compile
+            - test
       - codacy/tag_version:
           name: tag_version
           context: CodacyAWS
