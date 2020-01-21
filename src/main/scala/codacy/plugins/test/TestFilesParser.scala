@@ -67,9 +67,7 @@ class TestFilesParser(filesDir: JFile) extends LogSupport {
                   } match {
                     case Success(result) => result
                     case Failure(_) =>
-                      error(s"${file.getName}: Failing to parse Issue $value")
-                      System.exit(2)
-                      None
+                      throw new Exception(s"${file.getName}: Failing to parse Issue $value")
                   }
                 case Warning(value) =>
                   Some(TestFileResult(value, nextLine, Result.Level.Warn))
