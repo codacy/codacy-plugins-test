@@ -41,14 +41,15 @@ object DockerTest extends LogSupport {
             }
             testRunResult match {
               case Left(err) =>
-                error(err)
-                System.exit(1)
+                throw new Exception(err)
               case Right(()) =>
                 debug("[Success] All tests passed!")
             }
         }
       case wrongTypeOfTest =>
-        error(s"Wrong test type -> $wrongTypeOfTest should be one of [${possibleTestNames.mkString(", ")}]")
+        throw new Exception(
+          s"Wrong test type -> $wrongTypeOfTest should be one of [${possibleTestNames.mkString(", ")}]"
+        )
     }
   }
 
