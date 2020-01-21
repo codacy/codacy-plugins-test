@@ -1,4 +1,5 @@
 package codacy.plugins.test
+import com.codacy.plugins.api
 import com.codacy.plugins.api.languages.Language
 import com.codacy.plugins.api.languages.Languages._
 import codacy.utils.FileHelper
@@ -62,13 +63,27 @@ private[test] object Utils {
       currentLine
 
   def toCodacyPluginsApiMetricsFileMetrics(fileMetrics: com.codacy.analysis.core.model.FileMetrics) =
-    com.codacy.plugins.api.metrics.FileMetrics(filename = fileMetrics.filename.toString,
-                                               complexity = fileMetrics.complexity,
-                                               loc = fileMetrics.loc,
-                                               cloc = fileMetrics.cloc,
-                                               nrMethods = fileMetrics.nrMethods,
-                                               nrClasses = fileMetrics.nrClasses,
-                                               lineComplexities = fileMetrics.lineComplexities)
+    api.metrics.FileMetrics(filename = fileMetrics.filename.toString,
+                            complexity = fileMetrics.complexity,
+                            loc = fileMetrics.loc,
+                            cloc = fileMetrics.cloc,
+                            nrMethods = fileMetrics.nrMethods,
+                            nrClasses = fileMetrics.nrClasses,
+                            lineComplexities = fileMetrics.lineComplexities)
+
+  def toCodacyPluginsApiDuplicationDuplicationClone(duplicationClone: com.codacy.analysis.core.model.DuplicationClone) =
+    api.duplication.DuplicationClone(cloneLines = duplicationClone.cloneLines,
+                                     nrTokens = duplicationClone.nrTokens,
+                                     nrLines = duplicationClone.nrLines,
+                                     files = duplicationClone.files
+                                       .map(
+                                         file =>
+                                           api.duplication
+                                             .DuplicationCloneFile(filePath = file.filePath,
+                                                                   startLine = file.startLine,
+                                                                   endLine = file.endLine)
+                                       )
+                                       .toSeq)
 
   def exceptionToString(e: Throwable): String = {
     s"""${e.getMessage()}

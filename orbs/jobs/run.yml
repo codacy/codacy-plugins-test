@@ -19,6 +19,10 @@ parameters:
     type: boolean
     default: false
     description: "Run 'metrics' tests in codacy-plugins-test"
+  run_duplication_tests:
+    type: boolean
+    default: false
+    description: "Run 'duplication' tests in codacy-plugins-test"
   run_multiple_tests:
     type: boolean
     default: false
@@ -53,35 +57,42 @@ steps:
       condition: << parameters.run_json_tests >>
       steps:
         - run:
-            name: RunJsonTests
+            name: Run Json Tests
             command: |
               codacy-plugins-test/$FILENAME json << parameters.docker_image_name >>:<< parameters.docker_image_tag >>
   - when:
       condition: << parameters.run_pattern_tests >>
       steps:
         - run:
-            name: RunPatternTests
+            name: Run Pattern Tests
             command: |
               codacy-plugins-test/$FILENAME pattern << parameters.docker_image_name >>:<< parameters.docker_image_tag >>
   - when:
       condition: << parameters.run_plugin_tests >>
       steps:
         - run:
-            name: RunPluginTests
+            name: Run Plugin Tests
             command: |
               codacy-plugins-test/$FILENAME plugin << parameters.docker_image_name >>:<< parameters.docker_image_tag >>
   - when:
       condition: << parameters.run_metrics_tests >>
       steps:
         - run:
-            name: RunMetricsTests
+            name: Run Metrics Tests
             command: |
               codacy-plugins-test/$FILENAME metrics << parameters.docker_image_name >>:<< parameters.docker_image_tag >>
+  - when:
+      condition: << parameters.run_duplication_tests >>
+      steps:
+        - run:
+            name: Run Duplication Tests
+            command: |
+              codacy-plugins-test/$FILENAME duplication << parameters.docker_image_name >>:<< parameters.docker_image_tag >>
   - when:
       condition: << parameters.run_multiple_tests >>
       steps:
         - run:
-            name: RunMultipleTests
+            name: Run Multiple Tests
             command: |
               codacy-plugins-test/$FILENAME multiple << parameters.docker_image_name >>:<< parameters.docker_image_tag >>
   - save_cache:

@@ -4,8 +4,9 @@ import com.codacy.plugins.results.PluginResult
 import codacy.plugins.test.Utils.exceptionToString
 import wvlet.log.LogSupport
 
-object ResultPrinter extends LogSupport {
-  private[multiple] def printToolResults(res: Try[Set[PluginResult]], expectedResults: Set[PluginResult]) = res match {
+private[multiple] object ResultPrinter extends LogSupport {
+
+  def printToolResults(res: Try[Set[PluginResult]], expectedResults: Set[PluginResult]) = res match {
     case Failure(e) =>
       info("Got failure in the analysis:")
       error(exceptionToString(e))
