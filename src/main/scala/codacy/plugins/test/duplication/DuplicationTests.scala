@@ -1,12 +1,12 @@
 package codacy.plugins.test.duplication
 
 import codacy.plugins.test._
-
 import com.codacy.plugins.duplication.traits
 import com.codacy.analysis.core
-
 import better.files._
 import java.io.{File => JFile}
+
+import codacy.plugins.test.resultprinter.ResultPrinter
 
 import scala.util.Try
 import scala.xml.XML
@@ -37,13 +37,13 @@ object DuplicationTests extends ITest {
       .forall(identity)
   }
 
-  private def runTool(tool: core.tools.DuplicationTool, multipleTestsDirectory: File): Try[Set[DuplicationClone]] = {
+  private def runTool(tool: core.tools.DuplicationTool, duplicationTestsDirectory: File): Try[Set[DuplicationClone]] = {
     val filesToTest = for {
-      file <- multipleTestsDirectory.listRecursively
+      file <- duplicationTestsDirectory.listRecursively
       if file.isRegularFile
     } yield file.path
     tool
-      .run(multipleTestsDirectory, filesToTest.toSet)
+      .run(duplicationTestsDirectory, filesToTest.toSet)
       .map(_.map(Utils.toCodacyPluginsApiDuplicationDuplicationClone))
   }
 }

@@ -1,13 +1,14 @@
-package codacy.plugins.test.duplication
+package codacy.plugins.test.resultprinter
 
-import scala.util.{Failure, Success, Try}
-import com.codacy.plugins.api.duplication.DuplicationClone
 import codacy.plugins.test.Utils.exceptionToString
 import wvlet.log.LogSupport
 
-private[duplication] object ResultPrinter extends LogSupport {
+import scala.util.{Failure, Success, Try}
 
-  def printToolResults(res: Try[Set[DuplicationClone]], expectedResults: Set[DuplicationClone]) =
+
+private[test] object ResultPrinter extends LogSupport {
+
+  def printToolResults[A](res: Try[Set[A]], expectedResults: Set[A]): Boolean =
     res match {
       case Failure(e) =>
         info("Got failure in the analysis:")

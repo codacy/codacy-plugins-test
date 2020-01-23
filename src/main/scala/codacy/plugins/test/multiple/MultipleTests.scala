@@ -1,7 +1,6 @@
 package codacy.plugins.test.multiple
 
 import codacy.plugins.test._
-
 import com.codacy.analysis.core.model.{CodacyCfg, Configuration, FileCfg, FileError, FullLocation, Issue, LineLocation}
 import com.codacy.analysis.core.tools.Tool
 import com.codacy.plugins.api.results.Result
@@ -9,14 +8,16 @@ import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
 import com.codacy.plugins.results.PluginResult
-
 import better.files._
 import java.io.{File => JFile}
+
+import codacy.plugins.test.resultprinter.ResultPrinter
 
 import scala.util.{Failure, Success, Try}
 import scala.xml.XML
 import com.codacy.analysis.core.model.ToolResult
 import com.codacy.analysis.core.model.Location
+
 import scala.util.Properties
 
 object MultipleTests extends ITest {
@@ -75,7 +76,9 @@ object MultipleTests extends ITest {
                       configuration: Configuration,
                       excludedFilesRegex: Option[String]): Try[Set[PluginResult]] = {
     val optRegex = excludedFilesRegex.map(_.r)
+
     def toExclude(file: File) = optRegex.exists(_.findFirstIn(file.name).nonEmpty)
+
     val filesToTest = for {
       file <- multipleTestsDirectory.listRecursively
       if file.isRegularFile && !toExclude(file)
