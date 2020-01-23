@@ -1,7 +1,6 @@
 package codacy.plugins.test.duplication
 
 import codacy.plugins.test._
-import com.codacy.plugins.duplication.traits
 import com.codacy.analysis.core
 import better.files._
 import java.io.{File => JFile}
@@ -10,7 +9,14 @@ import codacy.plugins.test.resultprinter.ResultPrinter
 
 import scala.util.Try
 import scala.xml.XML
-import com.codacy.plugins.api.duplication.DuplicationClone
+
+import com.codacy.analysis.core.model.DuplicationClone
+import com.codacy.plugins.api.duplication.DuplicationTool.CodacyConfiguration
+import com.codacy.plugins.duplication.api.DuplicationRequest
+import com.codacy.plugins.duplication.traits.DuplicationRunner
+import com.codacy.plugins.duplication.{api, _}
+import com.codacy.plugins.runners.BinaryDockerRunner
+import scala.concurrent.duration._
 
 object DuplicationTests extends ITest {
 
@@ -30,20 +36,30 @@ object DuplicationTests extends ITest {
         val expectedResults = CheckstyleFormatParser.parseResultsXml(resultFileXML).toSet
         debug(s"${testDirectory.name} should have ${expectedResults.size} results")
         duplicationTools.exists { tool =>
-          val res = runTool(tool, srcDir)
+          val res = this.runDuplicationTool(srcDir, duplicationTool, tool)
           ResultPrinter.printToolResults(res, expectedResults)
         }
       }
       .forall(identity)
   }
 
-  private def runTool(tool: core.tools.DuplicationTool, duplicationTestsDirectory: File): Try[Set[DuplicationClone]] = {
-    val filesToTest = for {
-      file <- duplicationTestsDirectory.listRecursively
-      if file.isRegularFile
-    } yield file.path
-    tool
-      .run(duplicationTestsDirectory, filesToTest.toSet)
-      .map(_.map(Utils.toCodacyPluginsApiDuplicationDuplicationClone))
+  private def runDuplicationTool(srcDir: File,
+                                 duplicationTool: traits.DuplicationTool,
+                                 tool: com.codacy.analysis.core.tools.DuplicationTool): Try[Set[DuplicationClone]] = {
+    val request = DuplicationRequest(srcDir.pathAsString)
+
+    val dockerRunner = new BinaryDockerRunner[api.DuplicationClone](duplicationTool)()
+    val runner = new DuplicationRunner(duplicationTool, dockerRunner)
+
+    for {
+      duplicationClones <- runner.run(request,
+                                      CodacyConfiguration(Option(tool.languageToRun), Option.empty),
+                                      15.minutes,
+                                      None)
+    } yield {
+      duplicationClones.map(
+        clone => DuplicationClone(clone.cloneLines, clone.nrTokens, clone.nrLines, clone.files.to[Set])
+      )(collection.breakOut): Set[DuplicationClone]
+    }
   }
 }
