@@ -10,11 +10,12 @@ private[duplication] object CheckstyleFormatParser {
   def parseResultsXml(root: Elem): Seq[DuplicationClone] = {
     for {
       checkstyle <- root \\ "checkstyle"
-      fileTags = root \\ "checkstyle" \ "file"
-      nrTokens = checkstyle.getProperty("nrTokens").fold(throw new NumberFormatException)(_.toInt)
-      nrLines = checkstyle.getProperty("nrLines").fold(throw new NumberFormatException)(_.toInt)
-      message = checkstyle.getProperty("message").fold(throw new NumberFormatException)(_.toString)
+      duplication <- checkstyle \ "duplication"
+      nrTokens = duplication.getAttribute("nrTokens").toInt
+      nrLines = duplication.getAttribute("nrLines").toInt
+      message = duplication.getAttribute("message")
 
+      fileTags = duplication \ "file"
       files = fileTags.map { fileTag =>
         val startLine = fileTag.getProperty("startLine").fold(throw new NumberFormatException)(_.toInt)
         val endLine = fileTag.getProperty("endLine").fold(throw new NumberFormatException)(_.toInt)

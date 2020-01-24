@@ -11,6 +11,10 @@ object CheckstyleImplicits {
         propertyNode <- (node \ "property").find(p => (p \@ "name") == name)
       } yield propertyNode \@ "value"
     }
+
+    def getAttribute(name: String): String = {
+      node \@ name
+    }
   }
 
 }
