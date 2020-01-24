@@ -8,6 +8,7 @@ import scala.util.Try
 object DockerHelpers {
   val testsDirectoryName = "tests"
   val multipleTestsDirectoryName = "multiple-tests"
+  val duplicationTestsDirectoryName = "duplication-tests"
 
   private val processLogger = ProcessLogger((line: String) => ())
 

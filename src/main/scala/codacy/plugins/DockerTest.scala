@@ -4,6 +4,7 @@ import java.nio.file.Path
 
 import codacy.plugins.test._
 import codacy.plugins.test.multiple.MultipleTests
+import codacy.plugins.test.duplication.DuplicationTests
 import java.io.{File => JFile}
 import wvlet.log.{LogFormatter, LogLevel, LogSupport, Logger}
 
@@ -17,7 +18,8 @@ object DockerTest extends LogSupport {
     possibleTests.map { test =>
       test.opt -> Seq(test)
     }
-  private lazy val possibleTests = Seq(JsonTests, PluginsTests, PatternTests, MultipleTests, MetricsTests)
+  private lazy val possibleTests =
+    Seq(JsonTests, PluginsTests, PatternTests, MultipleTests, MetricsTests, DuplicationTests)
   private lazy val possibleTestNames = config.keySet
 
   def main(args: Array[String]): Unit = {
