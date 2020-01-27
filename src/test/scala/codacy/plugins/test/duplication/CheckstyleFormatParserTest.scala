@@ -28,6 +28,15 @@ class CheckstyleFormatParserTest extends FunSuite {
     </duplication>
   </checkstyle>
 
+  val ignoreMessageCheckstyle = <checkstyle version="4.3" ignoreMessage="true">
+    <duplication nrTokens="2" nrLines="1" message="foobar">
+      <file name="foobar.txt">
+        <property name="startLine" value="1"></property>
+        <property name="endLine" value="2"></property>
+      </file>
+    </duplication>
+  </checkstyle>
+
   val invalidCheckstyleXml = <checkstyle version="4.3">
     <duplication>
       <property name="nrLines" value="1"></property>
@@ -43,9 +52,20 @@ class CheckstyleFormatParserTest extends FunSuite {
     val barFiles = Set(DuplicationCloneFile("bar.txt", 1, 2), DuplicationCloneFile("bar2.txt", 1, 2))
     val expected = List(DuplicationClone("foobar", 2, 1, foobarFiles), DuplicationClone("bar", 2, 1, barFiles))
 
-    val result = CheckstyleFormatParser.parseResultsXml(validCheckstyleXml)
+    val (result, ignoreMessage) = CheckstyleFormatParser.parseResultsXml(validCheckstyleXml)
 
     assert(result == expected)
+    assert(!ignoreMessage)
+  }
+
+  test("checkstyle ignore cloned lines message") {
+    val foobarFiles = Set(DuplicationCloneFile("foobar.txt", 1, 2))
+    val expected = List(DuplicationClone("", 2, 1, foobarFiles))
+
+    val (result, ignoreMessage) = CheckstyleFormatParser.parseResultsXml(ignoreMessageCheckstyle)
+
+    assert(result == expected)
+    assert(ignoreMessage)
   }
 
   test("checkstyle format parser with invalid input") {
