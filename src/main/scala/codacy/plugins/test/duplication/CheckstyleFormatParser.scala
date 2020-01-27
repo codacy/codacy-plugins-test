@@ -7,13 +7,19 @@ import codacy.plugins.test.checkstyle.CheckstyleImplicits._
 
 private[duplication] object CheckstyleFormatParser {
 
-  def parseResultsXml(root: Elem): Seq[DuplicationClone] = {
-    for {
+  private def shouldIgnoreMessage(root: Elem): Boolean = {
+    (root \\ "checkstyle").isPropertyDefined("ignoreMessage")
+  }
+
+  def parseResultsXml(root: Elem): (Seq[DuplicationClone], Boolean) = {
+    val ignoreMessage = shouldIgnoreMessage(root)
+
+    val duplications = for {
       checkstyle <- root \\ "checkstyle"
       duplication <- checkstyle \ "duplication"
       nrTokens = duplication.getAttribute("nrTokens").toInt
       nrLines = duplication.getAttribute("nrLines").toInt
-      message = duplication.getAttribute("message")
+      message = if (ignoreMessage) "" else duplication.getAttribute("message")
 
       fileTags = duplication \ "file"
       files = fileTags.map { fileTag =>
@@ -22,5 +28,7 @@ private[duplication] object CheckstyleFormatParser {
         DuplicationCloneFile(fileTag \@ "name", startLine, endLine)
       }
     } yield DuplicationClone(message, nrTokens, nrLines, files.toSet)
+
+    (duplications, ignoreMessage)
   }
 }
