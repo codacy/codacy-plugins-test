@@ -7,15 +7,15 @@ import java.io.{File => JFile}
 
 import codacy.plugins.test.resultprinter.ResultPrinter
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 import scala.xml.XML
-
 import com.codacy.analysis.core.model.DuplicationClone
 import com.codacy.plugins.api.duplication.DuplicationTool.CodacyConfiguration
 import com.codacy.plugins.duplication.api.DuplicationRequest
 import com.codacy.plugins.duplication.traits.DuplicationRunner
 import com.codacy.plugins.duplication.{api, _}
 import com.codacy.plugins.runners.BinaryDockerRunner
+
 import scala.concurrent.duration._
 
 object DuplicationTests extends ITest {
@@ -33,14 +33,31 @@ object DuplicationTests extends ITest {
         val duplicationTools = languages.map(l => new core.tools.DuplicationTool(duplicationTool, l))
         val resultFile = testDirectory / "results.xml"
         val resultFileXML = XML.loadFile(resultFile.toJava)
-        val expectedResults = CheckstyleFormatParser.parseResultsXml(resultFileXML).toSet
+        val (expectedResults, ignoreMessage) = CheckstyleFormatParser.parseResultsXml(resultFileXML)
+
         debug(s"${testDirectory.name} should have ${expectedResults.size} results")
         duplicationTools.exists { tool =>
           val res = this.runDuplicationTool(srcDir, duplicationTool, tool)
-          ResultPrinter.printToolResults(res, expectedResults)
+          if (ignoreMessage) {
+            ResultPrinter.printToolResults(ignoreClonedLines(res), expectedResults.toSet)
+          } else {
+            ResultPrinter.printToolResults(res, expectedResults.toSet)
+          }
         }
       }
       .forall(identity)
+  }
+
+  private def ignoreClonedLines(res: Try[Set[DuplicationClone]]): Try[Set[DuplicationClone]] = {
+    Try {
+      res match {
+        case Success(resultsList) =>
+          resultsList.map { r =>
+            r.copy(cloneLines = "")
+          }
+        case Failure(err) => throw new Exception(err)
+      }
+    }
   }
 
   private def runDuplicationTool(srcDir: File,
