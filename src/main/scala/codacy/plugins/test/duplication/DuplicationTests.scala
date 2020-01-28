@@ -7,7 +7,7 @@ import java.io.{File => JFile}
 
 import codacy.plugins.test.resultprinter.ResultPrinter
 
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 import scala.xml.XML
 import com.codacy.analysis.core.model.DuplicationClone
 import com.codacy.plugins.api.duplication.DuplicationTool.CodacyConfiguration
@@ -49,15 +49,7 @@ object DuplicationTests extends ITest {
   }
 
   private def ignoreClonedLines(res: Try[Set[DuplicationClone]]): Try[Set[DuplicationClone]] = {
-    Try {
-      res match {
-        case Success(resultsList) =>
-          resultsList.map { r =>
-            r.copy(cloneLines = "")
-          }
-        case Failure(err) => throw new Exception(err)
-      }
-    }
+    res.map(duplicationClones => duplicationClones.map(dupClone => dupClone.copy(cloneLines = "")))
   }
 
   private def runDuplicationTool(srcDir: File,

@@ -13,11 +13,7 @@ object CheckstyleImplicits {
     }
 
     def isPropertyDefined(name: String): Boolean = {
-      val property = for {
-        propertyNode <- (node \ "property").find(p => (p \@ "name") == name)
-      } yield propertyNode \@ "name"
-
-      property.fold(false)(_ => true)
+      (node \ "property").exists(p => (p \@ "name") == name)
     }
 
     def getAttribute(name: String): String = {
