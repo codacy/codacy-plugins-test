@@ -12,6 +12,10 @@ object CheckstyleImplicits {
       } yield propertyNode \@ "value"
     }
 
+    def isPropertyDefined(name: String): Boolean = {
+      (node \ "property").exists(p => (p \@ "name") == name)
+    }
+
     def getAttribute(name: String): String = {
       node \@ name
     }
