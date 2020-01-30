@@ -11,9 +11,8 @@ import scala.util.Try
 import scala.xml.XML
 import com.codacy.analysis.core.model.DuplicationClone
 import com.codacy.plugins.api.duplication.DuplicationTool.CodacyConfiguration
-import com.codacy.plugins.duplication.api.DuplicationRequest
-import com.codacy.plugins.duplication.traits.DuplicationRunner
-import com.codacy.plugins.duplication.{api, _}
+import com.codacy.plugins.duplication.traits.{DuplicationRunner, DuplicationTool}
+import com.codacy.plugins.api
 import com.codacy.plugins.runners.BinaryDockerRunner
 
 import scala.concurrent.duration._
@@ -29,7 +28,7 @@ object DuplicationTests extends ITest {
       .map { testDirectory =>
         val srcDir = testDirectory / "src"
         val languages = findLanguages(srcDir.toJava, dockerImage)
-        val duplicationTool = new traits.DuplicationTool(languages.toList, dockerImage.name, dockerImage.version) {}
+        val duplicationTool = new DuplicationTool(languages.toList, dockerImage.name, dockerImage.version) {}
         val duplicationTools = languages.map(l => new core.tools.DuplicationTool(duplicationTool, l))
         val resultFile = testDirectory / "results.xml"
         val resultFileXML = XML.loadFile(resultFile.toJava)
@@ -53,15 +52,13 @@ object DuplicationTests extends ITest {
   }
 
   private def runDuplicationTool(srcDir: File,
-                                 duplicationTool: traits.DuplicationTool,
+                                 duplicationTool: DuplicationTool,
                                  tool: com.codacy.analysis.core.tools.DuplicationTool): Try[Set[DuplicationClone]] = {
-    val request = DuplicationRequest(srcDir.pathAsString)
-
-    val dockerRunner = new BinaryDockerRunner[api.DuplicationClone](duplicationTool)()
+    val dockerRunner = new BinaryDockerRunner[api.duplication.DuplicationClone](duplicationTool)()
     val runner = new DuplicationRunner(duplicationTool, dockerRunner)
 
     for {
-      duplicationClones <- runner.run(request,
+      duplicationClones <- runner.run(srcDir.toJava,
                                       CodacyConfiguration(Option(tool.languageToRun), Option.empty),
                                       15.minutes,
                                       None)
