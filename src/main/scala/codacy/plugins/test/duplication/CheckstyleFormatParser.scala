@@ -1,6 +1,6 @@
 package codacy.plugins.test.duplication
 
-import com.codacy.plugins.duplication.api.DuplicationCloneFile
+import com.codacy.plugins.api.duplication.DuplicationCloneFile
 import com.codacy.analysis.core.model.DuplicationClone
 import scala.xml.Elem
 import codacy.plugins.test.checkstyle.CheckstyleImplicits._
