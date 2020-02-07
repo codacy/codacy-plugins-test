@@ -27,7 +27,7 @@ object MultipleTests extends ITest {
   def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     debug(s"Running MultipleTests:")
     val multipleTestsDirectory = docsDirectory.toScala / DockerHelpers.multipleTestsDirectoryName
-    multipleTestsDirectory.list.toList
+    multipleTestsDirectory.list.toList.par
       .map { testDirectory =>
         val srcDir = testDirectory / "src"
         val languages = findLanguages(srcDir.toJava, dockerImage)
@@ -39,12 +39,15 @@ object MultipleTests extends ITest {
         val resultFile = testDirectory / "results.xml"
         val resultFileXML = XML.loadFile(resultFile.toJava)
         val expectedResults = CheckstyleFormatParser.parseResultsXml(resultFileXML).toSet
-        debug(s"${testDirectory.name} should have ${expectedResults.size} results")
         val (configuration, excludedFilesRegex) = createConfiguration(testDirectory, srcDir)
-        tools.exists { tool =>
-          val res = runTool(tool, srcDir, configuration, excludedFilesRegex)
-          ResultPrinter.printToolResults(res, expectedResults)
-        }
+        val results = tools.map(runTool(_, srcDir, configuration, excludedFilesRegex))
+        (testDirectory.name, results, expectedResults)
+      }
+      .seq
+      .map {
+        case (directoryName, results, expectedResults) =>
+          debug(s"${directoryName} should have ${expectedResults.size} results")
+          results.exists(ResultPrinter.printToolResults(_, expectedResults))
       }
       .forall(identity)
   }
