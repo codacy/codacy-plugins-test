@@ -24,7 +24,7 @@ object DuplicationTests extends ITest {
   def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     debug(s"Running DuplicationTests:")
     val testsDirectory = docsDirectory.toScala / DockerHelpers.duplicationTestsDirectoryName
-    testsDirectory.list.toList
+    testsDirectory.list.toList.par
       .map { testDirectory =>
         val srcDir = testDirectory / "src"
         val languages = findLanguages(srcDir.toJava, dockerImage)
@@ -34,15 +34,18 @@ object DuplicationTests extends ITest {
         val resultFileXML = XML.loadFile(resultFile.toJava)
         val (expectedResults, ignoreMessage) = CheckstyleFormatParser.parseResultsXml(resultFileXML)
 
-        debug(s"${testDirectory.name} should have ${expectedResults.size} results")
-        duplicationTools.exists { tool =>
-          val res = this.runDuplicationTool(srcDir, duplicationTool, tool)
+        val results = duplicationTools.map(runDuplicationTool(srcDir, duplicationTool, _))
+        (testDirectory.name, results, expectedResults, ignoreMessage)
+      }
+      .seq
+      .map {
+        case (directoryName, results, expectedResults, ignoreMessage) =>
+          debug(s"${directoryName} should have ${expectedResults.size} results")
           if (ignoreMessage) {
-            ResultPrinter.printToolResults(ignoreClonedLines(res), expectedResults.toSet)
+            results.exists(res => ResultPrinter.printToolResults(ignoreClonedLines(res), expectedResults.toSet))
           } else {
-            ResultPrinter.printToolResults(res, expectedResults.toSet)
+            results.exists(ResultPrinter.printToolResults(_, expectedResults.toSet))
           }
-        }
       }
       .forall(identity)
   }
