@@ -17,6 +17,7 @@ import scala.util.{Failure, Success, Try}
 import scala.xml.XML
 import com.codacy.analysis.core.model.ToolResult
 import com.codacy.analysis.core.model.Location
+import com.codacy.plugins.api.languages.Languages
 
 import scala.util.Properties
 
@@ -30,12 +31,12 @@ object MultipleTests extends ITest {
     multipleTestsDirectory.list.toList.par
       .map { testDirectory =>
         val srcDir = testDirectory / "src"
-        val languages = findLanguages(srcDir.toJava, dockerImage)
-        val dockerTool = createDockerTool(languages, dockerImage)
+        // on multiple tests, the language is not validated but required. We used Scala.
+        val dockerTool = createDockerTool(Set(Languages.Scala), dockerImage)
         val toolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
         val dockerRunner = new BinaryDockerRunner[Result](dockerTool)()
         val runner = new ToolRunner(dockerTool, toolDocumentation, dockerRunner)
-        val tools = languages.map(new Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
+        val tools = dockerTool.languages.map(new Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
         val resultFile = testDirectory / "results.xml"
         val resultFileXML = XML.loadFile(resultFile.toJava)
         val expectedResults = CheckstyleFormatParser.parseResultsXml(resultFileXML).toSet
