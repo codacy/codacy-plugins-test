@@ -28,7 +28,7 @@ trait ITest extends LogSupport {
       sys.props.get("codacy.tests.languages").map(_.split(",").flatMap(Languages.fromName).to[Set])
 
     lazy val languagesFromTool = (core.tools.Tool.availableTools ++ PluginHelper.dockerEnterprisePlugins).collectFirst {
-      case tool if tool.dockerName == dockerImage.name && tool.dockerTag == dockerImage.version =>
+      case tool if tool.dockerName == dockerImage.name =>
         tool.languages
     }
 
