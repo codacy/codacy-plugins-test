@@ -24,7 +24,8 @@ object DuplicationTests extends ITest {
   def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     debug(s"Running DuplicationTests:")
     val testsDirectory = docsDirectory.toScala / DockerHelpers.duplicationTestsDirectoryName
-    testsDirectory.list.toList.par
+    ParallelCollectionsUtils
+      .toPar(testsDirectory.list.toList)
       .map { testDirectory =>
         val srcDir = testDirectory / "src"
         val languages = findLanguages(srcDir.toJava, dockerImage)

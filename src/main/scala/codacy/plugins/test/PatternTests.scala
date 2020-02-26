@@ -1,17 +1,18 @@
 package codacy.plugins.test
 
-import better.files._
+import java.io.{File => JFile}
+import java.nio.file.Paths
 
+import better.files._
+import codacy.plugins.test.Utils.exceptionToString
 import com.codacy.analysis.core
-import com.codacy.analysis.core.model.{CodacyCfg, FullLocation, Issue, LineLocation, Pattern}
+import com.codacy.analysis.core.model._
 import com.codacy.plugins.api._
 import com.codacy.plugins.api.results.Result
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
-import codacy.plugins.test.Utils.exceptionToString
-import java.nio.file.Paths
-import java.io.{File => JFile}
+
 import scala.util.{Failure, Success, Try}
 
 object PatternTests extends ITest with CustomMatchers {
@@ -34,15 +35,18 @@ object PatternTests extends ITest with CustomMatchers {
       testFiles.filter(testFiles => testFiles.file.getName.contains(fileNameToTest))
     }
 
-    val matchResultsAndComparisons = filteredTestFiles.par.flatMap { testFile =>
-      info(s"Analysing ${testFile.file.getName()}")
-      tools
-        .filter(_.languageToRun.name.equalsIgnoreCase(testFile.language.toString))
-        .map { tool =>
-          val analysisResultTry = analyseFile(toolDocumentation.spec, testsDirectory, testFile, tool)
-          (testFile, analysisResultTry.map(matches => (matches, beEqualTo(testFile.matches).apply(matches))))
-        }
-    }.seq
+    val matchResultsAndComparisons = ParallelCollectionsUtils
+      .toPar(filteredTestFiles)
+      .flatMap { testFile =>
+        info(s"Analysing ${testFile.file.getName()}")
+        tools
+          .filter(_.languageToRun.name.equalsIgnoreCase(testFile.language.toString))
+          .map { tool =>
+            val analysisResultTry = analyseFile(toolDocumentation.spec, testsDirectory, testFile, tool)
+            (testFile, analysisResultTry.map(matches => (matches, beEqualTo(testFile.matches).apply(matches))))
+          }
+      }
+      .seq
 
     for ((testFile, matchResultsAndComparisonsTry) <- matchResultsAndComparisons) {
       val filename = testsDirectory.path.relativize(testFile.file.toPath())

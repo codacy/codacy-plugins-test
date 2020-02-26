@@ -1,11 +1,11 @@
 package codacy.plugins
 
+import java.io.{File => JFile}
 import java.nio.file.Path
 
 import codacy.plugins.test._
-import codacy.plugins.test.multiple.MultipleTests
 import codacy.plugins.test.duplication.DuplicationTests
-import java.io.{File => JFile}
+import codacy.plugins.test.multiple.MultipleTests
 import wvlet.log.{LogFormatter, LogLevel, LogSupport, Logger}
 
 case class Sources(mainSourcePath: Path, directoryPaths: Seq[Path])
