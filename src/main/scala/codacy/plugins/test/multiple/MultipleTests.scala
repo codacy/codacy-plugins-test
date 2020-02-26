@@ -1,25 +1,21 @@
 package codacy.plugins.test.multiple
 
+import java.io.{File => JFile}
+
+import better.files._
 import codacy.plugins.test._
-import com.codacy.analysis.core.model.{CodacyCfg, Configuration, FileCfg, FileError, FullLocation, Issue, LineLocation}
+import codacy.plugins.test.resultprinter.ResultPrinter
+import com.codacy.analysis.core.model._
 import com.codacy.analysis.core.tools.Tool
+import com.codacy.plugins.api.languages.Languages
 import com.codacy.plugins.api.results.Result
+import com.codacy.plugins.results.PluginResult
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
-import com.codacy.plugins.results.PluginResult
-import better.files._
-import java.io.{File => JFile}
 
-import codacy.plugins.test.resultprinter.ResultPrinter
-
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Properties, Success, Try}
 import scala.xml.XML
-import com.codacy.analysis.core.model.ToolResult
-import com.codacy.analysis.core.model.Location
-import com.codacy.plugins.api.languages.Languages
-
-import scala.util.Properties
 
 object MultipleTests extends ITest {
 
@@ -28,7 +24,8 @@ object MultipleTests extends ITest {
   def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     debug(s"Running MultipleTests:")
     val multipleTestsDirectory = docsDirectory.toScala / DockerHelpers.multipleTestsDirectoryName
-    multipleTestsDirectory.list.toList.par
+    ParallelCollectionsUtils
+      .toPar(multipleTestsDirectory.list.toList)
       .map { testDirectory =>
         val srcDir = testDirectory / "src"
         // on multiple tests, the language is not validated but required. We used Scala.
