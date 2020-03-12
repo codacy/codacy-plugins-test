@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  codacy: codacy/base@2.1.1
+  codacy: codacy/base@2.7.0
 references:
   circleci_job: &circleci_job
     docker:
@@ -48,6 +48,22 @@ jobs:
           name: Publish final orb
           command: circleci orb publish orb.yml codacy/plugins-test@$(cat .version) --token $CIRCLE_TOKEN
 
+  compress_and_package_artifacts:
+    docker:
+      - image: hairyhenderson/upx:3.94
+    working_directory: ~/workdir
+    steps:
+      - run: apk add ca-certificates
+      - attach_workspace:
+          at: ~/workdir
+      - run: |
+          mkdir -p ~/workdir/artifacts/
+          upx --lzma -o ~/workdir/artifacts/$CIRCLE_PROJECT_REPONAME-linux-$(cat .version) ~/workdir/target/graalvm-native-image/$CIRCLE_PROJECT_REPONAME
+      - persist_to_workspace:
+          root: ~/workdir
+          paths:
+            - "*"
+
 workflows:
   version: 2
   build-and-deploy:
@@ -77,25 +93,41 @@ workflows:
             - populate_cache
       - codacy/sbt:
           name: build_native_image
-          cmd: |
-            ./scripts/build-native.sh -n $CIRCLE_PROJECT_REPONAME -m codacy.plugins.DockerTest -t docker $(cat .version)
-            curl -T ~/workdir/$CIRCLE_PROJECT_REPONAME-linux-$(cat .version) -ucodacy-ci:$BINTRAY_API_KEY -H "X-Bintray-Package:$CIRCLE_PROJECT_REPONAME" -H "X-Bintray-Version:$(cat .version)" https://api.bintray.com/content/codacy/Binaries/$(cat .version)/$CIRCLE_PROJECT_REPONAME-linux
-            curl -X POST -ucodacy-ci:$BINTRAY_API_KEY https://api.bintray.com/content/codacy/Binaries/$CIRCLE_PROJECT_REPONAME/$(cat .version)/publish
-            GHR_FLAGS=""
-            if [ "$CIRCLE_BRANCH" != "master" ]; then
-              GHR_FLAGS+="-prerelease"
-            fi
-            mkdir -p /tmp/ghr-publish
-            cp ~/workdir/$CIRCLE_PROJECT_REPONAME-linux-$(cat .version) /tmp/ghr-publish
-            go get github.com/tcnksm/ghr
-            ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME -c $CIRCLE_SHA1 $GHR_FLAGS -delete $(cat .version) /tmp/ghr-publish
+          cmd: sbt graalvm-native-image:packageBin
+          persist_to_workspace: true
           requires:
             - compile_and_test
+      - compress_and_package_artifacts:
+          requires:
+            - build_native_image
+      - codacy/shell:
+          name: publish_bintray
+          cmd: |
+            curl -T ~/workdir/$CIRCLE_PROJECT_REPONAME-linux-$(cat .version) -ucodacy-ci:$BINTRAY_API_KEY -H "X-Bintray-Package:$CIRCLE_PROJECT_REPONAME" -H "X-Bintray-Version:$(cat .version)" https://api.bintray.com/content/codacy/Binaries/$(cat .version)/$CIRCLE_PROJECT_REPONAME-linux
+            curl -X POST -ucodacy-ci:$BINTRAY_API_KEY https://api.bintray.com/content/codacy/Binaries/$CIRCLE_PROJECT_REPONAME/$(cat .version)/publish
+          filters:
+            branches:
+              only:
+                - master
+          context: CodacyBintray
+          requires:
+            - compress_and_package_artifacts
+      - codacy/publish_ghr:
+          name: publish_ghr
+          path: ~/workdir/artifacts/
+          context: CodacyGitHub
+          filters:
+            branches:
+              only:
+                - master
+          requires:
+            - compress_and_package_artifacts
       - codacy/tag_version:
           name: tag_version
           context: CodacyAWS
           requires:
-            - build_native_image
+            - publish_ghr
+            - publish_bintray
       - publish_dev:
           context: CodacyCircleCI
           requires:
