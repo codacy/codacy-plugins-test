@@ -1,4 +1,4 @@
-[![Codacy Badge](https://api.codacy.com/project/badge/grade/77e0473f417446a78758f02785a705b8)](https://www.codacy.com/app/Codacy/codacy-plugins-test)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/77e0473f417446a78758f02785a705b8)](https://www.codacy.com/gh/codacy/codacy-plugins-test?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=codacy/codacy-plugins-test&amp;utm_campaign=Badge_Grade)
 [![Build Status](https://circleci.com/gh/codacy/codacy-plugins-test.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/codacy/codacy-plugins-test)
 
 # Codacy Plugins Test
