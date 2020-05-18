@@ -22,11 +22,19 @@ class CheckstyleFormatParserTest extends FunSuite {
 
   test("checkstyle format parser with valid input") {
     val patternIdWrapper = api.results.Pattern.Id(patternId)
-    val expected = Set(
-      FileError(Paths.get("foo.txt"), "Error message"),
-      Issue(patternIdWrapper, Paths.get("bar.txt"), Message("Error1"), category = None, level = Level.Info, location = LineLocation(1)),
-      Issue(patternIdWrapper, Paths.get("bar.txt"), Message("Error2"), category = None, level = Level.Warn, location = LineLocation(2))
-    )
+    val expected = Set(FileError(Paths.get("foo.txt"), "Error message"),
+                       Issue(patternIdWrapper,
+                             Paths.get("bar.txt"),
+                             Message("Error1"),
+                             category = None,
+                             level = Level.Info,
+                             location = LineLocation(1)),
+                       Issue(patternIdWrapper,
+                             Paths.get("bar.txt"),
+                             Message("Error2"),
+                             category = None,
+                             level = Level.Warn,
+                             location = LineLocation(2)))
 
     val result = CheckstyleFormatParser.parseResultsXml(validCheckstyleXml).toSet
 
