@@ -30,7 +30,7 @@ object MultipleTests extends ITest {
         // on multiple tests, the language is not validated but required. We used Scala.
         val dockerTool = createDockerTool(Set(Languages.Scala), dockerImage)
         val toolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
-        val dockerRunner = new BinaryDockerRunner[Result](dockerTool)()
+        val dockerRunner = new BinaryDockerRunner[Result](dockerTool)
         val runner = new ToolRunner(dockerTool, toolDocumentation, dockerRunner)
         val tools = dockerTool.languages.map(new Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
         val resultFile = testDirectory / "results.xml"
@@ -74,6 +74,11 @@ object MultipleTests extends ITest {
       if file.isRegularFile && !toExclude(file)
     } yield file.path
 
-    tool.run(multipleTestsDirectory, filesToTest.toSet, configuration)
+    tool
+      .run(multipleTestsDirectory, filesToTest.toSet, configuration)
+      .map(_.map {
+        case fileError: FileError => fileError.copy(filename = multipleTestsDirectory.relativize(fileError.filename))
+        case issue: Issue => issue.copy(filename = multipleTestsDirectory.relativize(issue.filename))
+      })
   }
 }

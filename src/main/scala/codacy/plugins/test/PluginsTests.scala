@@ -26,7 +26,7 @@ object PluginsTests extends ITest {
     val dockerTool = createDockerTool(languages, dockerImage)
     val dockerToolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
     val specOpt = dockerToolDocumentation.spec
-    val dockerRunner = new BinaryDockerRunner[Result](dockerTool)()
+    val dockerRunner = new BinaryDockerRunner[Result](dockerTool)
     val runner = new ToolRunner(dockerTool, dockerToolDocumentation, dockerRunner)
 
     specOpt.forall { spec =>

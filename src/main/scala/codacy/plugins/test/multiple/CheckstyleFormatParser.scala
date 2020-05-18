@@ -23,9 +23,10 @@ private[multiple] object CheckstyleFormatParser {
       lineAttr = errorsTag \ "@line"
       patternIdAttr = errorsTag \ "@source"
       severityAttr = errorsTag \ "@severity"
-      result = if (patternIdAttr.isEmpty && severityAttr.isEmpty) {
+    } yield {
+      if (patternIdAttr.isEmpty && severityAttr.isEmpty && lineAttr.isEmpty) {
         FileError(filePath, message)
-      } else if (patternIdAttr.nonEmpty && severityAttr.nonEmpty) {
+      } else if (patternIdAttr.nonEmpty && severityAttr.nonEmpty && lineAttr.nonEmpty) {
         val line = lineAttr.text.toInt
         val severity = severityAttr.text
         val patternId = patternIdAttr.text
@@ -43,7 +44,7 @@ private[multiple] object CheckstyleFormatParser {
                               |Example file error:
                               |  <error message="Error message" />""".stripMargin)
       }
-    } yield result
+    }
   }
 
   def parsePatternsXml(root: Elem): (Set[Pattern], Option[Map[String, play.api.libs.json.JsValue]], Option[String]) = {
