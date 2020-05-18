@@ -2,31 +2,49 @@ package codacy.plugins.test.multiple
 
 import com.codacy.analysis.core.model.{Parameter, Pattern}
 import com.codacy.plugins.api.results.Result.Level
-import com.codacy.plugins.results.PluginResult
 
 import play.api.libs.json.Json
 
 import com.fasterxml.jackson.core.JsonParseException
 import scala.xml.Elem
+import com.codacy.analysis.core.model.{FileError, Issue, ToolResult}
+import java.nio.file.Paths
+import com.codacy.analysis.core.model.LineLocation
+import com.codacy.plugins.api
 
 private[multiple] object CheckstyleFormatParser {
 
-  def parseResultsXml(root: Elem) = {
+  def parseResultsXml(root: Elem): Seq[ToolResult] = {
     for {
-      fileTag <- root \\ "checkstyle" \\ "file"
-      fileName = fileTag \@ "name"
-      errorsTag <- fileTag \\ "error"
-      line = errorsTag \@ "line"
-      patternId = errorsTag \@ "source"
+      fileTag <- root \\ "checkstyle" \ "file"
+      filePath = Paths.get(fileTag \@ "name")
+      errorsTag <- fileTag \ "error"
       message = errorsTag \@ "message"
-      severity = errorsTag \@ "severity"
-      level = severity match {
-        case "info" => Level.Info
-        case "warning" => Level.Warn
-        case "error" => Level.Err
-        case _ => throw new Exception(s"""$severity is not a valid level. Use one of ["info", "warning", "error"]""")
+      lineAttr = errorsTag \ "@line"
+      patternIdAttr = errorsTag \ "@source"
+      severityAttr = errorsTag \ "@severity"
+    } yield {
+      if (patternIdAttr.isEmpty && severityAttr.isEmpty && lineAttr.isEmpty) {
+        FileError(filePath, message)
+      } else if (patternIdAttr.nonEmpty && severityAttr.nonEmpty && lineAttr.nonEmpty) {
+        val line = lineAttr.text.toInt
+        val severity = severityAttr.text
+        val patternId = patternIdAttr.text
+        val level = severity match {
+          case "info" => Level.Info
+          case "warning" => Level.Warn
+          case "error" => Level.Err
+          case _ => throw new Exception(s"""$severity is not a valid level. Use one of ["info", "warning", "error"]""")
+        }
+        Issue(api.results.Pattern.Id(patternId), filePath, Issue.Message(message), level, None, LineLocation(line))
+      } else {
+        throw new Exception("""Errors should be either results or file errors:
+                              |Example result:
+                              |  <error source="pattern_id" line="1" message="Message from the tool." severity="info" />
+                              |Example file error:
+                              |  <error message="Error message" />""".stripMargin)
       }
-    } yield PluginResult(patternId, fileName, line.toInt, message, level)
+    }
   }
 
   def parsePatternsXml(root: Elem): (Set[Pattern], Option[Map[String, play.api.libs.json.JsValue]], Option[String]) = {
@@ -37,7 +55,6 @@ private[multiple] object CheckstyleFormatParser {
       } catch {
         case _: JsonParseException => // support non quoted strings
           Json.parse(s""""$v"""")
-        case e: Throwable => throw e
       }
       (node \@ "name", value)
     }.toMap

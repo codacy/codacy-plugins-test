@@ -8,7 +8,6 @@ import com.codacy.analysis.core.model.{FileError, Issue, Pattern, ToolResult}
 import com.codacy.plugins.api._
 import com.codacy.plugins.api.languages.{Language, Languages}
 import com.codacy.plugins.results.traits.DockerTool
-import com.codacy.plugins.utils.PluginHelper
 
 import wvlet.log.LogSupport
 
@@ -27,7 +26,7 @@ trait ITest extends LogSupport {
     val languagesFromProperties =
       sys.props.get("codacy.tests.languages").map(_.split(",").flatMap(Languages.fromName).to[Set])
 
-    lazy val languagesFromTool = (core.tools.Tool.availableTools ++ PluginHelper.dockerEnterprisePlugins).collectFirst {
+    lazy val languagesFromTool = (core.tools.Tool.availableTools).collectFirst {
       case tool if tool.dockerName == dockerImage.name =>
         tool.languages
     }
@@ -54,7 +53,6 @@ trait ITest extends LogSupport {
                    sourceCodeUrl = "",
                    prefix = "",
                    needsCompilation = false,
-                   needsPatternsToRun = true,
                    hasUIConfiguration = true) {
       override val dockerTag: String = dockerImageVersion
       override val dockerImageName: String = dockerImageFor(Option(dockerImageVersion))

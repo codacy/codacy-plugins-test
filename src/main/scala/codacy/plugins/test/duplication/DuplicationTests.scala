@@ -58,7 +58,7 @@ object DuplicationTests extends ITest {
   private def runDuplicationTool(srcDir: File,
                                  duplicationTool: DuplicationTool,
                                  tool: com.codacy.analysis.core.tools.DuplicationTool): Try[Set[DuplicationClone]] = {
-    val dockerRunner = new BinaryDockerRunner[api.duplication.DuplicationClone](duplicationTool)()
+    val dockerRunner = new BinaryDockerRunner[api.duplication.DuplicationClone](duplicationTool)
     val runner = new DuplicationRunner(duplicationTool, dockerRunner)
 
     for {

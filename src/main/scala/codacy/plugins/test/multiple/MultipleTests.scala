@@ -9,12 +9,11 @@ import com.codacy.analysis.core.model._
 import com.codacy.analysis.core.tools.Tool
 import com.codacy.plugins.api.languages.Languages
 import com.codacy.plugins.api.results.Result
-import com.codacy.plugins.results.PluginResult
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
 
-import scala.util.{Failure, Properties, Success, Try}
+import scala.util.Try
 import scala.xml.XML
 
 object MultipleTests extends ITest {
@@ -31,7 +30,7 @@ object MultipleTests extends ITest {
         // on multiple tests, the language is not validated but required. We used Scala.
         val dockerTool = createDockerTool(Set(Languages.Scala), dockerImage)
         val toolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
-        val dockerRunner = new BinaryDockerRunner[Result](dockerTool)()
+        val dockerRunner = new BinaryDockerRunner[Result](dockerTool)
         val runner = new ToolRunner(dockerTool, toolDocumentation, dockerRunner)
         val tools = dockerTool.languages.map(new Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
         val resultFile = testDirectory / "results.xml"
@@ -62,20 +61,10 @@ object MultipleTests extends ITest {
     } else (FileCfg(Some(srcDir.pathAsString), None), None)
   }
 
-  private def convertResults(resultSet: Set[ToolResult]): Set[Either[String, PluginResult]] = resultSet.map {
-    case Issue(patternId, filename, message, level, category, location: Location) =>
-      val line = location match {
-        case FullLocation(line, column) => line
-        case LineLocation(line) => line
-      }
-      Right(PluginResult(patternId.value, filename.getFileName().toString(), line, message.text, level))
-    case FileError(file, error) => Left(s"  error $error in file $file")
-  }
-
   private def runTool(tool: Tool,
                       multipleTestsDirectory: File,
                       configuration: Configuration,
-                      excludedFilesRegex: Option[String]): Try[Set[PluginResult]] = {
+                      excludedFilesRegex: Option[String]): Try[Set[ToolResult]] = {
     val optRegex = excludedFilesRegex.map(_.r)
 
     def toExclude(file: File) = optRegex.exists(_.findFirstIn(file.name).nonEmpty)
@@ -84,18 +73,12 @@ object MultipleTests extends ITest {
       file <- multipleTestsDirectory.listRecursively
       if file.isRegularFile && !toExclude(file)
     } yield file.path
-    val toolRunResult: Try[Set[ToolResult]] = tool.run(multipleTestsDirectory, filesToTest.toSet, configuration)
 
-    toolRunResult.flatMap { resultSet =>
-      val resultEithers = convertResults(resultSet)
-      val failures = resultEithers.collect { case Left(error) => error }
-      if (failures.isEmpty)
-        Success(resultEithers.collect { case Right(value) => value })
-      else {
-        val errorsString =
-          failures.mkString(Properties.lineSeparator)
-        Failure(new Exception(s"Got errors in ${failures.size} files:${Properties.lineSeparator}$errorsString"))
-      }
-    }
+    tool
+      .run(multipleTestsDirectory, filesToTest.toSet, configuration)
+      .map(_.map {
+        case fileError: FileError => fileError.copy(filename = multipleTestsDirectory.relativize(fileError.filename))
+        case issue: Issue => issue.copy(filename = multipleTestsDirectory.relativize(issue.filename))
+      })
   }
 }
