@@ -22,9 +22,20 @@ object MultipleTests extends ITest {
 
   def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     debug(s"Running MultipleTests:")
+
+    val selectedTest = optArgs.sliding(2).collectFirst {
+      case Seq("--only", multipleTestDir) =>
+        multipleTestDir
+    }
     val multipleTestsDirectory = docsDirectory.toScala / DockerHelpers.multipleTestsDirectoryName
+
+    val directories = selectedTest match {
+      case Some(dirName) => Seq(multipleTestsDirectory / dirName)
+      case None => multipleTestsDirectory.list.toSeq
+    }
+
     ParallelCollectionsUtils
-      .toPar(multipleTestsDirectory.list.toList)
+      .toPar(directories)
       .map { testDirectory =>
         val srcDir = testDirectory / "src"
         // on multiple tests, the language is not validated but required. We used Scala.
