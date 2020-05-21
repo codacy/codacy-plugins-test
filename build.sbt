@@ -11,13 +11,13 @@ libraryDependencies ++= Seq("com.codacy" %% "codacy-analysis-core" % "3.2.0",
                             "org.wvlet.airframe" %% "airframe-log" % "19.12.4",
                             codacy.libs.scalatest)
 
-lazy val nativeImageOnDocker = settingKey[Boolean]("Use docker to build the native-image")
-nativeImageOnDocker := true
+lazy val graalVMNativeImageUseDocker = settingKey[Boolean]("Use docker to build the native-image")
+graalVMNativeImageUseDocker := true
 
 enablePlugins(GraalVMNativeImagePlugin)
 
 graalVMNativeImageGraalVersion := {
-  if (nativeImageOnDocker.value) Some("20.0.0-java8")
+  if (graalVMNativeImageUseDocker.value) Some("20.0.0-java8")
   else None
 }
 
@@ -31,5 +31,6 @@ graalVMNativeImageOptions := Seq("--enable-http",
                                  "--no-fallback",
                                  "--initialize-at-build-time",
                                  "--report-unsupported-elements-at-runtime") ++ {
-  if (!nativeImageOnDocker.value && sys.props.get("os.name").contains("Mac OS X")) Seq.empty else Seq("--static")
+  if (!graalVMNativeImageUseDocker.value && sys.props.get("os.name").contains("Mac OS X")) Seq.empty
+  else Seq("--static")
 }
