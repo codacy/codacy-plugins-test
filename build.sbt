@@ -31,5 +31,5 @@ graalVMNativeImageOptions := Seq("--enable-http",
                                  "--no-fallback",
                                  "--initialize-at-build-time",
                                  "--report-unsupported-elements-at-runtime") ++ {
-  if (nativeImageOnDocker.value || sys.props.get("os.name").forall(_ != "Mac OS X")) Seq("--static") else Seq.empty
+  if (!nativeImageOnDocker.value && sys.props.get("os.name").contains("Mac OS X")) Seq.empty else Seq("--static")
 }
