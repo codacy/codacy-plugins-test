@@ -37,7 +37,7 @@ object DockerTest extends LogSupport {
               val allTestsPassed = possibleTests
                 .map(test => run(docsDirectory, test, typeOfTest, dockerImage, optArgs))
                 .forall(identity)
-              if (allTestsPassed) Right(()) else Left("[Failure] Some tests failed!")
+              if (!allTestsPassed) throw new Exception("[Failure] Some tests failed!")
             }
             debug("[Success] All tests passed!")
         }
