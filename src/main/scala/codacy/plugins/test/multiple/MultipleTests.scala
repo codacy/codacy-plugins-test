@@ -9,12 +9,6 @@ import better.files._
 import codacy.plugins.test._
 import codacy.plugins.test.resultprinter.ResultPrinter
 import com.codacy.analysis.core.model._
-import com.codacy.analysis.core.tools.Tool
-import com.codacy.plugins.api.languages.Languages
-import com.codacy.plugins.api.results.Result
-import com.codacy.plugins.results.traits
-import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
-import com.codacy.plugins.utils.BinaryDockerHelper
 
 import codacy.plugins.test.runner.ToolRunner
 
@@ -44,24 +38,18 @@ object MultipleTests extends ITest {
       .map { testDirectory =>
         val srcDir = testDirectory / "src"
         // on multiple tests, the language is not validated but required. We used Scala.
-        val dockerTool = createDockerTool(Set(Languages.Scala), dockerImage)
-        val toolDocumentation =
-          new traits.DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
-        val dockerRunner = new BinaryDockerRunner[Result](dockerTool)
-        val runner = new traits.ToolRunner(dockerTool, toolDocumentation, dockerRunner)
-        val tools = dockerTool.languages.map(new Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
         val resultFile = testDirectory / "results.xml"
         val resultFileXML = XML.loadFile(resultFile.toJava)
         val expectedResults = CheckstyleFormatParser.parseResultsXml(resultFileXML)
         val (configuration, excludedFilesRegex) = createConfiguration(testDirectory, srcDir)
-        val results = tools.map(runTool(_, dockerImage.toString(), srcDir, configuration, excludedFilesRegex))
-        (testDirectory.name, results, expectedResults)
+        val result = runTool(dockerImage.toString(), srcDir, configuration, excludedFilesRegex)
+        (testDirectory.name, result, expectedResults)
       }
       .seq
       .map {
-        case (directoryName, results, expectedResults) =>
+        case (directoryName, result, expectedResults) =>
           debug(s"${directoryName} should have ${expectedResults.size} results")
-          results.exists(ResultPrinter.printToolResults(_, expectedResults))
+          ResultPrinter.printToolResults(result, expectedResults)
       }
       .forall(identity)
   }
@@ -78,8 +66,7 @@ object MultipleTests extends ITest {
     } else (FileCfg(Some(srcDir.pathAsString), None), None)
   }
 
-  private def runTool(tool: Tool,
-                      dockerImage: String,
+  private def runTool(dockerImage: String,
                       multipleTestsDirectory: File,
                       configuration: Configuration,
                       excludedFilesRegex: Option[String]): Try[Seq[ToolResult]] = {
