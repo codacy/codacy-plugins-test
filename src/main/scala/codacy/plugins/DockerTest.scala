@@ -33,18 +33,13 @@ object DockerTest extends LogSupport {
           dockerImageNameAndVersion =>
             val dockerImage = parseDockerImage(dockerImageNameAndVersion)
 
-            val testRunResult = DockerHelpers.usingDocsDirectoryInDockerImage(dockerImage) { docsDirectory =>
+            DockerHelpers.usingDocsDirectoryInDockerImage(dockerImage.toString) { docsDirectory =>
               val allTestsPassed = possibleTests
                 .map(test => run(docsDirectory, test, typeOfTest, dockerImage, optArgs))
                 .forall(identity)
               if (allTestsPassed) Right(()) else Left("[Failure] Some tests failed!")
             }
-            testRunResult match {
-              case Left(err) =>
-                throw new Exception(err)
-              case Right(()) =>
-                debug("[Success] All tests passed!")
-            }
+            debug("[Success] All tests passed!")
         }
       case wrongTypeOfTest =>
         throw new Exception(

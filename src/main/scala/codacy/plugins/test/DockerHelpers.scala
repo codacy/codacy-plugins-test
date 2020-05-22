@@ -16,12 +16,10 @@ object DockerHelpers {
 
   val dockerRunCmd = List("docker", "run", "--net=none", "--privileged=false", "--user=docker")
 
-  def usingDocsDirectoryInDockerImage(
-    dockerImage: DockerImage
-  )(f: JFile => Either[String, Unit]): Either[String, Unit] = {
-    val dockerStartedCmd = dockerRunCmd ++ List("-d", "--entrypoint=sh", dockerImage.toString)
+  def usingDocsDirectoryInDockerImage[T](dockerImage: String)(f: JFile => T): T = {
+    val dockerStartedCmd = dockerRunCmd ++ List("-d", "--entrypoint=sh", dockerImage)
     val output = dockerStartedCmd.lineStream_!.headOption
-    val directory = File.newTemporaryDirectory()
+    val directory = File.newTemporaryDirectory(parent = Some(File.root / "tmp"))
     try {
       output match {
         case Some(containerId) =>
@@ -29,7 +27,7 @@ object DockerHelpers {
           List("docker", "cp", s"$containerId:/docs", directory.pathAsString) ! processLogger
           f((directory / "docs").toJava)
         case None =>
-          Left("[Failure] Couldn't get the container id!")
+          throw new Exception("Couldn't get the container id!")
       }
     } finally {
       for (containerId <- output) {
