@@ -1,11 +1,12 @@
 package codacy.plugins.test.multiple
 
-import org.scalatest.FunSuite
+import java.nio.file.Paths
+
+import com.codacy.analysis.core.model.Issue.Message
 import com.codacy.analysis.core.model._
 import com.codacy.plugins.api
-import com.codacy.analysis.core.model.Issue.Message
-import java.nio.file.Paths
 import com.codacy.plugins.api.results.Result.Level
+import org.scalatest.FunSuite
 
 class CheckstyleFormatParserTest extends FunSuite {
   val patternId = "my_pattern"

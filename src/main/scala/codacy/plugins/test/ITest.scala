@@ -8,7 +8,6 @@ import com.codacy.analysis.core.model.{FileError, Issue, Pattern, ToolResult}
 import com.codacy.plugins.api._
 import com.codacy.plugins.api.languages.{Language, Languages}
 import com.codacy.plugins.results.traits.DockerTool
-
 import wvlet.log.LogSupport
 
 final case class DockerImage(name: String, version: String) {

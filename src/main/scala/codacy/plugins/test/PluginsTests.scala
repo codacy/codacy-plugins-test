@@ -1,7 +1,12 @@
 package codacy.plugins.test
 
+import java.io.{File => JFile}
 import java.nio.file.{Path, Paths}
 
+import scala.util.{Failure, Success, Try}
+
+import better.files._
+import codacy.plugins.test.Utils.exceptionToString
 import codacy.utils.FileHelper
 import com.codacy.analysis.core
 import com.codacy.analysis.core.model.{CodacyCfg, Issue, Pattern}
@@ -9,10 +14,6 @@ import com.codacy.plugins.api.results.Result
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
-import codacy.plugins.test.Utils.exceptionToString
-import better.files._
-import java.io.{File => JFile}
-import scala.util.{Failure, Success, Try}
 
 object PluginsTests extends ITest {
 

@@ -1,7 +1,7 @@
 package codacy.plugins.test
 
-import org.scalatest._
 import codacy.plugins.DockerTest
+import org.scalatest._
 
 class ExampleToolTests extends FunSuite {
   test("tests with ExampleTool should pass") {

@@ -83,7 +83,7 @@ workflows:
             - codacy/checkout_and_version
       - codacy/sbt:
           name: check_fmt
-          cmd: sbt "scalafmt::test;test:scalafmt::test;sbt:scalafmt::test"
+          cmd: sbt "scalafmt::test;test:scalafmt::test;sbt:scalafmt::test;scalafixCheck"
           requires:
             - populate_cache
       - codacy/sbt:

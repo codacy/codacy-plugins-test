@@ -1,7 +1,7 @@
 package codacy.plugins.test.duplication
 
-import com.codacy.plugins.api.duplication.DuplicationCloneFile
 import com.codacy.analysis.core.model.DuplicationClone
+import com.codacy.plugins.api.duplication.DuplicationCloneFile
 import org.scalatest.FunSuite
 
 class CheckstyleFormatParserTest extends FunSuite {
