@@ -40,7 +40,8 @@ object ToolRunner {
   def run(dockerImage: String, srcDir: File, files: Set[Path], configuration: Configuration): Seq[ToolResult] =
     DockerHelpers.usingDocsDirectoryInDockerImage(dockerImage) { docsDirectory =>
       (for {
-        codacyrcFile <- File.temporaryFile(parent = Some(File.root / "tmp"))
+        codacyrcFileFolder <- File.temporaryDirectory(parent = Some(File.root / "tmp"))
+        codacyrcFile = codacyrcFileFolder / ".codacyrc"
         patternsJsonString = (docsDirectory.toScala / "patterns.json").contentAsString
         patternsJson = Json.parse(patternsJsonString)
         toolName = (patternsJson \ "name").get.as[String]

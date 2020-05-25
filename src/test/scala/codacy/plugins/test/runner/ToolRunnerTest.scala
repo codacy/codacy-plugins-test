@@ -18,7 +18,7 @@ class ToolRunnerTest extends FunSuite {
     val result: Seq[Result] = (for {
       srcDir <- File.temporaryDirectory(parent = Some(root / "tmp"))
       sourceFile = srcDir / "foobar.txt"
-      _ = sourceFile.write("foo")
+      _ = sourceFile.write("foo\n")
       config = FileCfg()
       res = ToolRunner.run(dockerImage, srcDir, Set(file), config)
     } yield res).get()
@@ -38,8 +38,8 @@ class ToolRunnerTest extends FunSuite {
   test("run example tool with /.codacyrc") {
     val result: Seq[Result] = (for {
       srcDir <- File.temporaryDirectory(parent = Some(root / "tmp"))
-      _ = (srcDir / "foobar.txt").write("foo")
-      _ = (srcDir / "test.txt").write("test")
+      _ = (srcDir / "foobar.txt").write("foo\n")
+      _ = (srcDir / "test.txt").write("test\n")
       config = CodacyCfg(Set(Pattern(id = "foobar", parameters = Set(Parameter(name = "value", value = "test")))))
       res = ToolRunner.run(dockerImage, srcDir, Set("foobar.txt", "test.txt").map(Paths.get(_)), config)
     } yield res).get()
