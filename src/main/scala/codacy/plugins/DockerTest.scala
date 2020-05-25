@@ -67,7 +67,7 @@ object DockerTest extends LogSupport {
         else
           error(s"[Failure] ${test.getClass.getSimpleName}")
         isSuccess
-      case a =>
+      case _ =>
         // this test was not selected
         true
     }

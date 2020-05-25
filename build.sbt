@@ -34,3 +34,12 @@ graalVMNativeImageOptions := Seq("--enable-http",
   if (!graalVMNativeImageUseDocker.value && sys.props.get("os.name").contains("Mac OS X")) Seq.empty
   else Seq("--static")
 }
+
+// Scalafix
+
+ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.3.1-RC2"
+ThisBuild / scalacOptions += "-Ywarn-unused"
+
+addCommandAlias("scalafixRun", "scalafixEnable; compile:scalafix; test:scalafix")
+
+addCommandAlias("scalafixCheck", "scalafixEnable; compile:scalafix --check; test:scalafix --check")

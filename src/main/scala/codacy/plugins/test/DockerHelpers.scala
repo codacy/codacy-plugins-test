@@ -1,16 +1,18 @@
 package codacy.plugins.test
 
-import scala.sys.process._
 import java.io.{File => JFile}
-import better.files.File
+
+import scala.sys.process._
 import scala.util.Try
+
+import better.files.File
 
 object DockerHelpers {
   val testsDirectoryName = "tests"
   val multipleTestsDirectoryName = "multiple-tests"
   val duplicationTestsDirectoryName = "duplication-tests"
 
-  private val processLogger = ProcessLogger((line: String) => ())
+  private val processLogger = ProcessLogger((_: String) => ())
 
   val dockerRunCmd = List("docker", "run", "--net=none", "--privileged=false", "--user=docker")
 

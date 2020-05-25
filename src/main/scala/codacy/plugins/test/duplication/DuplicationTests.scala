@@ -1,21 +1,20 @@
 package codacy.plugins.test.duplication
 
-import codacy.plugins.test._
-import com.codacy.analysis.core
-import better.files._
 import java.io.{File => JFile}
 
-import codacy.plugins.test.resultprinter.ResultPrinter
-
+import scala.concurrent.duration._
 import scala.util.Try
 import scala.xml.XML
+
+import better.files._
+import codacy.plugins.test._
+import codacy.plugins.test.resultprinter.ResultPrinter
+import com.codacy.analysis.core
 import com.codacy.analysis.core.model.DuplicationClone
+import com.codacy.plugins.api
 import com.codacy.plugins.api.duplication.DuplicationTool.CodacyConfiguration
 import com.codacy.plugins.duplication.traits.{DuplicationRunner, DuplicationTool}
-import com.codacy.plugins.api
 import com.codacy.plugins.runners.BinaryDockerRunner
-
-import scala.concurrent.duration._
 
 object DuplicationTests extends ITest {
 

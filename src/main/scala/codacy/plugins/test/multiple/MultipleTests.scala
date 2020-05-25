@@ -2,6 +2,9 @@ package codacy.plugins.test.multiple
 
 import java.io.{File => JFile}
 
+import scala.util.Try
+import scala.xml.XML
+
 import better.files._
 import codacy.plugins.test._
 import codacy.plugins.test.resultprinter.ResultPrinter
@@ -12,9 +15,6 @@ import com.codacy.plugins.api.results.Result
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
-
-import scala.util.Try
-import scala.xml.XML
 
 object MultipleTests extends ITest {
 

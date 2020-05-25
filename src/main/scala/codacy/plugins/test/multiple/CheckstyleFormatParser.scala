@@ -1,16 +1,14 @@
 package codacy.plugins.test.multiple
 
-import com.codacy.analysis.core.model.{Parameter, Pattern}
-import com.codacy.plugins.api.results.Result.Level
-
-import play.api.libs.json.Json
-
-import com.fasterxml.jackson.core.JsonParseException
-import scala.xml.Elem
-import com.codacy.analysis.core.model.{FileError, Issue, ToolResult}
 import java.nio.file.Paths
-import com.codacy.analysis.core.model.LineLocation
+
+import scala.xml.Elem
+
+import com.codacy.analysis.core.model.{FileError, Issue, LineLocation, Parameter, Pattern, ToolResult}
 import com.codacy.plugins.api
+import com.codacy.plugins.api.results.Result.Level
+import com.fasterxml.jackson.core.JsonParseException
+import play.api.libs.json.Json
 
 private[multiple] object CheckstyleFormatParser {
 
