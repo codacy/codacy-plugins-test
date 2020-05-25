@@ -1,11 +1,13 @@
 package codacy.plugins.test.runner
 
-import org.scalatest.FunSuite
-import better.files._
-import File._
-import com.codacy.plugins.api.results
-import com.codacy.analysis.core.model._
 import java.nio.file.Paths
+
+import better.files._
+import com.codacy.analysis.core.model._
+import com.codacy.plugins.api.results
+import org.scalatest.FunSuite
+
+import File._
 
 class ToolRunnerTest extends FunSuite {
 

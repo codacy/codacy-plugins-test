@@ -1,8 +1,9 @@
 package codacy.plugins.test.implicits
 
 import com.codacy.analysis.core.model._
-import com.codacy.plugins.api.results
 import com.codacy.plugins.api.duplication.DuplicationCloneFile
+import com.codacy.plugins.api.results
+
 import Ordering.Implicits._
 
 object OrderingInstances {
@@ -18,7 +19,7 @@ object OrderingInstances {
   implicit val subcategoryOrdering: Ordering[results.Pattern.Subcategory] = Ordering.by(_.toString)
   implicit val locationOrdering: Ordering[Location] = Ordering.by[Location, Int] {
     case LineLocation(l) => l
-    case FullLocation(l, c) => l
+    case FullLocation(l, _) => l
   }
   implicit val issueOrdering = Ordering.by(Issue.unapply)
   implicit val fileErrorOrdering = Ordering.by(FileError.unapply)
@@ -27,8 +28,8 @@ object OrderingInstances {
     new Ordering[ToolResult] {
 
       def compare(x: ToolResult, y: ToolResult): Int = (x, y) match {
-        case (e: FileError, i: Issue) => -1
-        case (i: Issue, e: FileError) => 1
+        case (_: FileError, _: Issue) => -1
+        case (_: Issue, _: FileError) => 1
         case (e1: FileError, e2: FileError) => fileErrorOrdering.compare(e1, e2)
         case (i1: Issue, i2: Issue) => issueOrdering.compare(i1, i2)
       }

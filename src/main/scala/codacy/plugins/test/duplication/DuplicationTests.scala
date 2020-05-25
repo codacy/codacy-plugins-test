@@ -8,6 +8,7 @@ import scala.xml.XML
 
 import better.files._
 import codacy.plugins.test._
+import codacy.plugins.test.implicits.OrderingInstances._
 import codacy.plugins.test.resultprinter.ResultPrinter
 import com.codacy.analysis.core
 import com.codacy.analysis.core.model.DuplicationClone
@@ -15,8 +16,6 @@ import com.codacy.plugins.api
 import com.codacy.plugins.api.duplication.DuplicationTool.CodacyConfiguration
 import com.codacy.plugins.duplication.traits.{DuplicationRunner, DuplicationTool}
 import com.codacy.plugins.runners.BinaryDockerRunner
-
-import codacy.plugins.test.implicits.OrderingInstances._
 
 object DuplicationTests extends ITest {
 

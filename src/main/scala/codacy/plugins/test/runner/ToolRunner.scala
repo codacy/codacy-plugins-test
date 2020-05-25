@@ -1,32 +1,25 @@
 package codacy.plugins.test.runner
 
+import java.nio.file.{Path, Paths}
+
 import better.files._
-import sys.process._
-import com.codacy.analysis.core.model._
-import play.api.libs.json.Json
-import com.codacy.plugins.api.results.Tool
-import com.codacy.plugins.api
-
-import java.nio.file.Path
-import java.nio.file.Paths
-import play.api.libs.json.JsSuccess
-import play.api.libs.json.Reads
-import play.api.libs.json.JsResult
-import play.api.libs.json.JsValue
-import play.api.libs.json.JsError
 import codacy.plugins.test.DockerHelpers
-import play.api.libs.json.JsArray
-
+import com.codacy.analysis.core.model._
+import com.codacy.plugins.api
 import com.codacy.plugins.api.PatternFormatImplicits._
+import com.codacy.plugins.api.results.Tool
+import play.api.libs.json.{JsArray, JsError, JsResult, JsSuccess, JsValue, Json, Reads}
+
+import sys.process._
 
 object ToolRunner {
   implicit private val resultReads = new Reads[ToolResult] {
 
     def reads(json: JsValue): JsResult[ToolResult] = {
-      val patternIdOpt = json.\("patternId").asOpt[String]
-      val lineOpt = json.\("line").asOpt[Int]
-      val message = json.\("message").as[String]
-      val filename = json.\("filename").as[String]
+      val patternIdOpt = (json \ "patternId").asOpt[String]
+      val lineOpt = (json \ "line").asOpt[Int]
+      val message = (json \ "message").as[String]
+      val filename = (json \ "filename").as[String]
 
       (patternIdOpt, lineOpt) match {
         case (None, None) => JsSuccess(FileError(Paths.get(filename), message))
@@ -62,11 +55,11 @@ object ToolRunner {
                             "--net=none",
                             "--privileged=false",
                             "--user=docker",
-                            dockerImage).lineStream_!.toList.filter(_.nonEmpty)
+                            dockerImage).lineStream_!.filter(_.nonEmpty)
         toolResults = resultStrings.map { r =>
           val jsResult = Json.fromJson[ToolResult](Json.parse(r))
           jsResult match {
-            case JsSuccess(value, path) => value
+            case JsSuccess(value, _) => value
             case JsError(errors) => throw new Exception(errors.toString())
           }
         }
@@ -83,7 +76,7 @@ object ToolRunner {
           case other => other
         }
 
-      } yield toolResultsWithCorrectLevel).get()
+      } yield toolResultsWithCorrectLevel.toList).get()
     }
 
   private def codacyrcContent(toolName: String, files: Set[Path], config: Configuration) = {
@@ -91,8 +84,8 @@ object ToolRunner {
                                   files: Set[Path],
                                   config: Configuration): Tool.CodacyConfiguration = {
       val patternsOpt = config match {
-        case CodacyCfg(patterns, baseSubDir, extraValues) => Some(patterns)
-        case FileCfg(baseSubDir, extraValues) => None
+        case CodacyCfg(patterns, _, _) => Some(patterns)
+        case FileCfg(_, _) => None
       }
       val patternsDefinitionsOpt = patternsOpt.map { patterns =>
         patterns.map { pattern =>

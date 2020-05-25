@@ -7,12 +7,10 @@ import scala.xml.XML
 
 import better.files._
 import codacy.plugins.test._
-import codacy.plugins.test.resultprinter.ResultPrinter
-import com.codacy.analysis.core.model._
-
-import codacy.plugins.test.runner.ToolRunner
-
 import codacy.plugins.test.implicits.OrderingInstances._
+import codacy.plugins.test.resultprinter.ResultPrinter
+import codacy.plugins.test.runner.ToolRunner
+import com.codacy.analysis.core.model._
 
 object MultipleTests extends ITest {
 
