@@ -1,19 +1,22 @@
 package codacy.plugins.test.multiple
 
 import java.io.{File => JFile}
+import java.nio.file.Paths
 
 import scala.util.Try
 import scala.xml.XML
 
 import better.files._
 import codacy.plugins.test._
+import codacy.plugins.test.implicits.OrderingInstances._
 import codacy.plugins.test.resultprinter.ResultPrinter
 import com.codacy.analysis.core.model._
-import com.codacy.analysis.core.tools.Tool
+import com.codacy.plugins.api.Options
 import com.codacy.plugins.api.languages.Languages
 import com.codacy.plugins.api.results.Result
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
-import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
+import com.codacy.plugins.results.{PatternRequest, PluginConfiguration, PluginRequest}
+import com.codacy.plugins.runners.BinaryDockerRunner
 import com.codacy.plugins.utils.BinaryDockerHelper
 
 object MultipleTests extends ITest {
@@ -43,39 +46,44 @@ object MultipleTests extends ITest {
         val toolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
         val dockerRunner = new BinaryDockerRunner[Result](dockerTool)
         val runner = new ToolRunner(dockerTool, toolDocumentation, dockerRunner)
-        val tools = dockerTool.languages.map(new Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
         val resultFile = testDirectory / "results.xml"
         val resultFileXML = XML.loadFile(resultFile.toJava)
-        val expectedResults = CheckstyleFormatParser.parseResultsXml(resultFileXML).toSet
-        val (configuration, excludedFilesRegex) = createConfiguration(testDirectory, srcDir)
-        val results = tools.map(runTool(_, srcDir, configuration, excludedFilesRegex))
+        val expectedResults = CheckstyleFormatParser.parseResultsXml(resultFileXML)
+        val (configuration, excludedFilesRegex) = createConfiguration(testDirectory)
+        val results = runTool(runner, srcDir, configuration, excludedFilesRegex)
         (testDirectory.name, results, expectedResults)
       }
       .seq
       .map {
         case (directoryName, results, expectedResults) =>
           debug(s"${directoryName} should have ${expectedResults.size} results")
-          results.exists(ResultPrinter.printToolResults(_, expectedResults))
+          ResultPrinter.printToolResults(results, expectedResults)
       }
       .forall(identity)
   }
 
-  private def createConfiguration(testDirectory: File, srcDir: File): (Configuration, Option[String]) = {
+  private def createConfiguration(testDirectory: File): (PluginConfiguration, Option[String]) = {
     val patternsPath = testDirectory / "patterns.xml"
-    if (patternsPath.exists) {
+    if (patternsPath.notExists) (PluginConfiguration(None, None), None)
+    else {
       val patternsFileXML = XML.loadFile(patternsPath.toJava)
       val (patterns, extraValues, excludedFilesRegex) = CheckstyleFormatParser.parsePatternsXml(patternsFileXML)
       val configuration =
-        if (patterns.isEmpty) FileCfg(Some(srcDir.pathAsString), extraValues)
-        else CodacyCfg(patterns, Some(srcDir.pathAsString), extraValues)
+        PluginConfiguration(
+          patterns =
+            if (patterns.nonEmpty)
+              Some(patterns.map(p => PatternRequest(p.id, p.parameters.map(p => p.name -> p.value).toMap)).toList)
+            else None,
+          options = extraValues.map(_.map { case (k, v) => Options.Key(k) -> Options.Value(v) })
+        )
       (configuration, excludedFilesRegex)
-    } else (FileCfg(Some(srcDir.pathAsString), None), None)
+    }
   }
 
-  private def runTool(tool: Tool,
+  private def runTool(runner: ToolRunner,
                       multipleTestsDirectory: File,
-                      configuration: Configuration,
-                      excludedFilesRegex: Option[String]): Try[Set[ToolResult]] = {
+                      configuration: PluginConfiguration,
+                      excludedFilesRegex: Option[String]): Try[Seq[ToolResult]] = {
     val optRegex = excludedFilesRegex.map(_.r)
 
     def toExclude(file: File) = optRegex.exists(_.findFirstIn(file.name).nonEmpty)
@@ -83,13 +91,30 @@ object MultipleTests extends ITest {
     val filesToTest = for {
       file <- multipleTestsDirectory.listRecursively
       if file.isRegularFile && !toExclude(file)
-    } yield file.path
+    } yield file.pathAsString
 
-    tool
-      .run(multipleTestsDirectory, filesToTest.toSet, configuration)
-      .map(_.map {
-        case fileError: FileError => fileError.copy(filename = multipleTestsDirectory.relativize(fileError.filename))
-        case issue: Issue => issue.copy(filename = multipleTestsDirectory.relativize(issue.filename))
-      })
+    val pluginResultsTry =
+      runner.run(PluginRequest(multipleTestsDirectory.pathAsString, filesToTest.toList, configuration))
+
+    pluginResultsTry.map { pluginResults =>
+      val fileErrors = pluginResults.fileErrors.map(
+        fileError =>
+          FileError(filename = Paths.get(fileError.filename),
+                    message = fileError.message
+                      .getOrElse(throw new Exception(s"Message not defined for fileError on ${fileError.filename}")))
+      )
+      val results = pluginResults.results.map(
+        result =>
+          Issue(patternId = com.codacy.plugins.api.results.Pattern.Id(result.patternIdentifier),
+                filename = Paths.get(result.filename),
+                message = Issue.Message(result.message),
+                level = result.level,
+                category = result.category,
+                location = LineLocation(result.line),
+        )
+      )
+
+      results ++ fileErrors
+    }
   }
 }
