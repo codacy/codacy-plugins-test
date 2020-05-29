@@ -7,22 +7,24 @@ import wvlet.log.LogSupport
 
 private[test] object ResultPrinter extends LogSupport {
 
-  def printToolResults[A](res: Try[Set[A]], expectedResults: Set[A]): Boolean =
+  def printToolResults[A: Ordering](res: Try[Seq[A]], expectedResults: Seq[A]): Boolean =
     res match {
       case Failure(e) =>
         info("Got failure in the analysis:")
         error(exceptionToString(e))
         false
       case Success(results) =>
-        if (results == expectedResults) {
+        val sortedResults = results.sorted
+        val sortedExpectedResults = expectedResults.sorted
+        if (sortedResults == sortedExpectedResults) {
           debug(s"Got ${results.size} results.")
           true
         } else {
           error("Tool results don't match expected results:")
           error("Extra: ")
-          info(pprint.apply(results.diff(expectedResults), height = Int.MaxValue))
+          info(pprint.apply(sortedResults.diff(sortedExpectedResults), height = Int.MaxValue))
           error("Missing:")
-          info(pprint.apply(expectedResults.diff(results), height = Int.MaxValue))
+          info(pprint.apply(sortedExpectedResults.diff(sortedResults), height = Int.MaxValue))
           false
         }
     }

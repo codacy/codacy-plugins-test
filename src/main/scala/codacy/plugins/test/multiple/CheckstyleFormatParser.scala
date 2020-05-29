@@ -45,7 +45,7 @@ private[multiple] object CheckstyleFormatParser {
     }
   }
 
-  def parsePatternsXml(root: Elem): (Set[Pattern], Option[Map[String, play.api.libs.json.JsValue]], Option[String]) = {
+  def parsePatternsXml(root: Elem): (Seq[Pattern], Option[Map[String, play.api.libs.json.JsValue]], Option[String]) = {
     val extraValues = (root \ "property").map { node =>
       val v = node \@ "value"
       val value = try {
@@ -56,7 +56,8 @@ private[multiple] object CheckstyleFormatParser {
       }
       (node \@ "name", value)
     }.toMap
-    val patternsList = for {
+
+    val patternsSeq = for {
       rootChildren <- root \ "module"
       if rootChildren \@ "name" != "BeforeExecutionExclusionFileFilter"
       patternId: String = rootChildren \@ "name"
@@ -82,6 +83,6 @@ private[multiple] object CheckstyleFormatParser {
           )
       }
     }
-    (patternsList.toSet, if (extraValues.isEmpty) None else Some(extraValues), excludedFilesRegex)
+    (patternsSeq, if (extraValues.isEmpty) None else Some(extraValues), excludedFilesRegex)
   }
 }

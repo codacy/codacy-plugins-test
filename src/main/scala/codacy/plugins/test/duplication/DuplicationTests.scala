@@ -8,6 +8,7 @@ import scala.xml.XML
 
 import better.files._
 import codacy.plugins.test._
+import codacy.plugins.test.implicits.OrderingInstances._
 import codacy.plugins.test.resultprinter.ResultPrinter
 import com.codacy.analysis.core
 import com.codacy.analysis.core.model.DuplicationClone
@@ -42,21 +43,21 @@ object DuplicationTests extends ITest {
         case (directoryName, results, expectedResults, ignoreMessage) =>
           debug(s"${directoryName} should have ${expectedResults.size} results")
           if (ignoreMessage) {
-            results.exists(res => ResultPrinter.printToolResults(ignoreClonedLines(res), expectedResults.toSet))
+            results.exists(res => ResultPrinter.printToolResults(ignoreClonedLines(res), expectedResults))
           } else {
-            results.exists(ResultPrinter.printToolResults(_, expectedResults.toSet))
+            results.exists(ResultPrinter.printToolResults(_, expectedResults))
           }
       }
       .forall(identity)
   }
 
-  private def ignoreClonedLines(res: Try[Set[DuplicationClone]]): Try[Set[DuplicationClone]] = {
+  private def ignoreClonedLines(res: Try[Seq[DuplicationClone]]): Try[Seq[DuplicationClone]] = {
     res.map(duplicationClones => duplicationClones.map(dupClone => dupClone.copy(cloneLines = "")))
   }
 
   private def runDuplicationTool(srcDir: File,
                                  duplicationTool: DuplicationTool,
-                                 tool: com.codacy.analysis.core.tools.DuplicationTool): Try[Set[DuplicationClone]] = {
+                                 tool: com.codacy.analysis.core.tools.DuplicationTool): Try[Seq[DuplicationClone]] = {
     val dockerRunner = new BinaryDockerRunner[api.duplication.DuplicationClone](duplicationTool)
     val runner = new DuplicationRunner(duplicationTool, dockerRunner)
 
@@ -67,8 +68,8 @@ object DuplicationTests extends ITest {
                                       None)
     } yield {
       duplicationClones.map(
-        clone => DuplicationClone(clone.cloneLines, clone.nrTokens, clone.nrLines, clone.files.to[Set])
-      )(collection.breakOut): Set[DuplicationClone]
+        clone => DuplicationClone(clone.cloneLines, clone.nrTokens, clone.nrLines, clone.files.toSet)
+      )
     }
   }
 }
