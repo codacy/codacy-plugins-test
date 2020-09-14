@@ -19,7 +19,6 @@ import com.codacy.plugins.results.{PatternRequest, PluginConfiguration, PluginRe
 import com.codacy.plugins.runners.BinaryDockerRunner
 import com.codacy.plugins.utils.BinaryDockerHelper
 
-
 object MultipleTests extends ITest {
 
   val opt = "multiple"
