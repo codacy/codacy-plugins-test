@@ -43,9 +43,11 @@ object MultipleTests extends ITest {
         val srcDir = testDirectory / "src"
         // on multiple tests, the language is not validated but required. We used Scala.
         val dockerTool = createDockerTool(Set(Languages.Scala), dockerImage)
-        val toolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
         val dockerRunner = new BinaryDockerRunner[Result](dockerTool)
-        val runner = new ToolRunner(dockerTool, toolDocumentation, dockerRunner)
+        val dockerToolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper())
+
+        val runner =
+          new ToolRunner(dockerToolDocumentation.toolSpecification, dockerToolDocumentation.toolPrefix, dockerRunner)
         val resultFile = testDirectory / "results.xml"
         val resultFileXML = XML.loadFile(resultFile.toJava)
         val expectedResults = CheckstyleFormatParser.parseResultsXml(resultFileXML)

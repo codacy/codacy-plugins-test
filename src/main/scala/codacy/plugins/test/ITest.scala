@@ -8,6 +8,7 @@ import com.codacy.analysis.core.model.{FileError, Issue, Pattern, ToolResult}
 import com.codacy.plugins.api._
 import com.codacy.plugins.api.languages.{Language, Languages}
 import com.codacy.plugins.results.traits.DockerTool
+import com.codacy.plugins.utils.DockerHelper
 import wvlet.log.LogSupport
 
 final case class DockerImage(name: String, version: String) {
@@ -53,8 +54,9 @@ trait ITest extends LogSupport {
                    prefix = "",
                    needsCompilation = false,
                    hasUIConfiguration = true) {
-      override val dockerTag: String = dockerImageVersion
-      override val dockerImageName: String = dockerImageFor(Option(dockerImageVersion))
+      override val dockerImageName = s"${dockerImage.name}:${dockerImageVersion}"
+
+      override def toolVersion(dockerHelper: DockerHelper): Option[String] = Some(dockerImageVersion)
     }
   }
 
