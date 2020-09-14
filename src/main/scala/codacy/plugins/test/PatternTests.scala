@@ -24,9 +24,12 @@ object PatternTests extends ITest with CustomMatchers {
     val testsDirectory = docsDirectory.toScala / DockerHelpers.testsDirectoryName
     val languages = findLanguages(testsDirectory.toJava, dockerImage)
     val dockerTool = createDockerTool(languages, dockerImage)
-    val toolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
     val dockerRunner = new BinaryDockerRunner[Result](dockerTool)
-    val runner = new ToolRunner(dockerTool, toolDocumentation, dockerRunner)
+    val dockerToolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper())
+
+    val specOpt = dockerToolDocumentation.toolSpecification
+    val runner =
+      new ToolRunner(dockerToolDocumentation.toolSpecification, dockerToolDocumentation.toolPrefix, dockerRunner)
     val tools = languages.map(new core.tools.Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
 
     val testFiles = new TestFilesParser(testsDirectory.toJava).getTestFiles
@@ -42,7 +45,7 @@ object PatternTests extends ITest with CustomMatchers {
         tools
           .filter(_.languageToRun.name.equalsIgnoreCase(testFile.language.toString))
           .map { tool =>
-            val analysisResultTry = analyseFile(toolDocumentation.spec, testsDirectory, testFile, tool)
+            val analysisResultTry = analyseFile(specOpt, testsDirectory, testFile, tool)
             (testFile, analysisResultTry.map(matches => (matches, beEqualTo(testFile.matches).apply(matches))))
           }
       }
@@ -55,7 +58,7 @@ object PatternTests extends ITest with CustomMatchers {
           debug(s"""- $filename should have ${testFile.matches.length} matches with patterns: ${testFile.enabledPatterns
                      .map(_.name)
                      .mkString(", ")}
-               |  + ${matches.size} matches found in lines: ${matches
+                 |  + ${matches.size} matches found in lines: ${matches
                      .map(_.line)
                      .to[Seq]
                      .sorted

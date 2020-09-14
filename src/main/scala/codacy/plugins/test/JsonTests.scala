@@ -22,28 +22,29 @@ object JsonTests extends ITest {
     val dockerToolDocumentation: DockerToolDocumentation =
       readDockerToolDocumentation(docsDirectory.toScala / DockerHelpers.testsDirectoryName, dockerImage)
 
-    dockerToolDocumentation.spec.fold(error("Could not read /docs/patterns.json successfully")) { _ =>
+    dockerToolDocumentation.toolSpecification.fold(error("Could not read /docs/patterns.json successfully")) { _ =>
       debug("Read /docs/patterns.json successfully")
     }
 
-    dockerToolDocumentation.descriptions.fold(error("Could not read /docs/description/description.json successfully")) {
-      descriptions =>
-        debug("Read /docs/description/description.json successfully")
-        descriptions.foreach { patternDescription =>
-          patternDescription.explanation.fold(
-            error(s"Could not read /docs/description/${patternDescription.patternId}.md")
-          ) { _ =>
-            debug(s"Read /docs/description/${patternDescription.patternId}.md successfully")
-          }
+    dockerToolDocumentation.patternDescriptions.fold(
+      error("Could not read /docs/description/description.json successfully")
+    ) { descriptions =>
+      debug("Read /docs/description/description.json successfully")
+      descriptions.foreach { patternDescription =>
+        patternDescription.explanation.fold(
+          error(s"Could not read /docs/description/${patternDescription.patternId}.md")
+        ) { _ =>
+          debug(s"Read /docs/description/${patternDescription.patternId}.md successfully")
         }
+      }
     }
 
-    (dockerToolDocumentation.spec, dockerToolDocumentation.descriptions) match {
+    (dockerToolDocumentation.toolSpecification, dockerToolDocumentation.patternDescriptions) match {
       case (Some(tool), Some(descriptions)) =>
         val diffResult = new CollectionHelper[Pattern.Specification, PatternDescription, String](tool.patterns.toSeq,
                                                                                                  descriptions.toSeq)({
           pattern =>
-            val parameters = pattern.parameters.getOrElse(Seq.empty).map(_.name.value).toSeq.sorted
+            val parameters = pattern.parameters.map(_.name.value).toSeq.sorted
             generateUniquePatternSignature(pattern.patternId.value, parameters)
         }, { description =>
           val parameters = description.parameters.getOrElse(Seq.empty).map(_.name.value).toSeq.sorted
@@ -107,6 +108,7 @@ object JsonTests extends ITest {
   private def readDockerToolDocumentation(testsDirectory: File, dockerImage: DockerImage) = {
     val languages = findLanguages(testsDirectory.toJava, dockerImage)
     val dockerTool = createDockerTool(languages, dockerImage)
+
     new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
   }
 

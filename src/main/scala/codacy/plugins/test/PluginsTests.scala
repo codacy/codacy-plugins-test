@@ -25,20 +25,22 @@ object PluginsTests extends ITest {
 
     val languages = findLanguages(testsDirectory.toJava, dockerImage)
     val dockerTool = createDockerTool(languages, dockerImage)
-    val dockerToolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
-    val specOpt = dockerToolDocumentation.spec
+
     val dockerRunner = new BinaryDockerRunner[Result](dockerTool)
-    val runner = new ToolRunner(dockerTool, dockerToolDocumentation, dockerRunner)
+    val dockerToolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper())
+
+    val specOpt = dockerToolDocumentation.toolSpecification
+    val runner =
+      new ToolRunner(dockerToolDocumentation.toolSpecification, dockerToolDocumentation.toolPrefix, dockerRunner)
 
     specOpt.forall { spec =>
       debug(s"  + ${spec.name} should find results for all patterns")
 
       val patterns: Set[Pattern] = spec.patterns.map(
         p =>
-          core.model.Pattern(p.patternId.value, p.parameters.fold(Set.empty[core.model.Parameter])(_.map {
-            parameterSpec =>
-              core.model.Parameter(parameterSpec.name.toString(), parameterSpec.default.toString)
-          }(collection.breakOut)))
+          core.model.Pattern(p.patternId.value, p.parameters.map { parameterSpec =>
+            core.model.Parameter(parameterSpec.name.toString(), parameterSpec.default.toString)
+          }(collection.breakOut))
       )(collection.breakOut)
       val codacyCfg = CodacyCfg(patterns)
 
@@ -66,9 +68,9 @@ object PluginsTests extends ITest {
         case Success(missingPatterns) =>
           if (missingPatterns.nonEmpty) {
             error(s"""
-                |Some patterns are not tested on plugin ${spec.name}
-                |-> Missing patterns:
-                |${missingPatterns.mkString(", ")}
+                       |Some patterns are not tested on plugin ${spec.name}
+                       |-> Missing patterns:
+                       |${missingPatterns.mkString(", ")}
               """.stripMargin)
             false
           } else {
