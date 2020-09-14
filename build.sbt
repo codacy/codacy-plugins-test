@@ -11,27 +11,20 @@ libraryDependencies ++= Seq("com.codacy" %% "codacy-analysis-core" % "3.3.7",
                             "org.wvlet.airframe" %% "airframe-log" % "19.12.4",
                             codacy.libs.scalatest)
 
-lazy val graalVMNativeImageUseDocker = settingKey[Boolean]("Use docker to build the native-image")
-graalVMNativeImageUseDocker := true
+enablePlugins(NativeImagePlugin)
 
-enablePlugins(GraalVMNativeImagePlugin)
-
-graalVMNativeImageGraalVersion := {
-  if (graalVMNativeImageUseDocker.value) Some("20.0.0-java8")
-  else None
-}
-
-graalVMNativeImageOptions := Seq("--enable-http",
-                                 "--enable-https",
-                                 "--enable-url-protocols=http,https,file,jar",
-                                 "--enable-all-security-services",
-                                 "-H:+JNI",
-                                 "-H:IncludeResourceBundles=com.sun.org.apache.xerces.internal.impl.msg.XMLMessages",
-                                 "-H:+ReportExceptionStackTraces",
-                                 "--no-fallback",
-                                 "--initialize-at-build-time",
-                                 "--report-unsupported-elements-at-runtime") ++ {
-  if (!graalVMNativeImageUseDocker.value && sys.props.get("os.name").contains("Mac OS X")) Seq.empty
+nativeImageOptions ++= Seq("--enable-http",
+                           "--enable-https",
+                           "--enable-url-protocols=http,https,file,jar",
+                           "--enable-all-security-services",
+                           "-H:+JNI",
+                           "-H:IncludeResourceBundles=com.sun.org.apache.xerces.internal.impl.msg.XMLMessages",
+                           "-H:+AllowIncompleteClasspath",
+                           "-H:+ReportExceptionStackTraces",
+                           "--no-fallback",
+                           "--initialize-at-build-time",
+                           "--report-unsupported-elements-at-runtime") ++ {
+  if (sys.props.get("os.name").contains("Mac OS X")) Seq.empty
   else Seq("--static")
 }
 

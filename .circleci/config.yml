@@ -58,7 +58,7 @@ jobs:
           at: ~/workdir
       - run: |
           mkdir -p ~/workdir/artifacts/
-          upx --lzma -o ~/workdir/artifacts/$CIRCLE_PROJECT_REPONAME-linux-$(cat .version) ~/workdir/target/graalvm-native-image/$CIRCLE_PROJECT_REPONAME
+          upx --lzma -o ~/workdir/artifacts/$CIRCLE_PROJECT_REPONAME-linux-$(cat .version) ~/workdir/target/native-image/$CIRCLE_PROJECT_REPONAME
       - persist_to_workspace:
           root: ~/workdir
           paths:
@@ -93,7 +93,7 @@ workflows:
             - populate_cache
       - codacy/sbt:
           name: build_native_image
-          cmd: sbt graalvm-native-image:packageBin
+          cmd: sbt nativeImage
           persist_to_workspace: true
           requires:
             - compile_and_test
