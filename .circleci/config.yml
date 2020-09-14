@@ -105,10 +105,10 @@ workflows:
           cmd: |
             curl -T ~/workdir/artifacts/$CIRCLE_PROJECT_REPONAME-linux-$(cat .version) -ucodacy-ci:$BINTRAY_API_KEY -H "X-Bintray-Package:$CIRCLE_PROJECT_REPONAME" -H "X-Bintray-Version:$(cat .version)" https://api.bintray.com/content/codacy/Binaries/$(cat .version)/$CIRCLE_PROJECT_REPONAME-linux
             curl -X POST -ucodacy-ci:$BINTRAY_API_KEY https://api.bintray.com/content/codacy/Binaries/$CIRCLE_PROJECT_REPONAME/$(cat .version)/publish
-          filters:
-            branches:
-              only:
-                - master
+          # filters:
+          #   branches:
+          #     only:
+          #       - master
           context: CodacyBintray
           requires:
             - compress_and_package_artifacts
