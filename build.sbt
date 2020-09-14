@@ -1,6 +1,6 @@
 name := "codacy-plugins-test"
 
-scalaVersion := "2.12.10"
+scalaVersion := "2.12.12"
 
 // Needed to avoid ResourceLeak with Airframe-Log
 fork in run := true
@@ -17,7 +17,7 @@ graalVMNativeImageUseDocker := true
 enablePlugins(GraalVMNativeImagePlugin)
 
 graalVMNativeImageGraalVersion := {
-  if (graalVMNativeImageUseDocker.value) Some("20.0.0-java8")
+  if (graalVMNativeImageUseDocker.value) Some("20.2.0-java8")
   else None
 }
 
