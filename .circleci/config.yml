@@ -110,7 +110,7 @@ workflows:
             branches:
               only:
                 - master
-          context: CodacyBintray
+          context: CodacyAWS
           requires:
             - compress_and_package_artifacts
       - codacy/publish_ghr:
