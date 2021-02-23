@@ -57,6 +57,8 @@ jobs:
       - attach_workspace:
           at: ~/workdir
       - run: |
+          # Uncompress target folders compressed by codacy/sbt orb
+          tar -xf targets.tar.gz
           mkdir -p ~/workdir/artifacts/
           upx --lzma -o ~/workdir/artifacts/$CIRCLE_PROJECT_REPONAME-linux ~/workdir/target/native-image/$CIRCLE_PROJECT_REPONAME
       - persist_to_workspace:
