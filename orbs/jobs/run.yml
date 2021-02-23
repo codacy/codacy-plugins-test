@@ -49,7 +49,7 @@ steps:
       command: |
         mkdir -p codacy-plugins-test
         cd codacy-plugins-test
-        LINK="https://bintray.com/codacy/Binaries/download_file?file_path=$CODACY_PLUGINS_TEST_VERSION%2Fcodacy-plugins-test-linux"
+        LINK="https://artifacts.codacy.com/bin/codacy-plugins-test/$CODACY_PLUGINS_TEST_VERSION/codacy-plugins-test-linux"
         wget -nc $LINK -O $FILENAME # FILENAME injected in .circle/config.yml
         chmod +x $FILENAME
         docker load --input << parameters.docker_tar_path >>

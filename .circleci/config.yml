@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  codacy: codacy/base@2.7.0
+  codacy: codacy/base@5.2.0
 references:
   circleci_job: &circleci_job
     docker:
@@ -58,7 +58,7 @@ jobs:
           at: ~/workdir
       - run: |
           mkdir -p ~/workdir/artifacts/
-          upx --lzma -o ~/workdir/artifacts/$CIRCLE_PROJECT_REPONAME-linux-$(cat .version) ~/workdir/target/native-image/$CIRCLE_PROJECT_REPONAME
+          upx --lzma -o ~/workdir/artifacts/$CIRCLE_PROJECT_REPONAME-linux ~/workdir/target/native-image/$CIRCLE_PROJECT_REPONAME
       - persist_to_workspace:
           root: ~/workdir
           paths:
@@ -100,11 +100,10 @@ workflows:
       - compress_and_package_artifacts:
           requires:
             - build_native_image
-      - codacy/shell:
-          name: publish_bintray
-          cmd: |
-            curl -T ~/workdir/artifacts/$CIRCLE_PROJECT_REPONAME-linux-$(cat .version) -ucodacy-ci:$BINTRAY_API_KEY -H "X-Bintray-Package:$CIRCLE_PROJECT_REPONAME" -H "X-Bintray-Version:$(cat .version)" https://api.bintray.com/content/codacy/Binaries/$(cat .version)/$CIRCLE_PROJECT_REPONAME-linux
-            curl -X POST -ucodacy-ci:$BINTRAY_API_KEY https://api.bintray.com/content/codacy/Binaries/$CIRCLE_PROJECT_REPONAME/$(cat .version)/publish
+      - codacy/publish_s3:
+          name: publish_artifacts
+          files: artifacts/codacy-plugins-test-linux
+          path: bin/codacy-plugins-test
           filters:
             branches:
               only:
@@ -127,7 +126,7 @@ workflows:
           context: CodacyAWS
           requires:
             - publish_ghr
-            - publish_bintray
+            - publish_artifacts
       - publish_dev:
           context: CodacyCircleCI
           requires:
