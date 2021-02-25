@@ -123,16 +123,9 @@ workflows:
                 - master
           requires:
             - compress_and_package_artifacts
-      - codacy/tag_version:
-          name: tag_version
-          context: CodacyAWS
-          requires:
-            - publish_ghr
-            - publish_artifacts
       - publish_dev:
           context: CodacyCircleCI
           requires:
-            - tag_version
             - pack_and_validate
           filters:
             branches:
@@ -141,7 +134,8 @@ workflows:
       - publish_prod:
           context: CodacyCircleCI
           requires:
-            - tag_version
+            - publish_ghr
+            - publish_artifacts
             - pack_and_validate
           filters:
             branches:
