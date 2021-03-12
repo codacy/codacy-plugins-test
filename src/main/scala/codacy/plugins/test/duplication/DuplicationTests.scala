@@ -28,7 +28,7 @@ object DuplicationTests extends ITest {
       .toPar(testsDirectory.list.toList)
       .map { testDirectory =>
         val srcDir = testDirectory / "src"
-        val languages = findLanguages(srcDir.toJava, dockerImage)
+        val languages = findLanguages(srcDir.toJava)
         val duplicationTool = new DuplicationTool(languages.toList, dockerImage.name, dockerImage.version) {}
         val duplicationTools = languages.map(l => new core.tools.DuplicationTool(duplicationTool, l))
         val resultFile = testDirectory / "results.xml"

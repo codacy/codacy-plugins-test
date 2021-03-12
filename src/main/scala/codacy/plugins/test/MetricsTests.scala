@@ -21,7 +21,7 @@ object MetricsTests extends ITest with CustomMatchers {
     val testsDirectory = docsDirectory.toScala / DockerHelpers.testsDirectoryName
     debug(s"Running MetricsTests:")
 
-    val languages = findLanguages(testsDirectory.toJava, dockerImage)
+    val languages = findLanguages(testsDirectory.toJava)
     val metricsTool = new traits.MetricsTool(languages.toList, dockerImage.name, dockerImage.version) {}
     val tools = languages.map(language => new MetricsTool(metricsTool, language))
 

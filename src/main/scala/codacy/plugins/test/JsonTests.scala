@@ -106,7 +106,7 @@ object JsonTests extends ITest {
   }
 
   private def readDockerToolDocumentation(testsDirectory: File, dockerImage: DockerImage) = {
-    val languages = findLanguages(testsDirectory.toJava, dockerImage)
+    val languages = findLanguages(testsDirectory.toJava)
     val dockerTool = createDockerTool(languages, dockerImage)
 
     new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
