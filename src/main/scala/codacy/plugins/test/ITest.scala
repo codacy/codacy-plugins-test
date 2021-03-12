@@ -3,8 +3,7 @@ package codacy.plugins.test
 import java.io.{File => JFile}
 import java.nio.file.Path
 
-import com.codacy.analysis.core
-import com.codacy.analysis.core.model.{FileError, Issue, Pattern, ToolResult}
+import com.codacy.analysis.core.model.{FileError, Issue, Pattern, ToolResult, ToolSpec}
 import com.codacy.plugins.api._
 import com.codacy.plugins.api.languages.{Language, Languages}
 import com.codacy.plugins.results.traits.DockerTool
@@ -22,21 +21,16 @@ trait ITest extends LogSupport {
 
   def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean
 
-  protected def findLanguages(testsDirectory: JFile, dockerImage: DockerImage): Set[Language] = {
+  protected def findLanguages(testsDirectory: JFile): Set[Language] = {
     val languagesFromProperties =
       sys.props.get("codacy.tests.languages").map(_.split(",").flatMap(Languages.fromName).to[Set])
-
-    lazy val languagesFromTool = (core.tools.Tool.availableTools).collectFirst {
-      case tool if tool.dockerName == dockerImage.name =>
-        tool.languages
-    }
 
     lazy val languagesFromFiles: Set[Language] = (for {
       testFile <- new TestFilesParser(testsDirectory).getTestFiles
       language <- Languages.fromName(testFile.language.toString)
     } yield language)(collection.breakOut)
 
-    languagesFromProperties.orElse(languagesFromTool).getOrElse(languagesFromFiles)
+    languagesFromProperties.getOrElse(languagesFromFiles)
   }
 
   protected def createDockerTool(languages: Set[Language], dockerImage: DockerImage): DockerTool = {
@@ -58,6 +52,27 @@ trait ITest extends LogSupport {
 
       override def toolVersion(dockerHelper: DockerHelper): Option[String] = Some(dockerImageVersion)
     }
+  }
+
+  protected def createToolSpec(languages: Set[Language], dockerImage: DockerImage): ToolSpec = {
+    val dockerImageName = dockerImage.name
+    val dockerImageVersion = dockerImage.version
+
+    new ToolSpec(uuid = dockerImageName,
+                 dockerImage = s"${dockerImage.name}:${dockerImageVersion}",
+                 version = dockerImageVersion,
+                 languages = languages,
+                 name = dockerImageName,
+                 shortName = dockerImageName,
+                 documentationUrl = Some(""),
+                 sourceCodeUrl = Some(""),
+                 prefix = "",
+                 needsCompilation = false,
+                 hasConfigFile = true,
+                 isClientSide = false,
+                 hasUIConfiguration = true,
+                 isDefault = true,
+                 configFilenames = Set.empty)
   }
 
   protected def filterResults(spec: Option[results.Tool.Specification],

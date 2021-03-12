@@ -22,15 +22,16 @@ object PatternTests extends ITest with CustomMatchers {
   def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     debug(s"Running PatternsTests:")
     val testsDirectory = docsDirectory.toScala / DockerHelpers.testsDirectoryName
-    val languages = findLanguages(testsDirectory.toJava, dockerImage)
+    val languages = findLanguages(testsDirectory.toJava)
     val dockerTool = createDockerTool(languages, dockerImage)
+    val toolSpec = createToolSpec(languages, dockerImage)
     val dockerRunner = new BinaryDockerRunner[Result](dockerTool)
     val dockerToolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper())
 
     val specOpt = dockerToolDocumentation.toolSpecification
     val runner =
       new ToolRunner(dockerToolDocumentation.toolSpecification, dockerToolDocumentation.toolPrefix, dockerRunner)
-    val tools = languages.map(new core.tools.Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
+    val tools = languages.map(new core.tools.Tool(runner, DockerRunner.defaultRunTimeout)(toolSpec, _))
 
     val testFiles = new TestFilesParser(testsDirectory.toJava).getTestFiles
 

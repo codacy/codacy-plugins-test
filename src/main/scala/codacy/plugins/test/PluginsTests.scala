@@ -23,8 +23,9 @@ object PluginsTests extends ITest {
     debug("Running PluginsTests:")
     val testsDirectory = docsDirectory.toScala / DockerHelpers.testsDirectoryName
 
-    val languages = findLanguages(testsDirectory.toJava, dockerImage)
+    val languages = findLanguages(testsDirectory.toJava)
     val dockerTool = createDockerTool(languages, dockerImage)
+    val toolSpec = createToolSpec(languages, dockerImage)
 
     val dockerRunner = new BinaryDockerRunner[Result](dockerTool)
     val dockerToolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper())
@@ -44,7 +45,7 @@ object PluginsTests extends ITest {
       )(collection.breakOut)
       val codacyCfg = CodacyCfg(patterns)
 
-      val tools = languages.map(new core.tools.Tool(runner, DockerRunner.defaultRunTimeout)(dockerTool, _))
+      val tools = languages.map(new core.tools.Tool(runner, DockerRunner.defaultRunTimeout)(toolSpec, _))
 
       val resultsUUIDSTry: Try[Set[String]] = {
         val files = FileHelper.listFiles(testsDirectory.toJava)
