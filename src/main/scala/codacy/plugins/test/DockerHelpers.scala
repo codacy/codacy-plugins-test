@@ -9,8 +9,6 @@ import better.files.File
 
 object DockerHelpers {
   val testsDirectoryName = "tests"
-  val multipleTestsDirectoryName = "multiple-tests"
-  val duplicationTestsDirectoryName = "duplication-tests"
 
   private val processLogger = ProcessLogger((_: String) => ())
 

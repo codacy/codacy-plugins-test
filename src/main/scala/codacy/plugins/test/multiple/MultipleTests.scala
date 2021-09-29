@@ -26,16 +26,7 @@ object MultipleTests extends ITest {
   def run(docsDirectory: JFile, dockerImage: DockerImage, optArgs: Seq[String]): Boolean = {
     debug(s"Running MultipleTests:")
 
-    val selectedTest = optArgs.sliding(2).collectFirst {
-      case Seq("--only", multipleTestDir) =>
-        multipleTestDir
-    }
-    val multipleTestsDirectory = docsDirectory.toScala / DockerHelpers.multipleTestsDirectoryName
-
-    val directories = selectedTest match {
-      case Some(dirName) => Seq(multipleTestsDirectory / dirName)
-      case None => multipleTestsDirectory.list.toSeq
-    }
+    val directories = multipleDirectories(docsDirectory.toScala / "multiple-tests", optArgs)
 
     ParallelCollectionsUtils
       .toPar(directories)
