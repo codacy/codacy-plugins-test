@@ -156,6 +156,7 @@ bin/
 /project/project
 /project/target
 /target
+/.bsp
 tmp/
 test-result
 server.pid

@@ -3,6 +3,7 @@ package codacy.plugins.test
 import java.io.{File => JFile}
 import java.nio.file.Path
 
+import better.files._
 import com.codacy.analysis.core.model.{FileError, Issue, Pattern, ToolResult, ToolSpec}
 import com.codacy.plugins.api._
 import com.codacy.plugins.api.languages.{Language, Languages}
@@ -149,5 +150,17 @@ trait ITest extends LogSupport {
       info(fileErrorsResults.map(fe => s"* File: ${fe.filename}, Error: ${fe.message}").mkString("\n"))
     }
     issuesResults
+  }
+
+  protected def multipleDirectories(testsDirectory: File, optArgs: Seq[String]) = {
+    val selectedTest = optArgs.sliding(2).collectFirst {
+      case Seq("--only", multipleTestDir) =>
+        multipleTestDir
+    }
+
+    selectedTest match {
+      case Some(dirName) => Seq(testsDirectory / dirName)
+      case None => testsDirectory.list.toSeq
+    }
   }
 }

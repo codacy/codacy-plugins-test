@@ -3,10 +3,10 @@ name := "codacy-plugins-test"
 scalaVersion := "2.12.12"
 
 // Needed to avoid ResourceLeak with Airframe-Log
-fork in run := true
-cancelable in Global := true
+run / fork := true
+Global / cancelable := true
 
-libraryDependencies ++= Seq("com.codacy" %% "codacy-analysis-core" % "5.2.4",
+libraryDependencies ++= Seq("com.codacy" %% "codacy-analysis-core" % "5.2.5",
                             "com.lihaoyi" %% "pprint" % "0.6.2",
                             "org.wvlet.airframe" %% "airframe-log" % "21.3.0",
                             codacy.libs.scalatest)
