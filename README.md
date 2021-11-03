@@ -137,14 +137,6 @@ sbt "runMain codacy.plugins.DockerTest json <DOCKER_NAME>:<DOCKER_VERSION>"
 
 -   `codacy.tests.ignore.descriptions` - if this variable is defined we do not check if all the patterns have descriptions
 
-> PluginsTests
-
-Checks if all the patterns have an occurrence in the test files
-
-```sh
-sbt "runMain codacy.plugins.DockerTest plugin <DOCKER_NAME>:<DOCKER_VERSION>"
-```
-
 > PatternTests
 
 Check if all the patterns defined in the test files occur in the specified line
@@ -154,8 +146,6 @@ sbt "runMain codacy.plugins.DockerTest pattern <DOCKER_NAME>:<DOCKER_VERSION>"
 ```
 
 **Options:**
-
--   `codacy.tests.threads` - number of parallel threads to run the tests
 
 -   `codacy.tests.languages` - languages supported by the tool. If this option isn't provided, the languages
     will be inferred from the test files. Example: `-Dcodacy.tests.languages=ruby,java,javascript`
@@ -180,14 +170,6 @@ Check if the tool runs with multiple patterns and test files at the same time an
 
 ```sh
 sbt "runMain codacy.plugins.DockerTest multiple <DOCKER_NAME>:<DOCKER_VERSION>"
-```
-
-> All
-
-Runs PatternTests, JsonTests and PluginTests
-
-```sh
-sbt "runMain codacy.plugins.DockerTest all <DOCKER_NAME>:<DOCKER_VERSION>"
 ```
 
 > Debug
