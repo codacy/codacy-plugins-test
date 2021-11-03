@@ -11,10 +11,6 @@ parameters:
     type: boolean
     default: true
     description: "Run 'pattern' tests in codacy-plugins-test"
-  run_plugin_tests:
-    type: boolean
-    default: false
-    description: "Run 'plugin' tests in codacy-plugins-test"
   run_metrics_tests:
     type: boolean
     default: false
@@ -67,13 +63,6 @@ steps:
             name: Run Pattern Tests
             command: |
               codacy-plugins-test/$FILENAME pattern << parameters.docker_image_name >>:<< parameters.docker_image_tag >>
-  - when:
-      condition: << parameters.run_plugin_tests >>
-      steps:
-        - run:
-            name: Run Plugin Tests
-            command: |
-              codacy-plugins-test/$FILENAME plugin << parameters.docker_image_name >>:<< parameters.docker_image_tag >>
   - when:
       condition: << parameters.run_metrics_tests >>
       steps:

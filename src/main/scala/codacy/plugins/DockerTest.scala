@@ -14,12 +14,11 @@ object DockerTest extends LogSupport {
   Logger.setDefaultFormatter(LogFormatter.SimpleLogFormatter)
   Logger.setDefaultLogLevel(LogLevel.DEBUG)
 
-  private lazy val config = Map("all" -> Seq(JsonTests, PluginsTests, PatternTests)) ++
-    possibleTests.map { test =>
-      test.opt -> Seq(test)
-    }
+  private lazy val config = possibleTests.map { test =>
+    test.opt -> Seq(test)
+  }.toMap
   private lazy val possibleTests =
-    Seq(JsonTests, PluginsTests, PatternTests, MultipleTests, MetricsTests, DuplicationTests)
+    Seq(JsonTests, PatternTests, MultipleTests, MetricsTests, DuplicationTests)
   private lazy val possibleTestNames = config.keySet
 
   def main(args: Array[String]): Unit = {
