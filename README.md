@@ -125,7 +125,7 @@ configuration (if it exists)), two files named `patterns.xml` and `results.xml` 
 
 ## Usage
 
-> JsonTests
+### JsonTests
 
 Checks if the patterns definitions are in the correct format
 
@@ -133,11 +133,11 @@ Checks if the patterns definitions are in the correct format
 sbt "runMain codacy.plugins.DockerTest json <DOCKER_NAME>:<DOCKER_VERSION>"
 ```
 
-**Options:**
+Options:
 
 -   `codacy.tests.ignore.descriptions` - if this variable is defined we do not check if all the patterns have descriptions
 
-> PatternTests
+### PatternTests
 
 Check if all the patterns defined in the test files occur in the specified line
 
@@ -145,7 +145,7 @@ Check if all the patterns defined in the test files occur in the specified line
 sbt "runMain codacy.plugins.DockerTest pattern <DOCKER_NAME>:<DOCKER_VERSION>"
 ```
 
-**Options:**
+Options:
 
 -   `codacy.tests.languages` - languages supported by the tool. If this option isn't provided, the languages
     will be inferred from the test files. Example: `-Dcodacy.tests.languages=ruby,java,javascript`
@@ -156,7 +156,7 @@ Alternatively, you can run a specific test file:
 sbt "runMain codacy.plugins.DockerTest pattern <DOCKER_NAME>:<DOCKER_VERSION> no-curly-brackets"
 ```
 
-> MetricsTests
+### MetricsTests
 
 Check if the metrics defined in the test files match with same complexieties in the specified lines
 
@@ -164,7 +164,7 @@ Check if the metrics defined in the test files match with same complexieties in 
 sbt "runMain codacy.plugins.DockerTest metrics <DOCKER_NAME>:<DOCKER_VERSION>"
 ```
 
-> MultipleTests
+### MultipleTests
 
 Check if the tool runs with multiple patterns and test files at the same time and configuration file behavior as well
 
@@ -172,9 +172,10 @@ Check if the tool runs with multiple patterns and test files at the same time an
 sbt "runMain codacy.plugins.DockerTest multiple <DOCKER_NAME>:<DOCKER_VERSION>"
 ```
 
-> Debug
+Options:
 
-If you need to debug the output of the dockers after the tests you can request the runner to not remove them with:
+- `--only` by adding this flag, followed by the folder name, you can run a single test of the multiple folder ``` sbt "runMain codacy.plugins.DockerTest multiple <DOCKER_NAME>:<DOCKER_VERSION>" --only <folderName> ```
+
 
 ## Docs
 
