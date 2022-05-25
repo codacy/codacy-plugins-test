@@ -1,13 +1,12 @@
 package codacy.plugins.test
 
-import java.io.{File => JFile}
-
-import scala.util.Try
-
 import codacy.utils.FileHelper
 import com.codacy.plugins.api.languages.{Language, Languages}
 import com.codacy.plugins.api.metrics.{FileMetrics, LineComplexity}
 import play.api.libs.json.Json
+
+import java.io.{File => JFile}
+import scala.util.Try
 
 import Utils._
 

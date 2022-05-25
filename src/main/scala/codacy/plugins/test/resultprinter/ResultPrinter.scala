@@ -1,9 +1,9 @@
 package codacy.plugins.test.resultprinter
 
-import scala.util.{Failure, Success, Try}
-
 import codacy.plugins.test.Utils.exceptionToString
 import wvlet.log.LogSupport
+
+import scala.util.{Failure, Success, Try}
 
 private[test] object ResultPrinter extends LogSupport {
 

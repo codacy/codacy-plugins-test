@@ -1,11 +1,5 @@
 package codacy.plugins.test.multiple
 
-import java.io.{File => JFile}
-import java.nio.file.Paths
-
-import scala.util.Try
-import scala.xml.XML
-
 import better.files._
 import codacy.plugins.test._
 import codacy.plugins.test.implicits.OrderingInstances._
@@ -18,6 +12,11 @@ import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.results.{PatternRequest, PluginConfiguration, PluginRequest}
 import com.codacy.plugins.runners.BinaryDockerRunner
 import com.codacy.plugins.utils.BinaryDockerHelper
+
+import java.io.{File => JFile}
+import java.nio.file.Paths
+import scala.util.Try
+import scala.xml.XML
 
 object MultipleTests extends ITest {
 

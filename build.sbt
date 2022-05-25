@@ -1,6 +1,6 @@
 name := "codacy-plugins-test"
 
-scalaVersion := "2.12.12"
+scalaVersion := "2.12.15"
 
 // Needed to avoid ResourceLeak with Airframe-Log
 run / fork := true
@@ -13,16 +13,16 @@ libraryDependencies ++= Seq("com.codacy" %% "codacy-analysis-core" % "5.2.5",
 
 enablePlugins(NativeImagePlugin)
 
+nativeImageVersion := "22.1.0"
+
 nativeImageOptions ++= Seq("--enable-http",
                            "--enable-https",
-                           "--enable-url-protocols=http,https,file,jar",
-                           "--enable-all-security-services",
+                           "--enable-url-protocols=http,https,jar",
                            "-H:+JNI",
                            "-H:IncludeResourceBundles=com.sun.org.apache.xerces.internal.impl.msg.XMLMessages",
                            "-H:+AllowIncompleteClasspath",
                            "-H:+ReportExceptionStackTraces",
                            "--no-fallback",
-                           "--initialize-at-build-time",
                            "--report-unsupported-elements-at-runtime") ++ {
   if (sys.props.get("os.name").contains("Mac OS X")) Seq.empty
   else Seq("--static")
@@ -30,9 +30,9 @@ nativeImageOptions ++= Seq("--enable-http",
 
 // Scalafix
 
-ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.3.1-RC2"
+ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.6.0"
 ThisBuild / scalacOptions += "-Ywarn-unused"
 
-addCommandAlias("scalafixRun", "scalafixEnable; compile:scalafix; test:scalafix")
+addCommandAlias("scalafixRun", "scalafixEnable; Compile / scalafix; Test / scalafix")
 
-addCommandAlias("scalafixCheck", "scalafixEnable; compile:scalafix --check; test:scalafix --check")
+addCommandAlias("scalafixCheck", "scalafixEnable; Compile / scalafix --check; Test / scalafix --check")
