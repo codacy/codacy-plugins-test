@@ -1,11 +1,5 @@
 package codacy.plugins.test.duplication
 
-import java.io.{File => JFile}
-
-import scala.concurrent.duration._
-import scala.util.Try
-import scala.xml.XML
-
 import better.files._
 import codacy.plugins.test._
 import codacy.plugins.test.implicits.OrderingInstances._
@@ -16,6 +10,11 @@ import com.codacy.plugins.api
 import com.codacy.plugins.api.duplication.DuplicationTool.CodacyConfiguration
 import com.codacy.plugins.duplication.traits.{DuplicationRunner, DuplicationTool}
 import com.codacy.plugins.runners.BinaryDockerRunner
+
+import java.io.{File => JFile}
+import scala.concurrent.duration._
+import scala.util.Try
+import scala.xml.XML
 
 object DuplicationTests extends ITest {
 

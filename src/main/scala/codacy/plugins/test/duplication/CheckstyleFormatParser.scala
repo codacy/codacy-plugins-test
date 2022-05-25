@@ -1,10 +1,10 @@
 package codacy.plugins.test.duplication
 
-import scala.xml.Elem
-
 import codacy.plugins.test.checkstyle.CheckstyleImplicits._
 import com.codacy.analysis.core.model.DuplicationClone
 import com.codacy.plugins.api.duplication.DuplicationCloneFile
+
+import scala.xml.Elem
 
 private[duplication] object CheckstyleFormatParser {
 

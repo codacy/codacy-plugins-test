@@ -1,13 +1,13 @@
 package codacy.plugins.test
 
-import java.io.{File => JFile}
-
 import better.files._
 import codacy.utils.CollectionHelper
 import com.codacy.plugins.api.PatternDescription
 import com.codacy.plugins.api.results.Pattern
 import com.codacy.plugins.results.traits.DockerToolDocumentation
 import com.codacy.plugins.utils.BinaryDockerHelper
+
+import java.io.{File => JFile}
 
 object JsonTests extends ITest {
 

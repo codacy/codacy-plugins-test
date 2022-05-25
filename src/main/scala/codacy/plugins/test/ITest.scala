@@ -1,8 +1,5 @@
 package codacy.plugins.test
 
-import java.io.{File => JFile}
-import java.nio.file.Path
-
 import better.files._
 import com.codacy.analysis.core.model.{FileError, Issue, Pattern, ToolResult, ToolSpec}
 import com.codacy.plugins.api._
@@ -10,6 +7,9 @@ import com.codacy.plugins.api.languages.{Language, Languages}
 import com.codacy.plugins.results.traits.DockerTool
 import com.codacy.plugins.utils.DockerHelper
 import wvlet.log.LogSupport
+
+import java.io.{File => JFile}
+import java.nio.file.Path
 
 final case class DockerImage(name: String, version: String) {
   override def toString: String = {

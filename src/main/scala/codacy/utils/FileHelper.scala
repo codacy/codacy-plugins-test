@@ -2,7 +2,6 @@ package codacy.utils
 
 import java.io.{File => JFile}
 import java.nio.charset.CodingErrorAction
-
 import scala.io.{Codec, Source}
 import scala.util.Try
 import scala.util.control.NonFatal

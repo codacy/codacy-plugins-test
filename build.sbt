@@ -30,9 +30,9 @@ nativeImageOptions ++= Seq("--enable-http",
 
 // Scalafix
 
-ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
+ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.6.0"
 ThisBuild / scalacOptions += "-Ywarn-unused"
 
-addCommandAlias("scalafixRun", "scalafixEnable; compile:scalafix; test:scalafix")
+addCommandAlias("scalafixRun", "scalafixEnable; Compile / scalafix; Test / scalafix")
 
-addCommandAlias("scalafixCheck", "scalafixEnable; compile:scalafix --check; test:scalafix --check")
+addCommandAlias("scalafixCheck", "scalafixEnable; Compile / scalafix --check; Test / scalafix --check")

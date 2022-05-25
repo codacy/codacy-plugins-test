@@ -1,9 +1,9 @@
 package codacy.plugins.test
 
-import scala.util.Properties
-
 import com.codacy.plugins.api.results.Result
 import org.scalatest.matchers.{MatchResult, Matcher}
+
+import scala.util.Properties
 
 case class TestFileResult(patternInternalId: String, line: Int, level: Result.Level)
 

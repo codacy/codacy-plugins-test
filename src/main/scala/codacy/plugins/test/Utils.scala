@@ -1,12 +1,11 @@
 package codacy.plugins.test
-import java.io.{File => JFile}
-
-import scala.annotation.tailrec
-
 import codacy.utils.FileHelper
 import com.codacy.plugins.api
 import com.codacy.plugins.api.languages.Language
 import com.codacy.plugins.api.languages.Languages._
+
+import java.io.{File => JFile}
+import scala.annotation.tailrec
 
 private[test] object Utils {
 

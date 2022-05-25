@@ -1,3 +1,3 @@
-addSbtPlugin("com.codacy" % "codacy-sbt-plugin" % "20.0.2")
+addSbtPlugin("com.codacy" % "codacy-sbt-plugin" % "22.0.2")
 addSbtPlugin("org.scalameta" % "sbt-native-image" % "0.3.1")
-addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.15")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.10.0")
