@@ -78,9 +78,7 @@ workflows:
             - codacy/checkout_and_version
       - codacy/sbt:
           name: populate_cache
-          cmd: |
-            sbt "set scalafmtUseIvy in ThisBuild := false;update"
-            sbt update
+          cmd: sbt update
           requires:
             - codacy/checkout_and_version
       - codacy/sbt:
