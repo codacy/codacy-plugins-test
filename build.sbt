@@ -1,6 +1,6 @@
 name := "codacy-plugins-test"
 
-scalaVersion := "2.12.12"
+scalaVersion := "2.12.15"
 
 // Needed to avoid ResourceLeak with Airframe-Log
 run / fork := true
@@ -12,6 +12,8 @@ libraryDependencies ++= Seq("com.codacy" %% "codacy-analysis-core" % "5.2.5",
                             codacy.libs.scalatest)
 
 enablePlugins(NativeImagePlugin)
+
+nativeImageVersion := "22.1.0"
 
 nativeImageOptions ++= Seq("--enable-http",
                            "--enable-https",
@@ -30,7 +32,7 @@ nativeImageOptions ++= Seq("--enable-http",
 
 // Scalafix
 
-ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.3.1-RC2"
+ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.5.0"
 ThisBuild / scalacOptions += "-Ywarn-unused"
 
 addCommandAlias("scalafixRun", "scalafixEnable; compile:scalafix; test:scalafix")
