@@ -17,7 +17,7 @@ nativeImageVersion := "22.1.0"
 
 nativeImageOptions ++= Seq("--enable-http",
                            "--enable-https",
-                           "--enable-url-protocols=http,https,file,jar",
+                           "--enable-url-protocols=http,https,jar",
                            "-H:+JNI",
                            "-H:IncludeResourceBundles=com.sun.org.apache.xerces.internal.impl.msg.XMLMessages",
                            "-H:+AllowIncompleteClasspath",
