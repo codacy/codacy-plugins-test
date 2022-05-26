@@ -23,10 +23,7 @@ nativeImageOptions ++= Seq("--enable-http",
                            "-H:+AllowIncompleteClasspath",
                            "-H:+ReportExceptionStackTraces",
                            "--no-fallback",
-                           "--report-unsupported-elements-at-runtime") ++ {
-  if (sys.props.get("os.name").contains("Mac OS X")) Seq.empty
-  else Seq("--static")
-}
+                           "--report-unsupported-elements-at-runtime")
 
 // Scalafix
 
