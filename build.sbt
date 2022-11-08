@@ -9,7 +9,7 @@ Global / cancelable := true
 libraryDependencies ++= Seq("com.codacy" %% "codacy-analysis-core" % "5.2.5",
                             "com.lihaoyi" %% "pprint" % "0.6.2",
                             "org.wvlet.airframe" %% "airframe-log" % "21.3.0",
-                            codacy.libs.scalatest)
+                            "org.scalatest" %% "scalatest" % "3.0.8")
 
 enablePlugins(NativeImagePlugin)
 
