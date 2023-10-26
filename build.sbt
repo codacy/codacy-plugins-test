@@ -6,7 +6,7 @@ scalaVersion := "2.12.15"
 run / fork := true
 Global / cancelable := true
 
-libraryDependencies ++= Seq("com.codacy" %% "codacy-analysis-core" % "5.2.5",
+libraryDependencies ++= Seq("com.codacy" %% "codacy-analysis-core" % "7.9.4",
                             "com.lihaoyi" %% "pprint" % "0.6.2",
                             "org.wvlet.airframe" %% "airframe-log" % "21.3.0",
                             "org.scalatest" %% "scalatest" % "3.0.8")
