@@ -2,6 +2,7 @@ package codacy.plugins.test
 
 import better.files._
 import com.codacy.analysis.core.model.{FileError, Issue, Pattern, ToolResult, ToolSpec}
+import com.codacy.analysis.core.tools.FullToolSpec
 import com.codacy.plugins.api._
 import com.codacy.plugins.api.languages.{Language, Languages}
 import com.codacy.plugins.results.traits.DockerTool
@@ -10,6 +11,9 @@ import wvlet.log.LogSupport
 
 import java.io.{File => JFile}
 import java.nio.file.Path
+import com.codacy.plugins.results.traits.DockerToolDocumentation
+import com.codacy.analysis.core.model.PatternSpec
+import com.codacy.analysis.core.model.ParameterSpec
 
 final case class DockerImage(name: String, version: String) {
   override def toString: String = {
@@ -74,6 +78,43 @@ trait ITest extends LogSupport {
                  hasUIConfiguration = true,
                  isDefault = true,
                  configFilenames = Set.empty)
+  }
+
+  protected def createFullToolSpec(toolSpec: ToolSpec,
+                                   dockerToolDocumentation: DockerToolDocumentation): FullToolSpec = {
+    val patterns: Seq[PatternSpec] =
+      dockerToolDocumentation.toolSpecification
+        .map(
+          _.patterns
+            .map { p =>
+              dockerToolDocumentation.patternDescriptions
+                .getOrElse(Set.empty)
+                .find(_.patternId == p.patternId)
+                .map {
+                  pd =>
+                    val parameters = p.parameters.map { pp =>
+                      val description =
+                        pd.parameters.getOrElse(Set.empty).find(_.name.value == pp.name.value).map(_.description)
+                      ParameterSpec(pp.name.value, pp.default.toString(), description)
+                    }.toSeq
+                    PatternSpec(p.patternId.toString(),
+                                p.level.toString(),
+                                p.category.toString(),
+                                p.subcategory.map(_.toString()),
+                                pd.title,
+                                pd.description,
+                                pd.explanation,
+                                p.enabled,
+                                pd.timeToFix,
+                                parameters,
+                                p.languages)
+                }
+            }
+            .toSeq
+            .flatten
+        )
+        .getOrElse(Seq.empty)
+    FullToolSpec(toolSpec, patterns)
   }
 
   protected def filterResults(spec: Option[results.Tool.Specification],

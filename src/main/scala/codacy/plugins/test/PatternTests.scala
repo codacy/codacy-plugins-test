@@ -5,9 +5,8 @@ import codacy.plugins.test.Utils.exceptionToString
 import com.codacy.analysis.core
 import com.codacy.analysis.core.model._
 import com.codacy.plugins.api._
-import com.codacy.plugins.api.results.Result
-import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
-import com.codacy.plugins.runners.{BinaryDockerRunner, DockerRunner}
+import com.codacy.plugins.results.traits.{DockerToolDocumentation}
+import com.codacy.plugins.runners.{DockerRunner}
 import com.codacy.plugins.utils.BinaryDockerHelper
 
 import java.io.{File => JFile}
@@ -24,13 +23,11 @@ object PatternTests extends ITest with CustomMatchers {
     val languages = findLanguages(testsDirectory.toJava)
     val dockerTool = createDockerTool(languages, dockerImage)
     val toolSpec = createToolSpec(languages, dockerImage)
-    val dockerRunner = new BinaryDockerRunner[Result](dockerTool)
     val dockerToolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper())
+    val toolFullSpec = createFullToolSpec(toolSpec, dockerToolDocumentation)
 
     val specOpt = dockerToolDocumentation.toolSpecification
-    val runner =
-      new ToolRunner(dockerToolDocumentation.toolSpecification, dockerToolDocumentation.toolPrefix, dockerRunner)
-    val tools = languages.map(new core.tools.Tool(runner, DockerRunner.defaultRunTimeout)(toolSpec, _))
+    val tools = languages.map(new core.tools.Tool(toolFullSpec, DockerRunner.defaultRunTimeout)(toolSpec, _))
 
     val testFiles = new TestFilesParser(testsDirectory.toJava).getTestFiles
 
@@ -93,7 +90,10 @@ object PatternTests extends ITest with CustomMatchers {
 
     val codacyCfg = CodacyCfg(patterns)
 
-    val resultTry = tool.run(better.files.File(rootDirectory.pathAsString), testFilesAbsolutePaths.to[Set], codacyCfg)
+    val resultTry = tool.run(better.files.File(rootDirectory.pathAsString),
+                             testFilesAbsolutePaths.to[Set],
+                             codacyCfg,
+                             maxToolMemory = Option.empty)
 
     val filteredResultsTry: Try[Set[Issue]] =
       resultTry.map(result => filterResults(spec, rootDirectory.path, testFiles, patterns.to[Seq], result))
