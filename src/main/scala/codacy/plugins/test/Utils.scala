@@ -11,8 +11,8 @@ private[test] object Utils {
 
   val languageComments: Language => Seq[String] = {
     case ABAP => Seq("*", "\"")
-    case Apex | C | CPP | CSharp | Dart | Groovy | JSON | Java | Javascript | Kotlin | ObjectiveC | Scala | Solidity |
-        TypeScript =>
+    case Apex | C | CPP | CSharp | Dart | Groovy | JSON | Java | Javascript | Kotlin | `Objective C` | Scala |
+        Solidity | TypeScript =>
       Seq("/*", "//")
     case CSS | LESS | SASS | Velocity => Seq("/*")
     case Clojure => Seq("#", ";;")
