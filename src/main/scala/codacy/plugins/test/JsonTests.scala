@@ -1,6 +1,5 @@
 package codacy.plugins.test
 
-import better.files._
 import codacy.utils.CollectionHelper
 import com.codacy.plugins.api.PatternDescription
 import com.codacy.plugins.api.results.Pattern
@@ -21,7 +20,7 @@ object JsonTests extends ITest {
       sys.props.get("codacy.tests.ignore.descriptions").isDefined || optArgs.contains("--ignore-descriptions")
 
     val dockerToolDocumentation: DockerToolDocumentation =
-      readDockerToolDocumentation(docsDirectory.toScala / DockerHelpers.testsDirectoryName, dockerImage)
+      readDockerToolDocumentation(dockerImage)
 
     dockerToolDocumentation.toolSpecification.fold(error("Could not read /docs/patterns.json successfully")) { _ =>
       debug("Read /docs/patterns.json successfully")
@@ -106,8 +105,7 @@ object JsonTests extends ITest {
     }
   }
 
-  private def readDockerToolDocumentation(testsDirectory: File, dockerImage: DockerImage) = {
-    testsDirectory.toString()
+  private def readDockerToolDocumentation(dockerImage: DockerImage) = {
     val dockerTool = new IDocker(dockerImage.toString()) {}
 
     new DockerToolDocumentation(dockerTool, new BinaryDockerHelper)
