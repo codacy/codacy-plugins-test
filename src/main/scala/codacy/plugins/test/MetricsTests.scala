@@ -5,12 +5,12 @@ import codacy.plugins.test.Utils.exceptionToString
 import com.codacy.analysis.core.tools.MetricsTool
 import com.codacy.plugins.api.Source
 import com.codacy.plugins.api.metrics.{FileMetrics, LineComplexity}
-import com.codacy.plugins.metrics.traits
 
 import java.io.{File => JFile}
 import scala.util.{Failure, Success, Try}
 
 import Utils._
+import com.codacy.analysis.core.model.MetricsToolSpec
 
 object MetricsTests extends ITest with CustomMatchers {
 
@@ -21,7 +21,7 @@ object MetricsTests extends ITest with CustomMatchers {
     debug(s"Running MetricsTests:")
 
     val languages = findLanguages(testsDirectory.toJava)
-    val metricsTool = new traits.MetricsTool(languages.toList, dockerImage.name, dockerImage.version) {}
+    val metricsTool = MetricsToolSpec(dockerImage.toString(), languages)
     val tools = languages.map(language => new MetricsTool(metricsTool, language))
 
     val testFiles = new MetricsTestFilesParser(testsDirectory.toJava).getTestFiles

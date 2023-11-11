@@ -109,7 +109,7 @@ object JsonTests extends ITest {
     val languages = findLanguages(testsDirectory.toJava)
     val dockerTool = createDockerTool(languages, dockerImage)
 
-    new DockerToolDocumentation(dockerTool, new BinaryDockerHelper(useCachedDocs = false))
+    new DockerToolDocumentation(dockerTool, new BinaryDockerHelper)
   }
 
   private def generateUniquePatternSignature(patternName: String, parameters: Seq[String]) = {

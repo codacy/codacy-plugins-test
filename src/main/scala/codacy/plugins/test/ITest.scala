@@ -42,7 +42,7 @@ trait ITest extends LogSupport {
     val dockerImageName = dockerImage.name
     val dockerImageVersion = dockerImage.version
 
-    new DockerTool(dockerName = dockerImageName,
+    new DockerTool(dockerImage = dockerImage.toString(),
                    isDefault = true,
                    languages = languages,
                    name = dockerImageName,
@@ -53,8 +53,6 @@ trait ITest extends LogSupport {
                    prefix = "",
                    needsCompilation = false,
                    hasUIConfiguration = true) {
-      override val dockerImageName = s"${dockerImage.name}:${dockerImageVersion}"
-
       override def toolVersion(dockerHelper: DockerHelper): Option[String] = Some(dockerImageVersion)
     }
   }

@@ -30,7 +30,7 @@ object DuplicationTests extends ITest {
       .map { testDirectory =>
         val srcDir = testDirectory / "src"
         val languages = findLanguages(srcDir.toJava)
-        val duplicationTool = new DuplicationTool(languages.toList, dockerImage.name, dockerImage.version) {}
+        val duplicationTool = new DuplicationTool(dockerImage.toString(), languages.toList)
         val duplicationToolSpec = core.model.DuplicationToolSpec(dockerImage.toString(), languages)
         val duplicationTools = languages.map(l => new core.tools.DuplicationTool(duplicationToolSpec, l))
         val resultFile = testDirectory / "results.xml"
