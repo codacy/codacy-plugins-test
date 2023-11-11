@@ -23,6 +23,8 @@ nativeImageOptions ++= Seq("--enable-http",
                            "--no-fallback",
                            "--report-unsupported-elements-at-runtime")
 
+nativeImageVersion := "22.1.0"
+
 addCommandAlias("scalafixRun", "scalafixEnable; Compile / scalafix; Test / scalafix")
 
 addCommandAlias("scalafixCheck", "scalafixEnable; Compile / scalafix --check; Test / scalafix --check")
