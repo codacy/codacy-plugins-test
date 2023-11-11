@@ -1,17 +1,15 @@
 package codacy.plugins.test
 
 import better.files._
-import com.codacy.analysis.core.model.{FileError, Issue, Pattern, ToolResult, ToolSpec}
+import com.codacy.analysis.core.model.{FileError, Issue, ParameterSpec, Pattern, PatternSpec, ToolResult, ToolSpec}
 import com.codacy.analysis.core.tools.FullToolSpec
 import com.codacy.plugins.api._
 import com.codacy.plugins.api.languages.{Language, Languages}
+import com.codacy.plugins.results.traits.DockerToolDocumentation
 import wvlet.log.LogSupport
 
 import java.io.{File => JFile}
 import java.nio.file.Path
-import com.codacy.plugins.results.traits.DockerToolDocumentation
-import com.codacy.analysis.core.model.PatternSpec
-import com.codacy.analysis.core.model.ParameterSpec
 
 final case class DockerImage(name: String, version: String) {
   override def toString: String = {

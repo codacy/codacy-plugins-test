@@ -1,9 +1,9 @@
 package codacy.plugins.test
 
 import codacy.plugins.DockerTest
-import org.scalatest._
+import org.scalatest.funsuite.AnyFunSuite
 
-class ExampleDuplicationToolTests extends FunSuite {
+class ExampleDuplicationToolTests extends AnyFunSuite {
   test("[ExampleDuplicationTool] tests should pass") {
     DockerTest.main(Array("pattern", "codacy/codacy-duplication-example-tool:latest"))
   }

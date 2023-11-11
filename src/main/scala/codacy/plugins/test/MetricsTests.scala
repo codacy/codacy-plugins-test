@@ -2,6 +2,7 @@ package codacy.plugins.test
 
 import better.files._
 import codacy.plugins.test.Utils.exceptionToString
+import com.codacy.analysis.core.model.MetricsToolSpec
 import com.codacy.analysis.core.tools.MetricsTool
 import com.codacy.plugins.api.Source
 import com.codacy.plugins.api.metrics.{FileMetrics, LineComplexity}
@@ -10,7 +11,6 @@ import java.io.{File => JFile}
 import scala.util.{Failure, Success, Try}
 
 import Utils._
-import com.codacy.analysis.core.model.MetricsToolSpec
 
 object MetricsTests extends ITest with CustomMatchers {
 

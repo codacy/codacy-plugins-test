@@ -1,10 +1,9 @@
 package com.codacy.plugins.utils
 
-import java.nio.file.{Files, Path}
-
 import com.codacy.plugins.api.PatternDescription
 import com.codacy.plugins.runners.{DockerConstants, IDocker}
 
+import java.nio.file.{Files, Path}
 import scala.util.{Properties, Try}
 
 class BinaryDockerHelper extends DockerHelper {

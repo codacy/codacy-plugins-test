@@ -1,12 +1,11 @@
 package com.codacy.plugins.utils
 
-import java.nio.file.{Path, Paths}
-
 import com.codacy.plugins.api.PatternDescription
 import com.codacy.plugins.api.results.Tool
 import com.codacy.plugins.runners.IDocker
 import play.api.libs.json.{Format, Json}
 
+import java.nio.file.{Path, Paths}
 import scala.util.Try
 
 trait IDockerHelper {

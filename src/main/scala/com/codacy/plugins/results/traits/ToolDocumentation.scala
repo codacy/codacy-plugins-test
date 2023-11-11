@@ -3,8 +3,8 @@ package com.codacy.plugins.results.traits
 import com.codacy.plugins.api.PatternDescription
 import com.codacy.plugins.api.results.Tool
 import com.codacy.plugins.results.docker.utils.PluginPrefixHelper
-import com.codacy.plugins.utils.DockerHelper
 import com.codacy.plugins.runners.IDocker
+import com.codacy.plugins.utils.DockerHelper
 
 trait ToolDocumentation {
   def toolSpecification: Option[Tool.Specification]

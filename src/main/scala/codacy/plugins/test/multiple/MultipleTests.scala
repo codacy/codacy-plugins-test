@@ -9,14 +9,13 @@ import com.codacy.plugins.api.Options
 import com.codacy.plugins.api.results.Result
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.results.{PatternRequest, PluginConfiguration, PluginRequest}
-import com.codacy.plugins.runners.BinaryDockerRunner
+import com.codacy.plugins.runners.{BinaryDockerRunner, IDocker}
 import com.codacy.plugins.utils.BinaryDockerHelper
 
 import java.io.{File => JFile}
 import java.nio.file.Paths
 import scala.util.Try
 import scala.xml.XML
-import com.codacy.plugins.runners.IDocker
 
 object MultipleTests extends ITest {
 
