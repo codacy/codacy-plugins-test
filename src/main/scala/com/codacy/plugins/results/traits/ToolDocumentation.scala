@@ -4,6 +4,7 @@ import com.codacy.plugins.api.PatternDescription
 import com.codacy.plugins.api.results.Tool
 import com.codacy.plugins.results.docker.utils.PluginPrefixHelper
 import com.codacy.plugins.utils.DockerHelper
+import com.codacy.plugins.runners.IDocker
 
 trait ToolDocumentation {
   def toolSpecification: Option[Tool.Specification]
@@ -21,7 +22,7 @@ trait ToolDocumentation {
   "This should only be used by codacy-tools and all other services should fetch this information from the tools API",
   since = ""
 )
-class DockerToolDocumentation(dockerTool: DockerTool, dockerHelper: DockerHelper) extends ToolDocumentation {
+class DockerToolDocumentation(dockerTool: IDocker, dockerHelper: DockerHelper) extends ToolDocumentation {
 
   val docsRoot = "/docs"
 
@@ -31,7 +32,7 @@ class DockerToolDocumentation(dockerTool: DockerTool, dockerHelper: DockerHelper
   override lazy val patternDescriptions: Option[Set[PatternDescription]] =
     dockerHelper.loadDescription(dockerTool)
 
-  override val toolPrefix: String = dockerTool.prefix
+  override val toolPrefix: String = ""
 
   override lazy val toolDescription: Option[String] = dockerHelper.loadToolDescription(dockerTool)
 

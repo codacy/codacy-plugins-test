@@ -8,6 +8,7 @@ import com.codacy.plugins.results.traits.DockerToolDocumentation
 import com.codacy.plugins.utils.BinaryDockerHelper
 
 import java.io.{File => JFile}
+import com.codacy.plugins.runners.IDocker
 
 object JsonTests extends ITest {
 
@@ -106,8 +107,7 @@ object JsonTests extends ITest {
   }
 
   private def readDockerToolDocumentation(testsDirectory: File, dockerImage: DockerImage) = {
-    val languages = findLanguages(testsDirectory.toJava)
-    val dockerTool = createDockerTool(languages, dockerImage)
+    val dockerTool = new IDocker(dockerImage.toString()) {}
 
     new DockerToolDocumentation(dockerTool, new BinaryDockerHelper)
   }

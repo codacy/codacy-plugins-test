@@ -12,6 +12,7 @@ import com.codacy.plugins.utils.BinaryDockerHelper
 import java.io.{File => JFile}
 import java.nio.file.Paths
 import scala.util.{Failure, Success, Try}
+import com.codacy.plugins.runners.IDocker
 
 object PatternTests extends ITest with CustomMatchers {
 
@@ -21,7 +22,7 @@ object PatternTests extends ITest with CustomMatchers {
     debug(s"Running PatternsTests:")
     val testsDirectory = docsDirectory.toScala / DockerHelpers.testsDirectoryName
     val languages = findLanguages(testsDirectory.toJava)
-    val dockerTool = createDockerTool(languages, dockerImage)
+    val dockerTool = new IDocker(dockerImage.toString()) {}
     val toolSpec = createToolSpec(languages, dockerImage)
     val dockerToolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper())
     val toolFullSpec = createFullToolSpec(toolSpec, dockerToolDocumentation)

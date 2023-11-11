@@ -5,8 +5,6 @@ import com.codacy.analysis.core.model.{FileError, Issue, Pattern, ToolResult, To
 import com.codacy.analysis.core.tools.FullToolSpec
 import com.codacy.plugins.api._
 import com.codacy.plugins.api.languages.{Language, Languages}
-import com.codacy.plugins.results.traits.DockerTool
-import com.codacy.plugins.utils.DockerHelper
 import wvlet.log.LogSupport
 
 import java.io.{File => JFile}
@@ -38,25 +36,6 @@ trait ITest extends LogSupport {
     languagesFromProperties.getOrElse(languagesFromFiles)
   }
 
-  protected def createDockerTool(languages: Set[Language], dockerImage: DockerImage): DockerTool = {
-    val dockerImageName = dockerImage.name
-    val dockerImageVersion = dockerImage.version
-
-    new DockerTool(dockerImage = dockerImage.toString(),
-                   isDefault = true,
-                   languages = languages,
-                   name = dockerImageName,
-                   shortName = dockerImageName,
-                   uuid = dockerImageName,
-                   documentationUrl = "",
-                   sourceCodeUrl = "",
-                   prefix = "",
-                   needsCompilation = false,
-                   hasUIConfiguration = true) {
-      override def toolVersion(dockerHelper: DockerHelper): Option[String] = Some(dockerImageVersion)
-    }
-  }
-
   protected def createToolSpec(languages: Set[Language], dockerImage: DockerImage): ToolSpec = {
     val dockerImageName = dockerImage.name
     val dockerImageVersion = dockerImage.version
@@ -80,7 +59,7 @@ trait ITest extends LogSupport {
 
   protected def createFullToolSpec(toolSpec: ToolSpec,
                                    dockerToolDocumentation: DockerToolDocumentation): FullToolSpec = {
-    val patterns: Seq[PatternSpec] =
+    val patterns =
       dockerToolDocumentation.toolSpecification
         .map(
           _.patterns
@@ -112,6 +91,7 @@ trait ITest extends LogSupport {
             .flatten
         )
         .getOrElse(Seq.empty)
+
     FullToolSpec(toolSpec, patterns)
   }
 
