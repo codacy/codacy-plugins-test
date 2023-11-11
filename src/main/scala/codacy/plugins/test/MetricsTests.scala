@@ -70,7 +70,7 @@ object MetricsTests extends ITest with CustomMatchers {
     debug(s"  - $filename should have: ${metricsMessage(testFile)}")
     val testFiles: Set[Source.File] = Set(Source.File(filename))
     val resultTry = tool
-      .run(rootDirectory, Option(testFiles))
+      .run(rootDirectory, testFiles)
       .map(_.map(toCodacyPluginsApiMetricsFileMetrics))
     resultTry.map { result =>
       val comparison = result == Iterable(testFile)

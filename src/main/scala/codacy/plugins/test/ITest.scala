@@ -72,7 +72,7 @@ trait ITest extends LogSupport {
                  prefix = "",
                  needsCompilation = false,
                  hasConfigFile = true,
-                 isClientSide = false,
+                 standalone = false,
                  hasUIConfiguration = true,
                  isDefault = true,
                  configFilenames = Set.empty)
