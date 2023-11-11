@@ -1,11 +1,11 @@
 version: 2.1
 
 orbs:
-  codacy: codacy/base@10.11.0
+  codacy: codacy/base@10.1.1
 references:
   circleci_job: &circleci_job
     docker:
-      - image: cimg/base:2023.11
+      - image: circleci/circleci-cli:0.1.23334
     working_directory: ~/workdir
 
 jobs:
@@ -35,7 +35,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/workdir
-      - run:
+      - deploy:
           name: Publish orb as dev (deleted after 90 days)
           command: circleci orb publish orb.yml codacy/plugins-test@dev:$(cat .version) --token $CIRCLE_TOKEN
 
@@ -44,7 +44,7 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/workdir
-      - run:
+      - deploy:
           name: Publish final orb
           command: circleci orb publish orb.yml codacy/plugins-test@$(cat .version) --token $CIRCLE_TOKEN
 
@@ -67,6 +67,7 @@ jobs:
             - "*"
 
 workflows:
+  version: 2
   build-and-deploy:
     jobs:
       - codacy/checkout_and_version:
