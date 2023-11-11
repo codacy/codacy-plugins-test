@@ -31,7 +31,8 @@ object DuplicationTests extends ITest {
         val srcDir = testDirectory / "src"
         val languages = findLanguages(srcDir.toJava)
         val duplicationTool = new DuplicationTool(languages.toList, dockerImage.name, dockerImage.version) {}
-        val duplicationTools = languages.map(l => new core.tools.DuplicationTool(duplicationTool, l))
+        val duplicationToolSpec = core.model.DuplicationToolSpec(dockerImage.toString(), languages)
+        val duplicationTools = languages.map(l => new core.tools.DuplicationTool(duplicationToolSpec, l))
         val resultFile = testDirectory / "results.xml"
         val resultFileXML = XML.loadFile(resultFile.toJava)
         val (expectedResults, ignoreMessage) = CheckstyleFormatParser.parseResultsXml(resultFileXML)

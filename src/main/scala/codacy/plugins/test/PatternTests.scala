@@ -27,7 +27,7 @@ object PatternTests extends ITest with CustomMatchers {
     val toolFullSpec = createFullToolSpec(toolSpec, dockerToolDocumentation)
 
     val specOpt = dockerToolDocumentation.toolSpecification
-    val tools = languages.map(new core.tools.Tool(toolFullSpec, DockerRunner.defaultRunTimeout)(toolSpec, _))
+    val tools = languages.map(new core.tools.Tool(toolFullSpec, _, DockerRunner.defaultRunTimeout))
 
     val testFiles = new TestFilesParser(testsDirectory.toJava).getTestFiles
 
