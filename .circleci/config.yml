@@ -50,10 +50,10 @@ jobs:
 
   compress_and_package_artifacts:
     docker:
-      - image: hairyhenderson/upx:3.94
+      - image: alpine:3.18
     working_directory: ~/workdir
     steps:
-      - run: apk add ca-certificates
+      - run: apk add ca-certificates upx
       - attach_workspace:
           at: ~/workdir
       - run: |
