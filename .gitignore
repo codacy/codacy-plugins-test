@@ -48,6 +48,7 @@
 # Metals scala language server
 .metals
 .bloop
+project/metals.sbt
 
 # Gradle:
 # .idea/gradle.xml

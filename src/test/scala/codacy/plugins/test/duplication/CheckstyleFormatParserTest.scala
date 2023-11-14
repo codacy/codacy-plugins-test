@@ -2,9 +2,9 @@ package codacy.plugins.test.duplication
 
 import com.codacy.analysis.core.model.DuplicationClone
 import com.codacy.plugins.api.duplication.DuplicationCloneFile
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
-class CheckstyleFormatParserTest extends FunSuite {
+class CheckstyleFormatParserTest extends AnyFunSuite {
   val validCheckstyleXml = <checkstyle version="4.3">
     <duplication nrTokens="2" nrLines="1" message="foobar">
       <property name="ignoreMessage"></property>

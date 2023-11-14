@@ -4,11 +4,11 @@ import com.codacy.analysis.core.model.Issue.Message
 import com.codacy.analysis.core.model._
 import com.codacy.plugins.api
 import com.codacy.plugins.api.results.Result.Level
-import org.scalatest.FunSuite
+import org.scalatest.funsuite.AnyFunSuite
 
 import java.nio.file.Paths
 
-class CheckstyleFormatParserTest extends FunSuite {
+class CheckstyleFormatParserTest extends AnyFunSuite {
   val patternId = "my_pattern"
 
   val validCheckstyleXml = <checkstyle version="4.3">

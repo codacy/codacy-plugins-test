@@ -6,11 +6,10 @@ import codacy.plugins.test.implicits.OrderingInstances._
 import codacy.plugins.test.resultprinter.ResultPrinter
 import com.codacy.analysis.core.model._
 import com.codacy.plugins.api.Options
-import com.codacy.plugins.api.languages.Languages
 import com.codacy.plugins.api.results.Result
 import com.codacy.plugins.results.traits.{DockerToolDocumentation, ToolRunner}
 import com.codacy.plugins.results.{PatternRequest, PluginConfiguration, PluginRequest}
-import com.codacy.plugins.runners.BinaryDockerRunner
+import com.codacy.plugins.runners.{BinaryDockerRunner, IDocker}
 import com.codacy.plugins.utils.BinaryDockerHelper
 
 import java.io.{File => JFile}
@@ -32,7 +31,7 @@ object MultipleTests extends ITest {
       .map { testDirectory =>
         val srcDir = testDirectory / "src"
         // on multiple tests, the language is not validated but required. We used Scala.
-        val dockerTool = createDockerTool(Set(Languages.Scala), dockerImage)
+        val dockerTool = new IDocker(dockerImage.toString()) {}
         val dockerRunner = new BinaryDockerRunner[Result](dockerTool)
         val dockerToolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper())
 
