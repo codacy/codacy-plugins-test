@@ -57,40 +57,39 @@ trait ITest extends LogSupport {
 
   protected def createFullToolSpec(toolSpec: ToolSpec,
                                    dockerToolDocumentation: DockerToolDocumentation): FullToolSpec = {
-    val patterns =
-      dockerToolDocumentation.toolSpecification
-        .map(
-          _.patterns
-            .map { p =>
-              dockerToolDocumentation.patternDescriptions
-                .getOrElse(Set.empty)
-                .find(_.patternId == p.patternId)
-                .map {
-                  pd =>
-                    val parameters = p.parameters.map { pp =>
-                      val description =
-                        pd.parameters.getOrElse(Set.empty).find(_.name.value == pp.name.value).map(_.description)
-                      ParameterSpec(pp.name.value, pp.default.toString(), description)
-                    }.toSeq
-                    PatternSpec(p.patternId.toString(),
-                                p.level.toString(),
-                                p.category.toString(),
-                                p.subcategory.map(_.toString()),
-                                pd.title,
-                                pd.description,
-                                pd.explanation,
-                                p.enabled,
-                                pd.timeToFix,
-                                parameters,
-                                p.languages)
-                }
-            }
-            .toSeq
-            .flatten
-        )
-        .getOrElse(Seq.empty)
+    val patternDescriptions = dockerToolDocumentation.patternDescriptions.getOrElse(Set.empty)
+    val patterns = dockerToolDocumentation.toolSpecification
+      .map(_.patterns)
+      .getOrElse(Seq.empty)
+      .flatMap { pattern =>
+        patternDescriptions
+          .find(_.patternId == pattern.patternId)
+          .map { patternDescription =>
+            merge(pattern, patternDescription)
+          }
+      }(collection.breakOut)
 
     FullToolSpec(toolSpec, patterns)
+  }
+
+  private def merge(p: results.Pattern.Specification, pd: PatternDescription): PatternSpec = {
+    val parameters = p.parameters.map { pp =>
+      val description =
+        pd.parameters.getOrElse(Set.empty).find(_.name.value == pp.name.value).map(_.description)
+      ParameterSpec(pp.name.value, pp.default.toString(), description)
+    }(collection.breakOut)
+
+    PatternSpec(p.patternId.toString(),
+                p.level.toString(),
+                p.category.toString(),
+                p.subcategory.map(_.toString()),
+                pd.title,
+                pd.description,
+                pd.explanation,
+                p.enabled,
+                pd.timeToFix,
+                parameters,
+                p.languages)
   }
 
   protected def filterResults(spec: Option[results.Tool.Specification],
