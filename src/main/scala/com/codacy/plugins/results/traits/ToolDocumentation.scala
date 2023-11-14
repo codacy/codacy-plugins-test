@@ -18,10 +18,6 @@ trait ToolDocumentation {
     PluginPrefixHelper.prefixDescription(toolPrefix, patternDescriptions)
 }
 
-@deprecated(
-  "This should only be used by codacy-tools and all other services should fetch this information from the tools API",
-  since = ""
-)
 class DockerToolDocumentation(dockerTool: IDocker, dockerHelper: DockerHelper) extends ToolDocumentation {
 
   val docsRoot = "/docs"
