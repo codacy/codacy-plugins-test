@@ -176,7 +176,7 @@ trait ITest extends LogSupport {
 
     selectedTest match {
       case Some(dirName) => Seq(testsDirectory / dirName)
-      case None => testsDirectory.list.toSeq
+      case None => testsDirectory.list.filter(_.isDirectory).toSeq
     }
   }
 }
