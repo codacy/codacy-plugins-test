@@ -22,7 +22,8 @@ abstract class DockerHelper extends IDockerHelper {
   protected val patternsFile = Paths.get(s"$docsRoot${File.separator}patterns.json")
   protected val toolDescriptionFile = Paths.get(s"$docsRoot${File.separator}tool-description.md")
   protected val descriptionsFile = Paths.get(s"$docsRoot${File.separator}description${File.separator}description.json")
-  protected def patternExplanationFile(id: Pattern.Id) = Paths.get(s"$docsRoot${File.separator}description${File.separator}$id.md")
+  protected def patternExplanationFile(id: Pattern.Id) =
+    Paths.get(s"$docsRoot${File.separator}description${File.separator}$id.md")
 
   /**
     * Reads the content of a file in a docker image. The file must be inside of `docsRoot`
