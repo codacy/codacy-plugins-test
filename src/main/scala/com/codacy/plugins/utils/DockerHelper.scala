@@ -1,7 +1,7 @@
 package com.codacy.plugins.utils
 
 import com.codacy.plugins.api.PatternDescription
-import com.codacy.plugins.api.results.Tool
+import com.codacy.plugins.api.results.{Pattern, Tool}
 import com.codacy.plugins.runners.IDocker
 import play.api.libs.json.{Format, Json}
 
