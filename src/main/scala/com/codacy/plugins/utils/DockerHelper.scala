@@ -8,7 +8,6 @@ import play.api.libs.json.{Format, Json}
 import java.io.File
 import java.nio.file.{Path, Paths}
 import scala.util.Try
-import com.codacy.plugins.api.results.Pattern
 
 trait IDockerHelper {
   def loadDescription(docker: IDocker): Option[Set[PatternDescription]]
