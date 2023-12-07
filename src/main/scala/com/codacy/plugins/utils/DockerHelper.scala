@@ -7,6 +7,7 @@ import play.api.libs.json.{Format, Json}
 
 import java.nio.file.{Path, Paths}
 import scala.util.Try
+import com.codacy.plugins.api.results.Pattern
 
 trait IDockerHelper {
   def loadDescription(docker: IDocker): Option[Set[PatternDescription]]
@@ -17,8 +18,13 @@ trait IDockerHelper {
 
 abstract class DockerHelper extends IDockerHelper {
 
+  // The following paths have linux style path separators because they are used exclusively
+  // within the docker image which is always linux based.
   protected val docsRoot: Path = Paths.get("/docs")
-  protected val cachedDescriptionsPathPrefix = docsRoot.resolve("description")
+  protected val patternsFile = Paths.get(s"$docsRoot/patterns.json")
+  protected val toolDescriptionFile = Paths.get(s"$docsRoot/tool-description.md")
+  protected val descriptionsFile = Paths.get(s"$docsRoot/description/description.json")
+  protected def patternExplanationFile(id: Pattern.Id) = Paths.get(s"$docsRoot/description/$id.md")
 
   /**
     * Reads the content of a file in a docker image. The file must be inside of `docsRoot`
@@ -32,14 +38,14 @@ abstract class DockerHelper extends IDockerHelper {
     readDescription(docker)
 
   override def loadPatterns(docker: IDocker): Option[Tool.Specification] =
-    readJsonDoc[Tool.Specification](docker, docsRoot.resolve("patterns.json"))
+    readJsonDoc[Tool.Specification](docker, patternsFile)
 
   override def loadVersion(docker: IDocker): Option[String] =
-    readRaw(docker, docsRoot.resolve("patterns.json"))
+    readRaw(docker, patternsFile)
       .flatMap(content => (Json.parse(content) \ "version").asOpt[String])
 
   override def loadToolDescription(docker: IDocker): Option[String] =
-    readRaw(docker, docsRoot.resolve("tool-description.md"))
+    readRaw(docker, toolDescriptionFile)
 
   protected def parseJsonDescriptions(content: String): Option[Set[PatternDescription]] = {
     Try(Json.parse(content).asOpt[Set[PatternDescription]]).toOption.flatten
@@ -51,11 +57,11 @@ abstract class DockerHelper extends IDockerHelper {
     */
   private[utils] def readDescription(docker: IDocker): Option[Set[PatternDescription]] = {
     for {
-      content <- readRaw(docker, cachedDescriptionsPathPrefix.resolve("description.json"))
+      content <- readRaw(docker, descriptionsFile)
       descriptions <- parseJsonDescriptions(content)
     } yield {
       descriptions.map { pattern =>
-        val descPath = cachedDescriptionsPathPrefix.resolve(s"${pattern.patternId}.md")
+        val descPath = patternExplanationFile(pattern.patternId)
         val fileContents = readRaw(docker, descPath)
         pattern.copy(explanation = fileContents)
       }

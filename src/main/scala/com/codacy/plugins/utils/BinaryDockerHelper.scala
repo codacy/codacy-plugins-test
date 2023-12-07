@@ -10,7 +10,7 @@ class BinaryDockerHelper extends DockerHelper {
 
   override def readDescription(docker: IDocker): Option[Set[PatternDescription]] = {
     val cmd =
-      s"${DockerConstants.dockerRunCmd} --entrypoint=cat ${docker.dockerImage} ${cachedDescriptionsPathPrefix.resolve("description.json")}"
+      s"${DockerConstants.dockerRunCmd} --entrypoint=cat ${docker.dockerImage} $descriptionsFile"
         .split(" ")
         .toList
 
