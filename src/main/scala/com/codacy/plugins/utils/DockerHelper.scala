@@ -5,6 +5,7 @@ import com.codacy.plugins.api.results.{Pattern, Tool}
 import com.codacy.plugins.runners.IDocker
 import play.api.libs.json.{Format, Json}
 
+import java.io.File
 import java.nio.file.{Path, Paths}
 import scala.util.Try
 import com.codacy.plugins.api.results.Pattern
@@ -17,14 +18,11 @@ trait IDockerHelper {
 }
 
 abstract class DockerHelper extends IDockerHelper {
-
-  // The following paths have linux style path separators because they are used exclusively
-  // within the docker image which is always linux based.
-  protected val docsRoot: Path = Paths.get("/docs")
-  protected val patternsFile = Paths.get(s"$docsRoot/patterns.json")
-  protected val toolDescriptionFile = Paths.get(s"$docsRoot/tool-description.md")
-  protected val descriptionsFile = Paths.get(s"$docsRoot/description/description.json")
-  protected def patternExplanationFile(id: Pattern.Id) = Paths.get(s"$docsRoot/description/$id.md")
+  protected val docsRoot: Path = Paths.get("docs")
+  protected val patternsFile = Paths.get(s"$docsRoot${File.separator}patterns.json")
+  protected val toolDescriptionFile = Paths.get(s"$docsRoot${File.separator}tool-description.md")
+  protected val descriptionsFile = Paths.get(s"$docsRoot${File.separator}description${File.separator}description.json")
+  protected def patternExplanationFile(id: Pattern.Id) = Paths.get(s"$docsRoot${File.separator}description${File.separator}$id.md")
 
   /**
     * Reads the content of a file in a docker image. The file must be inside of `docsRoot`
