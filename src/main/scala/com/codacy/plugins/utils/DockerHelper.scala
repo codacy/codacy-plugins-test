@@ -1,10 +1,11 @@
 package com.codacy.plugins.utils
 
 import com.codacy.plugins.api.PatternDescription
-import com.codacy.plugins.api.results.Tool
+import com.codacy.plugins.api.results.{Pattern, Tool}
 import com.codacy.plugins.runners.IDocker
 import play.api.libs.json.{Format, Json}
 
+import java.io.File
 import java.nio.file.{Path, Paths}
 import scala.util.Try
 
@@ -16,9 +17,12 @@ trait IDockerHelper {
 }
 
 abstract class DockerHelper extends IDockerHelper {
-
-  protected val docsRoot: Path = Paths.get("/docs")
-  protected val cachedDescriptionsPathPrefix = docsRoot.resolve("description")
+  protected val docsRoot: Path = Paths.get("docs")
+  protected val patternsFile = Paths.get(s"$docsRoot${File.separator}patterns.json")
+  protected val toolDescriptionFile = Paths.get(s"$docsRoot${File.separator}tool-description.md")
+  protected val descriptionsFile = Paths.get(s"$docsRoot${File.separator}description${File.separator}description.json")
+  protected def patternExplanationFile(id: Pattern.Id) =
+    Paths.get(s"$docsRoot${File.separator}description${File.separator}$id.md")
 
   /**
     * Reads the content of a file in a docker image. The file must be inside of `docsRoot`
@@ -32,14 +36,14 @@ abstract class DockerHelper extends IDockerHelper {
     readDescription(docker)
 
   override def loadPatterns(docker: IDocker): Option[Tool.Specification] =
-    readJsonDoc[Tool.Specification](docker, docsRoot.resolve("patterns.json"))
+    readJsonDoc[Tool.Specification](docker, patternsFile)
 
   override def loadVersion(docker: IDocker): Option[String] =
-    readRaw(docker, docsRoot.resolve("patterns.json"))
+    readRaw(docker, patternsFile)
       .flatMap(content => (Json.parse(content) \ "version").asOpt[String])
 
   override def loadToolDescription(docker: IDocker): Option[String] =
-    readRaw(docker, docsRoot.resolve("tool-description.md"))
+    readRaw(docker, toolDescriptionFile)
 
   protected def parseJsonDescriptions(content: String): Option[Set[PatternDescription]] = {
     Try(Json.parse(content).asOpt[Set[PatternDescription]]).toOption.flatten
@@ -51,11 +55,11 @@ abstract class DockerHelper extends IDockerHelper {
     */
   private[utils] def readDescription(docker: IDocker): Option[Set[PatternDescription]] = {
     for {
-      content <- readRaw(docker, cachedDescriptionsPathPrefix.resolve("description.json"))
+      content <- readRaw(docker, descriptionsFile)
       descriptions <- parseJsonDescriptions(content)
     } yield {
       descriptions.map { pattern =>
-        val descPath = cachedDescriptionsPathPrefix.resolve(s"${pattern.patternId}.md")
+        val descPath = patternExplanationFile(pattern.patternId)
         val fileContents = readRaw(docker, descPath)
         pattern.copy(explanation = fileContents)
       }

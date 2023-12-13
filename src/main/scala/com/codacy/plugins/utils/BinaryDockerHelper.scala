@@ -10,7 +10,7 @@ class BinaryDockerHelper extends DockerHelper {
 
   override def readDescription(docker: IDocker): Option[Set[PatternDescription]] = {
     val cmd =
-      s"${DockerConstants.dockerRunCmd} --entrypoint=cat ${docker.dockerImage} ${cachedDescriptionsPathPrefix.resolve("description.json")}"
+      s"${DockerConstants.dockerRunCmd} --entrypoint=cat ${docker.dockerImage} $descriptionsFile"
         .split(" ")
         .toList
 
@@ -20,9 +20,10 @@ class BinaryDockerHelper extends DockerHelper {
 
   override def readRaw(docker: IDocker, path: Path): Option[String] =
     Try {
+      // path: hack for Windows because it compiles with dev OS fileSeparator
       val shCmd =
-        s"""if [ -f $path ]; then
-             |  cat $path;
+        s"""if [ -f ${path.toString().replace('\\', '/')} ]; then
+             |  cat ${path.toString().replace('\\', '/')};
              |  if [ $$? -ne 0 ]; then
              |    exit 2;
              |  fi
@@ -37,6 +38,7 @@ class BinaryDockerHelper extends DockerHelper {
         case Right(CommandResult(0, stdout, stderr @ _)) =>
           Some(stdout.mkString(Properties.lineSeparator))
         case Right(CommandResult(1, stdout @ _, stderr @ _)) => // file doesn't exist
+          println(errorMsg)
           None
         case Right(CommandResult(code @ _, stdout, stderr)) =>
           Log.error(s"""$errorMsg
