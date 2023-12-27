@@ -2,8 +2,7 @@ package codacy.plugins.test
 
 import codacy.utils.CollectionHelper
 import com.codacy.plugins.api.PatternDescription
-import com.codacy.plugins.api.results.Pattern
-import com.codacy.plugins.api.results.Tool
+import com.codacy.plugins.api.results.{Pattern, Tool}
 import com.codacy.plugins.results.traits.DockerToolDocumentation
 import com.codacy.plugins.runners.IDocker
 import com.codacy.plugins.utils.BinaryDockerHelper
