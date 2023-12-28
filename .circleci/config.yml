@@ -67,7 +67,6 @@ jobs:
             - "*"
 
 workflows:
-  version: 2
   build-and-deploy:
     jobs:
       - codacy/checkout_and_version:
@@ -104,10 +103,6 @@ workflows:
           name: publish_artifacts
           files: artifacts/codacy-plugins-test-linux
           path: bin/codacy-plugins-test
-          filters:
-            branches:
-              only:
-                - master
           context: CodacyAWS
           requires:
             - compress_and_package_artifacts
