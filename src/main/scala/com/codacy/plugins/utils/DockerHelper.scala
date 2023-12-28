@@ -17,7 +17,7 @@ trait IDockerHelper {
 }
 
 abstract class DockerHelper extends IDockerHelper {
-  protected val docsRoot: Path = Paths.get("docs")
+  protected val docsRoot: Path = Paths.get("/docs")
   protected val patternsFile = Paths.get(s"$docsRoot${File.separator}patterns.json")
   protected val toolDescriptionFile = Paths.get(s"$docsRoot${File.separator}tool-description.md")
   protected val descriptionsFile = Paths.get(s"$docsRoot${File.separator}description${File.separator}description.json")
