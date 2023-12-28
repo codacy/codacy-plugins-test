@@ -2,7 +2,7 @@ package codacy.plugins.test
 
 import codacy.utils.CollectionHelper
 import com.codacy.plugins.api.PatternDescription
-import com.codacy.plugins.api.results.{Pattern, Tool}
+import com.codacy.plugins.api.results.{Category, Pattern, Tool}
 import com.codacy.plugins.results.traits.DockerToolDocumentation
 import com.codacy.plugins.runners.IDocker
 import com.codacy.plugins.utils.BinaryDockerHelper
@@ -39,9 +39,10 @@ object JsonTests extends ITest {
       }
     }
 
-    val patternCategoryResult = dockerToolDocumentation.toolSpecification.fold(true)(validatePatternCategory)
+    val onlyAllowedCategories =
+      dockerToolDocumentation.toolSpecification.map(validatePatternCategory).getOrElse(true)
 
-    val noMismatchResult =
+    val noMismatchBetweenPatternsAndDescription =
       (dockerToolDocumentation.toolSpecification, dockerToolDocumentation.patternDescriptions) match {
         case (Some(tool), Some(descriptions)) =>
           val diffResult = new CollectionHelper[Pattern.Specification, PatternDescription, String](tool.patterns.toSeq,
@@ -107,24 +108,20 @@ object JsonTests extends ITest {
         case _ => ignoreDescriptions
       }
 
-    patternCategoryResult && noMismatchResult
+    onlyAllowedCategories && noMismatchBetweenPatternsAndDescription
   }
 
+  // TS-682: Validate disabled categories aren't used
   private def validatePatternCategory(toolSpec: Tool.Specification): Boolean = {
-    // TS-682: filter disabled categories
-    val allowedCategories = Pattern.Category.values.filterNot(_ == Pattern.Category.Duplication)
-
     toolSpec.patterns.forall(pattern => {
-      if (!allowedCategories.contains(pattern.category)) {
+      val isAllowed = Category.allowedCategories.contains(pattern.category)
+      if (!isAllowed) {
         error(s"""
-           | Invalid pattern (${pattern.patternId}) category (${pattern.category}).
-           | Valid categories are:
-           | ${allowedCategories}
-          """.stripMargin)
-        false
-      } else {
-        true
+            | Disabled category "${pattern.category}" used by pattern "${pattern.patternId}".
+            | Allowed categories are: ${Category.allowedCategories.mkString(",")}.
+            """.stripMargin)
       }
+      isAllowed
     })
   }
 
