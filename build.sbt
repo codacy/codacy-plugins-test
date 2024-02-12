@@ -6,6 +6,9 @@ scalaVersion := "2.12.18"
 run / fork := true
 Global / cancelable := true
 
+connectInput / run := true
+outputStrategy := Some(StdoutOutput)
+
 libraryDependencies ++= Seq("com.codacy" %% "codacy-analysis-core" % "7.9.4",
                             "com.lihaoyi" %% "pprint" % "0.8.1",
                             "org.wvlet.airframe" %% "airframe-log" % "21.3.0",
@@ -24,6 +27,7 @@ nativeImageOptions ++= Seq("--enable-http",
                            "--report-unsupported-elements-at-runtime")
 
 nativeImageVersion := "22.1.0"
+Global / excludeLintKeys += nativeImageVersion
 
 addCommandAlias("scalafixRun", "scalafixEnable; Compile / scalafix; Test / scalafix")
 
