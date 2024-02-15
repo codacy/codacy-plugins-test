@@ -5,9 +5,9 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class ExampleDuplicationToolTests extends AnyFunSuite {
   test("[ExampleDuplicationTool] tests should pass") {
-    DockerTest.main(Array("pattern", "codacy/codacy-duplication-example-tool:latest"))
+    DockerTest.main(Array("duplication", "codacy/codacy-duplication-example-tool:latest"))
   }
   test("[ExampleDuplicationTool] tests with wrong test name should throw exception") {
-    intercept[Exception](DockerTest.main(Array("patern", "codacy/codacy-duplication-example-tool:latest")))
+    intercept[Exception](DockerTest.main(Array("duplicaion", "codacy/codacy-duplication-example-tool:latest")))
   }
 }

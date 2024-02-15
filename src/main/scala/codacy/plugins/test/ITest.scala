@@ -3,6 +3,7 @@ package codacy.plugins.test
 import better.files._
 import com.codacy.analysis.core.model.{FileError, Issue, ParameterSpec, Pattern, PatternSpec, ToolResult, ToolSpec}
 import com.codacy.analysis.core.tools.FullToolSpec
+import com.codacy.plugins.api
 import com.codacy.plugins.api._
 import com.codacy.plugins.api.languages.{Language, Languages}
 import com.codacy.plugins.results.traits.DockerToolDocumentation
@@ -34,33 +35,12 @@ trait ITest extends LogSupport {
     languagesFromProperties.getOrElse(languagesFromFiles)
   }
 
-  protected def createToolSpec(languages: Set[Language], dockerImage: DockerImage): ToolSpec = {
-    val dockerImageName = dockerImage.name
-    val dockerImageVersion = dockerImage.version
-
-    new ToolSpec(uuid = dockerImageName,
-                 dockerImage = s"${dockerImage.name}:${dockerImageVersion}",
-                 version = dockerImageVersion,
-                 languages = languages,
-                 name = dockerImageName,
-                 shortName = dockerImageName,
-                 documentationUrl = Some(""),
-                 sourceCodeUrl = Some(""),
-                 prefix = "",
-                 needsCompilation = false,
-                 hasConfigFile = true,
-                 standalone = false,
-                 hasUIConfiguration = true,
-                 isDefault = true,
-                 configFilenames = Set.empty)
-  }
-
-  protected def createFullToolSpec(toolSpec: ToolSpec,
-                                   dockerToolDocumentation: DockerToolDocumentation): FullToolSpec = {
+  protected def createFullToolSpec(toolSpec: api.results.Tool.Specification,
+                                   dockerToolDocumentation: DockerToolDocumentation,
+                                   languages: Set[Language],
+                                   dockerImage: DockerImage): FullToolSpec = {
     val patternDescriptions = dockerToolDocumentation.patternDescriptions.getOrElse(Set.empty)
-    val patterns = dockerToolDocumentation.toolSpecification
-      .map(_.patterns)
-      .getOrElse(Seq.empty)
+    val patterns = toolSpec.patterns
       .flatMap { pattern =>
         patternDescriptions
           .find(_.patternId == pattern.patternId)
@@ -69,7 +49,27 @@ trait ITest extends LogSupport {
           }
       }(collection.breakOut)
 
-    FullToolSpec(toolSpec, patterns)
+    FullToolSpec(toToolSpec(toolSpec, languages, dockerImage), patterns)
+  }
+
+  private def toToolSpec(toolSpec: api.results.Tool.Specification,
+                         languages: Set[Language],
+                         dockerImage: DockerImage): ToolSpec = {
+    ToolSpec(toolSpec.name.value,
+             dockerImage.toString,
+             isDefault = true,
+             dockerImage.version,
+             languages,
+             toolSpec.name.value,
+             toolSpec.name.value,
+             Option.empty,
+             Option.empty,
+             prefix = "",
+             needsCompilation = false,
+             hasConfigFile = true,
+             Set.empty,
+             standalone = false,
+             hasUIConfiguration = true)
   }
 
   private def merge(p: results.Pattern.Specification, pd: PatternDescription): PatternSpec = {

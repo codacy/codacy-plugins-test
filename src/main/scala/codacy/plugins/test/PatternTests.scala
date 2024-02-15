@@ -22,11 +22,10 @@ object PatternTests extends ITest with CustomMatchers {
     val testsDirectory = docsDirectory.toScala / DockerHelpers.testsDirectoryName
     val languages = findLanguages(testsDirectory.toJava)
     val dockerTool = new IDocker(dockerImage.toString()) {}
-    val toolSpec = createToolSpec(languages, dockerImage)
     val dockerToolDocumentation = new DockerToolDocumentation(dockerTool, new BinaryDockerHelper())
-    val toolFullSpec = createFullToolSpec(toolSpec, dockerToolDocumentation)
+    val toolSpecOpt = dockerToolDocumentation.toolSpecification
+    val toolFullSpec = createFullToolSpec(toolSpecOpt.get, dockerToolDocumentation, languages, dockerImage)
 
-    val specOpt = dockerToolDocumentation.toolSpecification
     val tools = languages.map(new core.tools.Tool(toolFullSpec, _, DockerRunner.defaultRunTimeout))
 
     val testFiles = new TestFilesParser(testsDirectory.toJava).getTestFiles
@@ -42,7 +41,7 @@ object PatternTests extends ITest with CustomMatchers {
         tools
           .filter(_.languageToRun.name.equalsIgnoreCase(testFile.language.toString))
           .map { tool =>
-            val analysisResultTry = analyseFile(specOpt, testsDirectory, testFile, tool)
+            val analysisResultTry = analyseFile(toolSpecOpt, testsDirectory, testFile, tool)
             (testFile, analysisResultTry.map(matches => (matches, beEqualTo(testFile.matches).apply(matches))))
           }
       }
