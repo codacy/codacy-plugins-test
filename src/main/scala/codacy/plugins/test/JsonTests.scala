@@ -2,7 +2,7 @@ package codacy.plugins.test
 
 import codacy.utils.CollectionHelper
 import com.codacy.plugins.api.PatternDescription
-import com.codacy.plugins.api.results.{Category, Pattern, Tool}
+import com.codacy.plugins.api.results.{Category, Pattern}
 import com.codacy.plugins.results.traits.DockerToolDocumentation
 import com.codacy.plugins.runners.IDocker
 import com.codacy.plugins.utils.BinaryDockerHelper
@@ -39,9 +39,6 @@ object JsonTests extends ITest {
       }
     }
 
-    val onlyAllowedCategories =
-      dockerToolDocumentation.toolSpecification.map(validatePatternCategory).getOrElse(true)
-
     val noMismatchBetweenPatternsAndDescription =
       (dockerToolDocumentation.toolSpecification, dockerToolDocumentation.patternDescriptions) match {
         case (Some(tool), Some(descriptions)) =>
@@ -60,7 +57,7 @@ object JsonTests extends ITest {
                |Some patterns were only found in /docs/patterns.json
                |Confirm that all the patterns and parameters present in /docs/patterns.json are also present in /docs/description/description.json
                |
-               |  * ${diffResult.newObjects.map(_.patternId).mkString(",")}
+               |  * ${diffResult.newObjects.map(_.patternId).mkString(", ")}
               """.stripMargin)
           }
 
@@ -69,36 +66,54 @@ object JsonTests extends ITest {
                |Some patterns were only found in /docs/description/description.json
                |Confirm that all the patterns and parameters present in /docs/description/description.json are also present in /docs/patterns.json
                |
-               |  * ${diffResult.deletedObjects.map(_.patternId).mkString(",")}
+               |  * ${diffResult.deletedObjects.map(_.patternId).mkString(", ")}
               """.stripMargin)
           }
 
+          ignoreDescriptions ||
+          (diffResult.newObjects.isEmpty && diffResult.deletedObjects.isEmpty)
+
+        case _ => ignoreDescriptions
+      }
+
+    val noInvalidDescriptions =
+      (dockerToolDocumentation.patternDescriptions) match {
+        case Some(descriptions) =>
           val titlesAboveLimit = descriptions.filter(_.title.length > 255)
           if (titlesAboveLimit.nonEmpty) {
             error(s"""
-               |Some titles are too big in /docs/description/description.json
-               |The max size of a title is 255 characters
-               |
-               | * ${titlesAboveLimit.map(_.patternId).mkString(", ")}
+                |Some titles are too big in /docs/description/description.json
+                |The max size of a title is 255 characters
+                |
+                | * ${titlesAboveLimit.map(_.patternId).mkString(", ")}
               """.stripMargin)
           }
 
           val descriptionsAboveLimit = descriptions.filter(_.description.getOrElse("").length > 500)
           if (descriptionsAboveLimit.nonEmpty) {
             error(s"""
-               |Some descriptions are too big in /docs/description/description.json
-               |The max size of a description is 500 characters
-               |
-               | * ${descriptionsAboveLimit.map(_.patternId).mkString(", ")}
+                |Some descriptions are too big in /docs/description/description.json
+                |The max size of a description is 500 characters
+                |
+                | * ${descriptionsAboveLimit.map(_.patternId).mkString(", ")}
               """.stripMargin)
           }
 
+          ignoreDescriptions ||
+          (titlesAboveLimit.isEmpty && descriptionsAboveLimit.isEmpty)
+
+        case _ => ignoreDescriptions
+      }
+
+    val noDuplicatePatterns =
+      (dockerToolDocumentation.toolSpecification, dockerToolDocumentation.patternDescriptions) match {
+        case (Some(tool), Some(descriptions)) =>
           val duplicatePatterns = tool.patterns.groupBy(_.patternId).filter { case (_, v) => v.size > 1 }
           if (duplicatePatterns.nonEmpty) {
             error(s"""
                |Some patterns are duplicated in /docs/patterns.json
                |
-               |  * ${duplicatePatterns.map { case (patternId, _) => patternId }.mkString(",")}
+               |  * ${duplicatePatterns.map { case (patternId, _) => patternId }.mkString(", ")}
               """.stripMargin)
           }
 
@@ -107,32 +122,39 @@ object JsonTests extends ITest {
             error(s"""
                |Some patterns are duplicated in /docs/description/description.json
                |
-               |  * ${duplicateDescriptions.map { case (patternId, _) => patternId }.mkString(",")}
+               |  * ${duplicateDescriptions.map { case (patternId, _) => patternId }.mkString(", ")}
               """.stripMargin)
           }
 
           ignoreDescriptions ||
-          (diffResult.newObjects.isEmpty && diffResult.deletedObjects.isEmpty &&
-          duplicatePatterns.isEmpty && duplicateDescriptions.isEmpty)
+          (duplicatePatterns.isEmpty && duplicateDescriptions.isEmpty)
 
         case _ => ignoreDescriptions
       }
 
-    onlyAllowedCategories && noMismatchBetweenPatternsAndDescription
-  }
+    val noInvalidPatternCategories =
+      dockerToolDocumentation.toolSpecification match {
+        case Some(tool) =>
+          val invalidCategories =
+            tool.patterns.filterNot(pattern => Category.allowedCategories.contains(pattern.category))
+          if (invalidCategories.nonEmpty) {
+            error(s"""
+               |Some patterns have invalid categories in /docs/patterns.json
+               |The allowed categories are: ${Category.allowedCategories.mkString(", ")}
+               |
+               |  * ${invalidCategories.map(pattern => s"""${pattern.patternId}:${pattern.category}""").mkString(", ")}
+              """.stripMargin)
+          }
 
-  // TS-682: Validate disabled categories aren't used
-  private def validatePatternCategory(toolSpec: Tool.Specification): Boolean = {
-    toolSpec.patterns.forall(pattern => {
-      val isAllowed = Category.allowedCategories.contains(pattern.category)
-      if (!isAllowed) {
-        error(s"""
-            | Disabled category "${pattern.category}" used by pattern "${pattern.patternId}".
-            | Allowed categories are: ${Category.allowedCategories.mkString(",")}.
-            """.stripMargin)
+          invalidCategories.isEmpty
+
+        case _ => ignoreDescriptions
       }
-      isAllowed
-    })
+
+    noMismatchBetweenPatternsAndDescription &&
+    noInvalidDescriptions &&
+    noDuplicatePatterns &&
+    noInvalidPatternCategories
   }
 
   private def readDockerToolDocumentation(dockerImage: DockerImage) = {
