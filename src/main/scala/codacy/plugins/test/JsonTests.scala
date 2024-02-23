@@ -55,15 +55,6 @@ object JsonTests extends ITest {
             generateUniquePatternSignature(description.patternId.value, parameters)
           }).fastDiff
 
-          val duplicateDescriptions = descriptions.groupBy(_.patternId).filter { case (_, v) => v.size > 1 }
-          if (duplicateDescriptions.nonEmpty) {
-            error(s"""
-               |Some patterns were duplicated in /docs/description/description.json
-               |
-               |  * ${duplicateDescriptions.map { case (patternId, _) => patternId }.mkString(",")}
-              """.stripMargin)
-          }
-
           if (diffResult.newObjects.nonEmpty) {
             error(s"""
                |Some patterns were only found in /docs/patterns.json
@@ -102,8 +93,27 @@ object JsonTests extends ITest {
               """.stripMargin)
           }
 
+          val duplicatePatterns = tool.patterns.groupBy(_.patternId).filter { case (_, v) => v.size > 1 }
+          if (duplicatePatterns.nonEmpty) {
+            error(s"""
+               |Some patterns were duplicated in /docs/description/patterns.json
+               |
+               |  * ${duplicatePatterns.map { case (patternId, _) => patternId }.mkString(",")}
+              """.stripMargin)
+          }
+
+          val duplicateDescriptions = descriptions.groupBy(_.patternId).filter { case (_, v) => v.size > 1 }
+          if (duplicateDescriptions.nonEmpty) {
+            error(s"""
+               |Some patterns were duplicated in /docs/description/description.json
+               |
+               |  * ${duplicateDescriptions.map { case (patternId, _) => patternId }.mkString(",")}
+              """.stripMargin)
+          }
+
           ignoreDescriptions ||
-          (diffResult.newObjects.isEmpty && diffResult.deletedObjects.isEmpty)
+          (diffResult.newObjects.isEmpty && diffResult.deletedObjects.isEmpty &&
+          duplicatePatterns.isEmpty && duplicateDescriptions.isEmpty)
 
         case _ => ignoreDescriptions
       }
