@@ -96,7 +96,7 @@ object JsonTests extends ITest {
           val duplicatePatterns = tool.patterns.groupBy(_.patternId).filter { case (_, v) => v.size > 1 }
           if (duplicatePatterns.nonEmpty) {
             error(s"""
-               |Some patterns were duplicated in /docs/description/patterns.json
+               |Some patterns are duplicated in /docs/patterns.json
                |
                |  * ${duplicatePatterns.map { case (patternId, _) => patternId }.mkString(",")}
               """.stripMargin)
@@ -105,7 +105,7 @@ object JsonTests extends ITest {
           val duplicateDescriptions = descriptions.groupBy(_.patternId).filter { case (_, v) => v.size > 1 }
           if (duplicateDescriptions.nonEmpty) {
             error(s"""
-               |Some patterns were duplicated in /docs/description/description.json
+               |Some patterns are duplicated in /docs/description/description.json
                |
                |  * ${duplicateDescriptions.map { case (patternId, _) => patternId }.mkString(",")}
               """.stripMargin)
