@@ -3,7 +3,6 @@ package codacy.plugins.test
 import codacy.utils.CollectionHelper
 import com.codacy.plugins.api.PatternDescription
 import com.codacy.plugins.api.results.{Category, Pattern}
-import com.codacy.plugins.api.results.{Category, Pattern}
 import com.codacy.plugins.results.traits.DockerToolDocumentation
 import com.codacy.plugins.runners.IDocker
 import com.codacy.plugins.utils.BinaryDockerHelper
@@ -89,7 +88,7 @@ object JsonTests extends ITest {
                 | * ${titlesAboveLimit.map(_.patternId).mkString(", ")}
               """.stripMargin)
           }
-    
+
           val descriptionsAboveLimit = descriptions.filter(_.description.getOrElse("").length > 500)
           if (descriptionsAboveLimit.nonEmpty) {
             error(s"""
