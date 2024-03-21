@@ -3,13 +3,14 @@ package com.codacy.plugins.utils
 import com.codacy.plugins.api.PatternDescription
 import com.codacy.plugins.api.results.{Pattern, Tool}
 import com.codacy.plugins.runners.IDocker
-import play.api.libs.json.{Format, Json}
+import play.api.libs.json.{Format, JsResultException, Json}
+import wvlet.log.LogSupport
 
 import java.io.File
 import java.nio.file.{Path, Paths}
 import scala.util.Try
 
-trait IDockerHelper {
+trait IDockerHelper extends LogSupport {
   def loadDescription(docker: IDocker): Option[Set[PatternDescription]]
   def loadPatterns(docker: IDocker): Option[Tool.Specification]
   def loadVersion(docker: IDocker): Option[String]
@@ -68,7 +69,14 @@ abstract class DockerHelper extends IDockerHelper {
 
   private def readJsonDoc[T](docker: IDocker, path: Path)(implicit docFmt: Format[T]): Option[T] = {
     val json = readRaw(docker, path).map(Json.parse)
-    json.flatMap(_.asOpt[T])
+    json.flatMap(jsValue => {
+      Try(jsValue.as[T])
+        .recover({
+          case e: JsResultException =>
+            e.errors.foreach(m => error(s"Error parsing JSON: $m"))
+            throw e
+        })
+        .toOption
+    })
   }
-
 }
