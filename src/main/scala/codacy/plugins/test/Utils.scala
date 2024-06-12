@@ -31,7 +31,7 @@ private[test] object Utils {
     case Lua => Seq("--", "--[[")
     case OCaml => Seq("(*")
     case PHP | Terraform => Seq("#", "//")
-    case PLSQL | SQL | TSQL => Seq("--", "/*")
+    case PLSQL | SQL | TSQL | Generic => Seq("--", "/*")
     case Powershell => Seq("#", "<#")
     case Scratch => Seq()
     case VisualBasic => Seq("'")
