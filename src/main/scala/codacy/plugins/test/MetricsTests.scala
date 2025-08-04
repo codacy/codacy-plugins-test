@@ -22,7 +22,7 @@ object MetricsTests extends ITest with CustomMatchers {
 
     val languages = findLanguages(testsDirectory.toJava)
     val metricsTool = MetricsToolSpec(dockerImage.toString(), languages)
-    val tools = languages.map(language => new MetricsTool(metricsTool, language))
+    val tools = languages.map(language => new MetricsTool(metricsTool, language, ""))
 
     val testFiles = new MetricsTestFilesParser(testsDirectory.toJava).getTestFiles
 
