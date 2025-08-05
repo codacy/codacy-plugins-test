@@ -30,8 +30,10 @@ private[multiple] object CheckstyleFormatParser {
         val level = severity match {
           case "info" => Level.Info
           case "warning" => Level.Warn
+          case "high" => Level.High
           case "error" => Level.Err
-          case _ => throw new Exception(s"""$severity is not a valid level. Use one of ["info", "warning", "error"]""")
+          case _ =>
+            throw new Exception(s"""$severity is not a valid level. Use one of ["info", "warning", "high", "error"]""")
         }
         Issue(api.results.Pattern.Id(patternId), filePath, Issue.Message(message), level, None, LineLocation(line))
       } else {

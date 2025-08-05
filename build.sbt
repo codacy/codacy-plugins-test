@@ -9,7 +9,7 @@ Global / cancelable := true
 connectInput / run := true
 outputStrategy := Some(StdoutOutput)
 
-libraryDependencies ++= Seq("com.codacy" %% "codacy-analysis-core" % "7.9.4",
+libraryDependencies ++= Seq("com.codacy" %% "codacy-analysis-core" % "7.9.25",
                             "com.lihaoyi" %% "pprint" % "0.8.1",
                             "org.wvlet.airframe" %% "airframe-log" % "21.3.0",
                             "org.scalatest" %% "scalatest" % "3.2.17")
