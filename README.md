@@ -1,6 +1,14 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/77e0473f417446a78758f02785a705b8)](https://www.codacy.com/gh/codacy/codacy-plugins-test?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=codacy/codacy-plugins-test&amp;utm_campaign=Badge_Grade)
 [![Build Status](https://circleci.com/gh/codacy/codacy-plugins-test.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/codacy/codacy-plugins-test)
 
+> [!IMPORTANT]  
+> This repository depends on a package published by [`codacy-analysis-cli`](https://github.com/codacy/codacy-analysis-cli).
+> Since that repository is now deprecated and no longer maintained we should eventually move only the necessary code here,
+> allowing us to depend directly on [`codacy-plugins-api`](https://github.com/codacy/codacy-plugins-api/) and [`codacy-plugins`](https://github.com/codacy/codacy-plugins/).
+> 
+> While that is not done, we can't test SBOM generation in tools.
+> We have no desire to do breaking version updates of plugins dependencies on the deprecated `codacy-analysis-cli`.
+
 # Codacy Plugins Test
 
 Provide a testing interface for the external docker tools.
